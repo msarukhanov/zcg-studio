@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZCG Studio — Next-Gen Browser Game Engine & Workstation</title>
+    <meta name="title" content="ZCG Studio — Next-Gen Browser Game Engine & Workstation">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MDAgNTAwIj4KPHJlY3Qgd2lkdGg9IjUwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMxMjEyMTIiIHJ4PSI0MCIvPgo8dGV4dCB4PSI1MCUiIHk9IjQ1JSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9IidKZXRCcmFpbnMgTW9ubycsICdGaXJhIENvZGUnLCAnTW9udHNlcnJhdCcsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiPgo8dHNwYW4geD0iNTAlIiBkeT0iMCIgZm9udC1zaXplPSIxMjUiIGZpbGw9IiNmZjVhNWYiIHRleHRMZW5ndGg9IjM2MCIgbGVuZ3RoQWRqdXN0PSJzcGFjaW5nQW5kR2x5cGhzIj5aQ0c8L3RzcGFuPgo8dHNwYW4geD0iNTAlIiBkeT0iMTE1IiBmb250LXNpemU9IjExNSIgZmlsbD0iIzRlY2NhMyIgdGV4dExlbmd0aD0iMzYwIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmdBbmRHbHlwaHMiPlNUVURJTzwvdHNwYW4+CjwvdGV4dD4KPC9zdmc+">
+
+    <meta name="description" content="Build, animate, and deploy lightweight responsive games straight from your browser. Integrated Dev Teams, Animation Editor, Asset Marketplace, and seamless Telegram Mini Apps support.">
+    <meta http-equiv="content-language" content="en-US">
+    <meta name="keywords" content="game engine, browser game builder, indie game dev, animation editor, telegram mini apps, asset marketplace, web3 gaming, no setup game dev">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="theme-color" content="#070714">
+
+    <!-- Open Graph / Facebook / Telegram / Discord -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://zcg-studio.onrender.com">
+    <meta property="og:title" content="ZCG Studio — Creating Games Has Never Been This Easy">
+    <meta property="og:description" content="The ultimate browser-based ecosystem for creators and indie devs. Build RPGs, strategies, or visual novels and deploy to any device with a single web link.">
+    <meta property="og:image" content="https://zcg-studio.onrender.com/assets/meta/ogpreview.png">
+
+    <!-- Twitter / X -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://zcg-studio.onrender.com">
+    <meta property="twitter:title" content="ZCG Studio — Browser Game Engine & Workstation">
+    <meta property="twitter:description" content="Collaborate in real-time, rig animations, trade assets, and wrap your games into lightweight APK/DMG bundles effortlessly.">
+    <meta property="twitter:image" content="https://zcg-studio.onrender.com/assets/meta/ogpreview.png">
+
+    <style>
+        /* Базовые стили и сброс */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #070714;
+            color: #fff;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        a { color: inherit; text-decoration: none; }
+
+        /* Контейнер */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* HEADER */
+        header {
+            background: rgba(7, 7, 20, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #1f1f45;
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            z-index: 100;
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 900;
+            color: #ff5a5f;
+            text-shadow: 0 0 10px rgba(255, 90, 95, 0.3);
+            letter-spacing: 1px;
+        }
+        .logo span { color: #4ecca3; }
+        nav { display: flex; gap: 30px; }
+        nav a {
+            font-size: 15px;
+            font-weight: 600;
+            color: #8a8ab0;
+            transition: color 0.3s;
+        }
+        nav a:hover { color: #4ecca3; }
+        .cta-header-btn {
+            background: linear-gradient(135deg, #4ecca3, #2b9371);
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            color: #070714;
+            box-shadow: 0 4px 15px rgba(78, 204, 163, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta-header-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 20px rgba(78, 204, 163, 0.5);
+        }
+
+        /* MAIN CONTENT */
+        main { padding-top: 80px; }
+
+        /* HERO SECTION */
+        .hero {
+            padding: 140px 0 100px 0;
+            text-align: center;
+            background: radial-gradient(circle at 50% 30%, rgba(78, 204, 163, 0.08) 0%, transparent 60%);
+        }
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 900;
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+        .hero h1 span {
+            color: #4ecca3;
+            text-shadow: 0 0 15px rgba(78, 204, 163, 0.2);
+        }
+        .hero p {
+            font-size: 19px;
+            color: #8a8ab0;
+            max-width: 700px;
+            margin: 0 auto 40px auto;
+        }
+        .hero-btns { display: flex; justify-content: center; gap: 20px; }
+        .btn-primary {
+            background: linear-gradient(135deg, #ff5a5f, #c83b40);
+            color: #fff;
+            padding: 15px 35px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            box-shadow: 0 6px 20px rgba(255, 90, 95, 0.3);
+            transition: transform 0.2s;
+        }
+        .btn-primary:hover { transform: scale(1.03); }
+        .btn-secondary {
+            border: 2px solid #25254d;
+            padding: 13px 33px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 16px;
+            color: #fff;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: #4ecca3;
+        }
+
+        /* SECTIONS GENERAL */
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .section-title span { color: #4ecca3; }
+        .section-desc {
+            text-align: center;
+            color: #8a8ab0;
+            max-width: 650px;
+            margin: 0 auto 50px auto;
+            font-size: 16px;
+        }
+
+        /* TOOLS SECTION */
+        .features {
+            padding: 90px 0;
+            background: #101026;
+            border-top: 1px solid #1f1f45;
+            border-bottom: 1px solid #1f1f45;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+        }
+        .feature-card {
+            background: #161638;
+            padding: 35px;
+            border-radius: 20px;
+            border: 1px solid #25254d;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #4ecca3;
+        }
+        .feature-card h3 {
+            color: #4ecca3;
+            margin-bottom: 15px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .feature-card p { color: #8a8ab0; font-size: 15px; line-height: 1.6; }
+
+        /* INDIE ADVANTAGES SECTION */
+        .indie-section { padding: 90px 0; background: #070714; }
+        .indie-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+        .indie-card {
+            background: linear-gradient(145deg, #12122c, #1a1a3a);
+            border: 1px solid #25254d;
+            border-radius: 20px;
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .indie-card:hover {
+            transform: translateY(-8px);
+            border-color: #ff5a5f;
+            box-shadow: 0 10px 25px rgba(255, 90, 95, 0.15);
+        }
+        .indie-icon { font-size: 40px; margin-bottom: 20px; display: inline-block; }
+        .indie-card h3 { font-size: 20px; margin-bottom: 12px; font-weight: 700; color: #fff; }
+        .indie-card p { font-size: 14px; color: #8a8ab0; line-height: 1.5; }
+
+        /* GENRES SECTION */
+        .genres-section {
+            padding: 90px 0;
+            background: #09091a;
+            border-top: 1px solid #1f1f45;
+        }
+        .genres-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .genre-item {
+            background: #12122c;
+            border: 1px solid #25254d;
+            border-radius: 16px;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        .genre-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+        .genre-item h4 { font-size: 16px; margin-bottom: 5px; color: #4ecca3; }
+        .genre-item p { font-size: 13px; color: #8a8ab0; }
+
+        /* CALL TO ACTION SECTION */
+        .cta-block-section {
+            padding: 100px 0;
+            background: #101026;
+            border-top: 1px solid #1f1f45;
+            text-align: center;
+        }
+        .cta-wrapper {
+            max-width: 700px;
+            margin: 0 auto;
+            background: linear-gradient(145deg, #12122c, #1a1a3a);
+            padding: 50px;
+            border-radius: 24px;
+            border: 2px solid #25254d;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+        .cta-wrapper h2 { font-size: 32px; margin-bottom: 15px; font-weight: 800; }
+        .cta-wrapper p { color: #8a8ab0; margin-bottom: 35px; font-size: 16px; }
+
+        .btn-launch-demo {
+            background: linear-gradient(135deg, #00f5d4 0%, #00bbf9 100%) !important;
+            border: 2px solid #00f5d4 !important;
+            color: #0d1117 !important;
+            padding: 16px 50px !important;
+            border-radius: 30px !important;
+            font-size: 16px !important;
+            font-weight: 900 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1.5px !important;
+            cursor: pointer !important;
+            box-shadow: 0 0 20px rgba(0, 245, 212, 0.4) !important;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1) !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-launch-demo:hover {
+            transform: translateY(-4px) scale(1.03) !important;
+            box-shadow: 0 0 35px rgba(0, 245, 212, 0.8) !important;
+            background: linear-gradient(135deg, #33f7dd 0%, #33ccff 100%) !important;
+            border-color: #33f7dd !important;
+        }
+        .live-dot {
+            width: 8px; height: 8px;
+            background-color: #0d1117;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.5; }
+        }
+
+        /* FOOTER */
+        footer {
+            background: #09091a;
+            border-top: 1px solid #1f1f45;
+            padding: 40px 0;
+            font-size: 14px;
+            color: #535375;
+        }
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .footer-links { display: flex; gap: 20px; }
+        .footer-links a:hover { color: #8a8ab0; }
+
+        /* Адаптивность */
+        @media (max-width: 992px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .indie-grid { grid-template-columns: repeat(2, 1fr); }
+            .genres-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .indie-grid, .genres-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 34px; }
+            nav { display: none; }
+            .hero-btns { flex-direction: column; gap: 10px; }
+            .cta-wrapper { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+    <div class="container header-content">
+        <div class="logo">ZCG<span>STUDIO</span></div>
+        <nav>
+            <a href="#ecosystem">Ecosystem</a>
+            <a href="#advantages">Indie Perks</a>
+            <a href="#genres">Genres</a>
+        </nav>
+        <a href="./platform" class="cta-header-btn">Launch App</a>
+    </div>
+</header>
+
+<!-- MAIN CONTENT -->
+<main>
+    <!-- HERO SECTION -->
+    <section class="hero" style="position: relative; overflow: hidden;">
+        <canvas id="heroBannerCanvas" style="position: absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none; opacity: 0.35;"></canvas>
+        <div class="container" style="position: relative; z-index: 5;">
+            <h1>Creating Games <br><span>Has Never Been This Easy.</span></h1>
+            <p>Plug-and-play browser workstation for players, developers, and creators. Build, animate, and deploy lightweight responsive games without setup lags.</p>
+            <div class="hero-btns">
+                <a href="./platform" class="btn-primary">Start Building Your World</a>
+                <a href="./platform" class="btn-secondary">Read Docs</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="ecosystem" class="features">
+        <div class="container">
+            <h2 class="section-title">The Browser <span>Workstation</span></h2>
+            <p class="section-desc">Everything you need to craft stunning games is packed right into a single browser viewport. No heavy installations required.</p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>🕹️ Next-Gen Game Player</h3>
+                    <p>An ultra-optimized, lightweight gaming environment built for seamless instant delivery. Players experience native-app responsiveness across all viewports with absolute zero loading delays.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🛠️ Cloud Code & Game Editor</h3>
+                    <p>Powerful workspace equipped with flexible server-verified tools. Tweak real-time mechanics, control states, and manage your assets securely within a centralized workspace.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🎨 Native Animation Editor</h3>
+                    <p>Create, bone-rig, and compile fluid custom motions directly on the timeline canvas. High-performance rendering rules guarantee perfect pixel-pure execution on both desktop and mobile layouts.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🏪 Built-in Asset Marketplace</h3>
+                    <p>Discover, purchase, or trade modular script sets, environment models, and animation templates. Monetize your own custom-built designs or download top-tier visual blocks instantly.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="advantages" class="indie-section">
+        <div class="container">
+            <h2 class="section-title">Built For <span>Indie Developers</span></h2>
+            <p class="section-desc">Why solo creators and small teams are migrating to ZCG Studio to launch their dream projects.</p>
+
+            <div class="indie-grid">
+                <div class="indie-card">
+                    <span class="indie-icon">🚀</span>
+                    <h3>Zero Setup Time</h3>
+                    <p>Forget about SDKs, dependency hell, and multi-gigabyte engine downloads. Open the website, log in, and start coding instantly.</p>
+                </div>
+                <div class="indie-card">
+                    <span class="indie-icon">🔗</span>
+                    <h3>Any Device via Link</h3>
+                    <p>No more native rebuilds. Drop your game link into a standard WebView wrapper to effortlessly compile lightweight APK, DMG, or EXE bundles for all modern devices.</p>
+                </div>
+                <div class="indie-card">
+                    <span class="indie-icon">👥</span>
+                    <h3>Dev Teams Framework</h3>
+                    <p>Collaborate with your crew in real-time. Manage workspaces, assign custom seat roles, handle multi-branch version logs, and share testing access dynamically.</p>
+                </div>
+                <div class="indie-card">
+                    <span class="indie-icon">🛡️</span>
+                    <h3>Robust Server Math</h3>
+                    <p>Protect your games from client-side hacks. All critical random generation, player scores, and game logic run on server-verified protocols.</p>
+                </div>
+                <div class="indie-card">
+                    <span class="indie-icon">⚡</span>
+                    <h3>Instant Multiplayer</h3>
+                    <p>Built-in WebSocket routing makes synchronizing player actions effortless. Create competitive loops without setting up custom network code.</p>
+                </div>
+                <div class="indie-card">
+                    <span class="indie-icon">💸</span>
+                    <h3>No Publisher Tax</h3>
+                    <p>Deploy directly to Web3 networks or Telegram Mini Apps. Retain full control over your monetization, revenue, and player analytics.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section id="genres" class="genres-section">
+        <div class="container">
+            <h2 class="section-title">Boundless <span>Flexibility</span></h2>
+            <p class="section-desc">Whether it is real-time action or a turn-based masterpiece, ZCG Studio adapts to your creative vision perfectly.</p>
+
+            <div class="genres-grid">
+                <div class="genre-item">
+                    <span class="genre-icon">🏰</span>
+                    <h4>Strategies</h4>
+                    <p>Real-time or turn-based empire grids.</p>
+                </div>
+                <div class="genre-item">
+                    <span class="genre-icon">⚔️</span>
+                    <h4>RPG & Worlds</h4>
+                    <p>Deep quest trees and player progression.</p>
+                </div>
+                <div class="genre-item">
+                    <span class="genre-icon">📖</span>
+                    <h4>Visual Novels</h4>
+                    <p>Interactive storylines and canvas assets.</p>
+                </div>
+                <div class="genre-item">
+                    <span class="genre-icon">🧩</span>
+                    <h4>Quests & Puzzles</h4>
+                    <p>Engaging mechanics and smart score metrics.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="launch" class="cta-block-section">
+        <div class="container">
+            <div class="cta-wrapper">
+                <h2>Join the Next-Gen Gaming Revolution</h2>
+                <p>Ready to bring your ideas to life? Step inside the cloud engine and build games that load in milliseconds on any modern device.</p>
+                <a href="#" class="btn-launch-demo">
+                    <span class="live-dot"></span> Open ZCG Studio App
+                </a>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <div class="container footer-content">
+            <div>&copy; 2026 ZCG Studio. All rights reserved. Creative Gaming Workstation.</div>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Анимация фонового баннера (Светящиеся частицы игровой матрицы)
+        const bannerCanvas = document.getElementById('heroBannerCanvas');
+        if (bannerCanvas) {
+            const bCtx = bannerCanvas.getContext('2d');
+            let particles = [];
+
+            function resizeBanner() {
+                bannerCanvas.width = bannerCanvas.parentElement.clientWidth;
+                bannerCanvas.height = bannerCanvas.parentElement.clientHeight;
+            }
+            window.addEventListener('resize', resizeBanner);
+            resizeBanner();
+
+            for (let i = 0; i < 40; i++) {
+                particles.push({
+                    x: Math.random() * bannerCanvas.width,
+                    y: Math.random() * bannerCanvas.height,
+                    radius: Math.random() * 2 + 1,
+                    speedY: Math.random() * 0.4 + 0.1,
+                    color: Math.random() > 0.5 ? '#4ecca3' : '#ff5a5f'
+                });
+            }
+
+            function animateBanner() {
+                bCtx.clearRect(0, 0, bannerCanvas.width, bannerCanvas.height);
+                particles.forEach(p => {
+                    p.y -= p.speedY;
+                    if (p.y < 0) p.y = bannerCanvas.height;
+                    bCtx.fillStyle = p.color;
+                    bCtx.beginPath();
+                    bCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    bCtx.fill();
+                });
+                requestAnimationFrame(animateBanner);
+            }
+            animateBanner();
+        }
+    </script>
+</body>
+</html>
+

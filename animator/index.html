@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Skeleton Animation Editor</title>
+    <style>
+        /* --- GLOBAL STYLE BASE --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        h3 { margin: 0 0 15px 0; color: #4af; font-size: 16px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- TOP NAVIGATION BAR --- */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #2d2d2d;
+            padding: 10px 20px;
+            border-bottom: 1px solid #3d3d3d;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .mode-switcher { display: flex; gap: 5px; background: #1a1a1a; padding: 4px; border-radius: 6px; }
+        .mode-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: #888;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .mode-btn.active { background: #4af; color: #111; }
+        .io-group { display: flex; gap: 10px; }
+        .io-btn {
+            padding: 8px 15px;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            color: #fff;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        .io-btn:hover { background: #4a4a4a; }
+
+        /* --- MODE CONTAINERS (VISIBILITY CONTROL) --- */
+        #designModeView { display: flex; gap: 20px; padding: 20px; height: calc(100vh - 100px); }
+        #animationModeView { display: none; flex-direction: column; gap: 15px; padding: 15px; height: calc(100vh - 90px); }
+
+        .panel {
+            background: #262626;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #363636;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* --- DESIGN MODE ELEMENTS --- */
+        .upload-side { width: 320px; display: flex; flex-direction: column; }
+        .pivot-side { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        #fileInput { display: none; }
+        .upload-trigger {
+            display: block;
+            text-align: center;
+            padding: 15px;
+            background: #3a3a3a;
+            border: 2px dashed #555;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .upload-trigger:hover { border-color: #4af; background: #2f383e; }
+
+        .asset-list {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 6px;
+        }
+        .asset-item {
+            padding: 10px;
+            background: #2d2d2d;
+            cursor: pointer;
+            border-radius: 4px;
+            border-left: 4px solid transparent;
+            font-size: 14px;
+        }
+        .asset-item:hover { background: #353535; }
+        .asset-item.active { background: #3d3d3d; border-left-color: #4af; color: #4af; }
+
+        /* Увеличенная зона для настройки точки вращения */
+        /* Увеличенная зона для настройки точки вращения с координатной сеткой */
+        #pivotZone {
+            position: relative;
+            border: 2px dashed #444;
+            width: 800px;  /* Можете менять этот размер как хотите */
+            height: 800px; /* Можете менять этот размер как хотите */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            /* Создаем сетку 20х20 пикселей на чистом CSS */
+            background-color: #111;
+            background-image:
+                    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: center;
+
+            cursor: crosshair;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        #pivotImg { max-width: 98%; max-height: 98%; object-fit: contain; pointer-events: none; }
+
+        /* Профессиональный тонкий прицел-перекрестие вместо жирной точки */
+        #pivotDot {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            display: none;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        /* Рисуем перекрестие и центральный пиксель с помощью псевдоэлементов */
+        #pivotDot::before, #pivotDot::after {
+            content: '';
+            position: absolute;
+            background: #ff4a4a;
+            box-shadow: 0 0 2px rgba(0,0,0,0.8);
+        }
+        /* Горизонтальная линия прицела */
+        #pivotDot::before {
+            top: 11px; left: 0; width: 24px; height: 2px;
+        }
+        /* Вертикальная линия прицела */
+        #pivotDot::after {
+            top: 0; left: 11px; width: 2px; height: 24px;
+        }
+
+        #pivotCoords { margin-top: 15px; font-family: monospace; font-size: 14px; color: #aaa; }
+
+        /* --- ANIMATION MODE ELEMENTS --- */
+        .workspace-row { display: flex; gap: 15px; flex: 1; min-height: 0; }
+        .hierarchy-side { width: 280px; display: flex; flex-direction: column; }
+        .canvas-side { flex: 1; display: flex; flex-direction: column; position: relative; }
+
+        #canvas {
+            /*background: #141414;*/
+            /*border: 1px solid #333;*/
+            /*border-radius: 6px;*/
+            /*!*width: 100%;*!*/
+            /*width: 700px;*/
+            /*height: 700px;*/
+            /*flex: 1;*/
+            /*min-height: 0;*/
+
+            background: #141414;
+            border: 1px solid #333;
+            border-radius: 6px;
+            width: 700px;
+            height: 700px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Hierarchy Tree Styling with indents */
+        .tree-node { padding: 6px 10px; cursor: pointer; border-radius: 4px; margin-bottom: 2px; font-size: 13px; }
+        .tree-node:hover { background: #333; }
+        .tree-node.active { background: #4af; color: #111; font-weight: bold; }
+        .indent-1 { margin-left: 15px; border-left: 1px solid #444; }
+        .indent-2 { margin-left: 30px; border-left: 1px solid #555; }
+        .indent-3 { margin-left: 45px; border-left: 1px solid #666; }
+
+        /* Transform Inspector */
+        .inspector {
+            display: flex;
+            gap: 15px;
+            background: #2d2d2d;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .inspector label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #bbb; }
+        .inspector input {
+            width: 70px;
+            background: #1e1e1e;
+            border: 1px solid #3d3d3d;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        #saveKeyBtn {
+            background: #ff4a4a;
+            border: none;
+            color: white;
+            padding: 6px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+        #saveKeyBtn:hover { background: #ff3333; }
+
+        /* Timeline Grid Container */
+        .timeline-area { background: #262626; padding: 15px; border-radius: 8px; border: 1px solid #363636; }
+        .timeline-controls { display: flex; gap: 15px; align-items: center; margin-bottom: 10px; }
+        #playBtn { padding: 6px 20px; background: #4f4; border: none; cursor: pointer; font-weight: bold; color: #111; border-radius: 4px; }
+        #playBtn:hover { background: #3e3; }
+
+        .timeline-scroll { display: flex; gap: 3px; overflow-x: auto; padding: 8px; background: #141414; border-radius: 6px; border: 1px solid #2d2d2d; }
+        .frame-btn {
+            min-width: 32px;
+            height: 40px;
+            background: #2a2a2a;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 11px;
+            display: flex;
+            border-radius: 3px;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s ease;
+        }
+        .frame-btn:hover { background: #353535; color: #fff; }
+        .frame-btn.active { background: #4af; color: #111; font-weight: bold; }
+        .frame-btn.has-key { border-top: 4px solid #ff4a4a; height: 36px; color: #ff8888; }
+
+        /* Стили для новых выпадающих списков в топ-баре */
+        .select-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #aaa;
+        }
+        .select-group select {
+            background: #1a1a1a;
+            border: 1px solid #4a4a4a;
+            color: #fff;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            outline: none;
+        }
+        .select-group select:focus {
+            border-color: #4af;
+        }
+
+        /* --- ANIMATION MODE ELEMENTS (ИСПРАВЛЕНО) --- */
+        #animationModeView {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            /* Жестко ограничиваем высоту рабочей области, чтобы таймлайн не улетал */
+            height: calc(100vh - 80px);
+            box-sizing: border-box;
+        }
+
+        .workspace-row {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-height: 0; /* Разрешаем внутренним элементам сжиматься */
+        }
+
+        .hierarchy-side {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            max-height: 100%; /* Ограничиваем список по высоте рабочей области */
+        }
+
+        .canvas-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #141414;
+            border-radius: 6px;
+            border: 1px solid #333;
+            min-height: 0;
+            position: relative;
+        }
+
+        /* Умный адаптивный Canvas, который сохраняет пропорции 700x700,
+           но автоматически сжимается по высоте, если экран маленький! */
+        #canvas {
+            background: transparent;
+            border: none;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Сохраняет квадрат 1:1 без искажения пикселей */
+            display: block;
+            margin: auto;
+        }
+
+        /* Ограничиваем высоту области таймлайна, чтобы она занимала фиксированное место внизу */
+        .timeline-area {
+            background: #262626;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid #363636;
+            flex-shrink: 0; /* Запрещаем таймлайну сжиматься */
+        }
+
+
+        /*#pivotZone {*/
+            /*position: relative;*/
+            /*width: 100%;*/
+            /*max-width: 500px; !* Задай максимальную ширину, которая тебе удобна под верстку *!*/
+            /*height: 500px;    !* Задай фиксированную или максимальную высоту *!*/
+            /*background: #1a1a1a;*/
+            /*border: 1px solid #333;*/
+            /*border-radius: 6px;*/
+            /*overflow: hidden;*/
+            /*display: flex;*/
+            /*align-items: center;*/
+            /*justify-content: center;*/
+        /*}*/
+
+        #designCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Картинка Т-позы полностью впишется в блок без искажений */
+            display: block;
+            margin: auto;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<!-- TOP CONTROL NAVIGATION BAR -->
+<div class="top-bar">
+    <div class="mode-switcher">
+        <button class="mode-btn active" id="btnDesignMode">Design Mode</button>
+        <button class="mode-btn" id="btnAnimationMode">Animation Mode</button>
+    </div>
+
+    <!-- Добавляем тумблеры Ракурса и Анимации -->
+    <div class="select-group">
+        <label for="viewSelect">View:</label>
+        <select id="viewSelect">
+            <option value="front">FRONT</option>
+            <option value="back">BACK</option>
+            <option value="left">LEFT</option>
+            <option value="right">RIGHT</option>
+        </select>
+    </div>
+
+    <div class="select-group" id="animSelectContainer" style="display: none;">
+        <label for="animSelect">Anim:</label>
+        <select id="animSelect">
+            <option value="idle">IDLE</option>
+            <option value="walk">WALK</option>
+            <option value="hit">HIT</option>
+        </select>
+        <!-- Небольшая кнопка для создания кастомных анимаций на будущее -->
+        <button id="addAnimBtn" style="background: #444; border: 1px solid #555; color: white; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 11px;">+ New</button>
+    </div>
+
+    <div class="io-group">
+        <button class="io-btn" id="exportBtn">Export JSON</button>
+        <button class="io-btn" id="importBtn" onclick="document.getElementById('importInput').click()">Import JSON</button>
+        <input type="file" id="importInput" accept=".json" style="display:none">
+    </div>
+</div>
+
+<!-- 🎨 MODE 1: DESIGN MODE VIEW (WORKSPACE SPREAD) -->
+<div id="designModeView">
+    <div class="panel upload-side">
+        <h3>1. Upload Sprite</h3>
+        <label class="upload-trigger" for="fileInput">Choose PNG Files</label>
+        <input type="file" id="fileInput" multiple accept="image/*">
+
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 11px; font-weight: bold; color: #888; letter-spacing: 1px;">SLOT MANAGER</div>
+
+            <input type="text" id="newSlotNameInp" placeholder="New slot name (e.g. cape)" style="background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 6px; border-radius: 4px; font-size: 12px; outline: none; box-sizing: border-box; width: 100%;">
+
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <label style="font-size: 11px; color: #aaa;">Parent:</label>
+                <select id="newSlotParentSelect" style="flex: 1; background: #1a1a1a; border: 1px solid #444; color: #fff; padding: 4px; border-radius: 4px; font-size: 11px; outline: none; color-scheme: dark;">
+                    <option value="torso">TORSO (Root)</option>
+                    <option value="head">HEAD</option>
+                    <option value="l_shoulder">L_SHOULDER</option>
+                    <option value="r_shoulder">R_SHOULDER</option>
+                    <option value="l_hand">L_HAND</option>
+                    <option value="r_hand">R_HAND</option>
+                    <option value="l_thigh">L_THIGH</option>
+                    <option value="r_thigh">R_THIGH</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 5px;">
+                <button id="addSlotBtn" style="flex: 1; background: #28a745; border: none; color: white; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">+ Add Slot</button>
+                <button id="deleteSlotBtn" style="flex: 1; background: #dc3545; border: none; color: white; padding: 6px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">- Delete</button>
+            </div>
+        </div>
+
+        <div class="asset-list" id="assetList">
+            <!-- Loaded asset items listed dynamically -->
+        </div>
+    </div>
+
+    <div class="panel pivot-side">
+        <h3>2. Anchor Setup (Pivot Point)</h3>
+        <div id="pivotZone">
+            <!--<img id="pivotImg" alt="">-->
+            <!--<div id="pivotDot"></div>-->
+            <canvas id="designCanvas"></canvas>
+        </div>
+        <div id="pivotCoords">No asset selected. Select from left panel.</div>
+    </div>
+</div>
+
+<!-- 🎬 MODE 2: ANIMATION MODE VIEW (WORKSPACE EXPANDED) -->
+<div id="animationModeView">
+
+    <!-- Inspector and Workspace Grid -->
+    <div class="inspector">
+        <div style="font-weight: bold; color: #4af; font-size: 14px;" id="inspectorTitle">No segment selected</div>
+        <label>Local X: <input type="number" id="inpX" value="0"></label>
+        <label>Local Y: <input type="number" id="inpY" value="0"></label>
+        <label>Rotation (°): <input type="number" id="inpRot" value="0" step="1"></label>
+
+
+        <button id="saveKeyBtn">Save Keyframe</button>
+        <!-- Добавляем кнопку удаления ключа -->
+        <button id="deleteKeyBtn" style="background:#555; border:none; color:#ff4a4a; padding:0 15px; cursor:pointer; font-weight:bold; border-radius:4px; margin-left:10px;">Delete Keyframe</button>
+
+    </div>
+
+    <div class="workspace-row">
+        <!-- Left Side: Hierarchy Structural Inspector List -->
+        <div class="panel hierarchy-side">
+            <h3>Skeleton Tree</h3>
+            <div class="asset-list" id="hierarchyTreeList">
+                <!-- Hierarchy tree nodes will be injected here -->
+            </div>
+        </div>
+
+        <!-- Canvas Preview Area -->
+        <div class="canvas-side">
+            <canvas id="canvas" width="700" height="700"></canvas>
+        </div>
+    </div>
+
+    <!-- Timeline Controls and Frame Grid Grid -->
+    <!--<div class="timeline-area">-->
+        <!--<div class="timeline-controls">-->
+            <!--<button id="playBtn">PLAY</button>-->
+            <!--<span id="currentFrameDisplay" style="font-family: monospace; font-size: 14px;">Frame: 0 / 30</span>-->
+        <!--</div>-->
+        <!--<div class="timeline-scroll" id="timelineTracks">-->
+            <!--&lt;!&ndash; 30 frames buttons will be injected here &ndash;&gt;-->
+        <!--</div>-->
+    <!--</div>-->
+
+    <div class="timeline-area">
+        <div class="timeline-controls">
+            <button id="playBtn">PLAY</button>
+            <!-- Добавляем кнопки копирования и вставки позы рядом с PLAY -->
+            <button onclick="window.copyCurrentFramePose()" style="padding: 6px 15px; background: #3a3a3a; border: 1px solid #555; color: white; cursor: pointer; border-radius: 4px; font-weight: bold; margin-left: 10px;">Copy Pose</button>
+            <button onclick="window.pastePoseToCurrentFrame()" style="padding: 6px 15px; background: #3a3a3a; border: 1px solid #555; color: white; cursor: pointer; border-radius: 4px; font-weight: bold; margin-left: 5px;">Paste Pose</button>
+
+            <span id="currentFrameDisplay" style="font-family: monospace; font-size: 14px; margin-left: auto;">Frame: 0 / 30</span>
+        </div>
+        <div class="timeline-scroll" id="timelineTracks"></div>
+    </div>
+
+
+</div>
+
+<script src="state.js"></script>       <!-- Глобальное состояние и структура скелета -->
+<script src="hierarchy.js"></script>   <!-- Связи родитель-ребенок и парсинг имен -->
+
+<script src="canvas_render.js"></script>
+<script src="timeline.js"></script>
+
+<script src="main.js"></script>
+
+</body>
+</html>
+

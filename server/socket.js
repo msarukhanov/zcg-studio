@@ -1,0 +1,539 @@
+const { Server } = require('socket.io');
+const { redisClient } = require('../redisClient');
+
+global.onlinePlayers = {};  // Реестр: { "demo_partner_Марк": "socket_id" }
+global.onlineByDomains = {}; // Реестр: { "localhost": ["Марк"] }
+
+function init(server) {
+    const io = new Server(server, {
+        cors: { origin: "*", methods: ["GET", "POST"], credentials: true },
+        transports: ['websocket', 'polling']
+    });
+
+    global.io = io;
+
+    const virtualArena = require('./battles/virtualArena');
+    virtualArena.startArenaEngine(300000, io);
+
+    io.on('connection', async (socket) => {
+        // 🪄 МАГИЯ БЕЗОПАСНОСТИ: Вытаскиваем защищенный заголовок Origin или Referer
+        const handshakeOrigin = socket.handshake.headers.origin || socket.handshake.headers.referer || '';
+
+        let clientDomain = 'localhost'; // Дефолт, если заголовков нет (например, кастомный клиент тестировщика)
+        if (handshakeOrigin && handshakeOrigin.startsWith('http')) {
+            try {
+                const parsedUrl = new URL(handshakeOrigin);
+                clientDomain = parsedUrl.hostname.toLowerCase(); // Чистый домен без http:// и портов (например: 'localhost' или 'casino.com')
+            } catch (urlErr) {
+                console.error("❌ [Socket Auth] Ошибка парсинга Origin URL:", urlErr.message);
+            }
+        }
+
+        console.log(`📡 [Socket Connected] Новое соединение. Защищенный определенный Origin домен: ${clientDomain}`);
+
+        let sessionRoomKey = null;
+        let domainRoomKey = null;
+        let currentUserName = null;
+        let activePartnerId = null;
+        let activeServerId = null;
+        let redisKey = null;
+
+        // Игрок шлет ТОЛЬКО свой username (или токен), больше ничего передавать не нужно!
+        socket.on('platform_join', async (data) => {
+            const { userId, gameId, username, serverId } = data;
+            if (!username) return socket.emit('error', { message: 'Username is required to map network gateway socket node.' });
+
+            try {
+                // 🔎 Ищем в PostgreSQL, какому партнеру принадлежит этот защищенный домен
+                const webCheck = await global.pool.query(
+                    'SELECT partner_id FROM b2b_websites WHERE domain_name = $1 AND is_active = 1 LIMIT 1',
+                    [clientDomain]
+                );
+
+                if (webCheck.rowCount === 0) {
+                    console.warn(`⚠️ [Socket Security] Отказ в регистрации сокета. Домен "${clientDomain}" не зарегистрирован в нашей B2B-платформе!`);
+                    return socket.emit('error', { message: 'This brand domain configuration mismatch.' });
+                }
+
+                // Извлекаем честный partner_id напрямую из Postgres!
+                activePartnerId = webCheck.rows[0].partner_id;
+                currentUserName = username;
+
+                // 1. Изолированная комната обновлений игрока (например: demo_mtwtech_world01_Марк)
+                sessionRoomKey = `${activePartnerId}_${serverId}_${userId}`;
+                socket.join(sessionRoomKey);
+
+                // 2. Общая брендовая комната всего домена (точки заменяем на _, чтобы не ломать селекторы Socket.io)
+                const safeDomainString = clientDomain.replace(/\./g, '_');
+                domainRoomKey = `domain_${safeDomainString}`;
+                socket.join(domainRoomKey);
+
+                // 3. Фиксируем статус "Онлайн" в оперативной памяти Node.js
+                global.onlinePlayers[sessionRoomKey] = socket.id;
+
+                console.log(`✅ [Socket Mapped] Игрок "${username}" "${userId}" успешно заперт в комнатах: [${sessionRoomKey}] и [${domainRoomKey}]. PartnerID: ${activePartnerId}`);
+
+                if (!global.onlineByDomains[clientDomain]) global.onlineByDomains[clientDomain] = [];
+                if (!global.onlineByDomains[clientDomain].includes(username)) {
+                    global.onlineByDomains[clientDomain].push(username);
+                }
+
+                activeServerId = serverId;
+
+                socket.emit('platform_join', {
+                    key: sessionRoomKey
+                });
+
+                redisKey = `p:${serverId}:${userId}`;
+                if (redisClient.isOpen && redisClient.isReady) {
+                    try {
+                        const playerRaw = await redisClient.get(redisKey);
+                        let playerObj = JSON.parse(playerRaw);
+
+                        // 1. Вход в мировой чат игры
+                        socket.join(`game:${gameId}:world`);
+
+                        // 2. Вход в серверный чат зоны
+                        socket.join(`server:${serverId}:zone`);
+
+                        // 3. Вход в личную комнату игрока (чтобы получать ЛС)
+                        socket.join(`p:${serverId}:${userId}`);
+
+                        // 4. ИСПРАВЛЕНО: Читаем guild_id из правильного объекта playerObj
+                        // Проверь, как у тебя в схеме: guild_id или guildId
+                        const activeGuildId = playerObj.guild_id || playerObj.guildId;
+                        if (activeGuildId) {
+                            socket.join(`guild:${activeGuildId}`);
+                        }
+
+                        redisClient.sAdd('online_players:' + serverId, userId);
+                    } catch (err) {
+                        console.error("[Socket Router Redis Error]:", err.message);
+                    }
+                }
+            } catch (dbErr) {
+                console.error("❌ [Socket DB Error] Не удалось сопоставить домен в Postgres:", dbErr.message);
+            }
+        });
+
+        socket.on('join_arena_room', (data) => {
+            const { gameId, serverId } = data;
+            if (gameId && serverId) {
+                const roomName = `room_${gameId}_${serverId}`;
+                socket.join(roomName);
+                console.log(`⚔️ Сокет ${socket.id} успешно вошел в комнату: ${roomName}`);
+            }
+        });
+
+        socket.on('join_chat_rooms', async (data) => { // Добавляем async, так как ниже идет await redisClient.get
+            try {
+                // 1. ИСПРАВЛЕНО: Читаем строго из data, а не из req
+                const { userId, username, deviceId, gameId, serverId, partnerId } = data;
+
+                // Защищенный sessionKey, привязанный к b2b-домену партнера
+                const sessionKey = `${partnerId}_${serverId}_${username}`;
+
+                // 2. ИСПРАВЛЕНО: Убраны несуществующие !type и !method
+                if (!username || !deviceId || !gameId || !serverId || !partnerId || !userId) {
+                    socket.emit('player_update', { error: true, msg: 'Invalid params.' });
+                    return;
+                }
+
+                let playerRaw;
+                const redisKey = `p:${serverId}:${userId}`;
+
+                if (redisClient.isOpen && redisClient.isReady) {
+                    try {
+                        playerRaw = await redisClient.get(redisKey);
+                    } catch (err) {
+                        console.error("[Socket Router Redis Error]:", err.message);
+                    }
+                }
+
+                if (!playerRaw) {
+                    socket.emit('player_update', {
+                        error: true,
+                        msg: 'Invalid player profile cache or session expired.',
+                        username, deviceId, userId, gameId, serverId, partnerId
+                    });
+                    return;
+                }
+
+                // Парсим плоский объект игрока из строки Редиса
+                let playerObj = JSON.parse(playerRaw);
+
+                // 1. Вход в мировой чат игры
+                socket.join(`game:${gameId}:world`);
+
+                // 2. Вход в серверный чат зоны
+                socket.join(`server:${serverId}:zone`);
+
+                // 4. ИСПРАВЛЕНО: Читаем guild_id из правильного объекта playerObj
+                // Проверь, как у тебя в схеме: guild_id или guildId
+                const activeGuildId = playerObj.guild_id || playerObj.guildId;
+                if (activeGuildId) {
+                    socket.join(`guild:${activeGuildId}`);
+                }
+
+            } catch (e) {
+                console.error("[Socket join_chat_rooms Critical Error]:", e);
+            }
+        });
+
+
+        socket.on('player_request', async (req) => {
+            try {
+                const { userId, username, deviceId, gameId, serverId, partnerId, type, method, data } = req;
+                // Защищенный sessionKey, привязанный к b2b-домену партнера
+                const sessionKey = `${partnerId}_${serverId}_${username}`;
+
+                if (!username || !deviceId || !gameId || !serverId || !partnerId || !type || !method) {
+                    socket.emit('player_update', { error: true, msg: 'Invalid params.' });
+                    return;
+                }
+
+                let playerRaw;
+                const redisKey = `p:${serverId}:${userId}`;
+
+                if (redisClient.isOpen && redisClient.isReady) {
+                    try {
+
+                        const flooded = await isRateLimited(userId, redisClient);
+                        if (flooded) {
+                            // Мгновенно отбиваем атаку, не нагружая контроллеры и базы данных!
+                            return socket.emit('player_update', {
+                                error: true,
+                                msg: 'Too many requests. Subspace distortion detected.'
+                            });
+                        }
+
+                        playerRaw = await redisClient.get(redisKey);
+                    } catch (err) {
+                        console.error("[Socket Router Redis Error]:", err.message);
+                    }
+                }
+
+                if (!playerRaw) {
+                    socket.emit('player_update', {
+                        error: true,
+                        msg: 'Invalid player profile cache or session expired.',
+                        username, deviceId, userId, gameId, serverId, partnerId, type, method
+                    });
+                    return;
+                }
+
+                // Парсим плоский объект игрока из строки Редиса
+                let playerObj = JSON.parse(playerRaw);
+
+                socket.playerId = playerObj.id;
+                socket.serverId = serverId;
+                socket.partnerId = partnerId;
+
+                const controllersMap = {
+                    'auth': './controllers/authController',
+                    'arena': './controllers/battleController',
+                    'battle': './controllers/battleController',
+                    'gacha': './controllers/gachaController',
+                    'game': './controllers/gameController',
+                    'hero': './controllers/heroesController',
+                    'items': './controllers/itemsController',
+                    'player': './controllers/playerController',
+                    'shop': './controllers/shopController',
+
+                    'friends': './controllers/friendsController',
+                    'guilds': './controllers/guildsController',
+                    'offers': './controllers/offersController',
+                    'quests': './controllers/questsController',
+                    'battlePass': './controllers/battlePassController',
+                    'bounty': './controllers/bountyController',
+
+                    'chat': './controllers/chatController',
+                    'mail': './controllers/mailController',
+                };
+
+                if (!controllersMap[type]) {
+                    socket.emit('player_update', { error: true, msg: 'Invalid controller type.', type });
+                    return;
+                }
+
+                // Динамически подключаем нужный контроллер ядра
+                const controller = require(controllersMap[type]);
+
+                if (!controller[method]) {
+                    socket.emit('player_update', { error: true, msg: 'Invalid controller method.', type, method });
+                    return;
+                }
+
+                // Передаем эстафету Части 2 — Эмуляции Express объектов req и res
+                // --- ЭМУЛЯЦИЯ СТРУКТУРЫ EXPRESS REQ / RES ---
+                // Собираем объект req в точности так, как его ждут твои 11 контроллеров
+                const fakeReq = {
+                    player: {
+                        id: playerObj.id, // Наш UUID из базы Постгреса
+                        serverId: serverId,
+                        gameId,
+                        userId,
+                        username,
+                        deviceId,
+                        activePartnerId
+                    },
+                    query: { ...data },
+                    body: { ...data }
+                };
+
+                // Перехватываем вызовы ответов res.json и res.status
+                const fakeRes = {
+                    status: function(statusCode) {
+                        this.statusCode = statusCode;
+                        return this; // Возвращаем сам объект для цепочки вызовов .status().json()
+                    },
+                    json: function(backendResponse) {
+                        // Если база или контроллер вернули ошибку
+                        if (this.statusCode >= 400 || backendResponse.error) {
+                            return socket.emit('player_update', {
+                                username,
+                                type: 'error',
+                                data: { message: backendResponse.message || backendResponse.error || "Action failed" }
+                            });
+                        }
+
+                        let updateType = 'award';
+                        let responseData = {};
+
+                        const actualResources = backendResponse.resources || backendResponse.game_data?.resources || playerObj.resources;
+                        const actualInventory = backendResponse.inventory || backendResponse.game_data?.inventory || playerObj.inventory;
+
+                        if (type === 'chat') {
+                            updateType = 'chat';
+                            responseData = backendResponse;
+                        }
+                        else if (type === 'mail') {
+                            updateType = 'mail';
+                            responseData = backendResponse;
+                        }
+                        else if (type === 'battle') {
+                            updateType = 'battle';
+                            responseData = backendResponse;
+                        }
+                        else if (type === 'hero') {
+                            updateType = 'hero';
+                            responseData = {
+                                heroes: backendResponse.heroes || {},
+                                instanceId: data.instanceId
+                            };
+                        }
+                        else if (type === 'arena') {
+                            updateType = 'arena';
+                            responseData = {
+                                arena_rating: actualResources?.arena_rating || playerObj.resources?.arena_rating,
+                                pvp_opponents: backendResponse.opponents || backendResponse.pvp_opponents || []
+                            };
+                        }
+                        else if (type === 'game') {
+                            updateType = 'leaderboard';
+                            responseData = {
+                                leaderboard: backendResponse.leaderboard || [],
+                                my_rank: backendResponse.myRank || null
+                            };
+                        }
+                        else if (type === 'gacha') {
+                            updateType = 'gacha';
+                            responseData = {
+                                gacha_list: backendResponse.state || backendResponse.gacha_list || {},
+                                heroes: backendResponse.heroes || {},
+                                resources: actualResources,
+                                inventory: actualInventory,
+                            };
+                        }
+                        else if (type === 'shop') {
+                            updateType = 'shop';
+                            responseData = {
+                                resources: backendResponse.state || {},
+                                state: backendResponse.state || {}
+                            };
+                        }
+                        else if (type === 'boss') {
+                            updateType = 'boss';
+                            responseData = {
+                                boss_list: backendResponse.statuses || backendResponse.boss_list || {}
+                            };
+                        }
+                        else if (type === 'friends') {
+                            updateType = 'friends';
+                            responseData = {
+                                friends: backendResponse.friends || null,
+                                friend_requests: backendResponse.friend_requests || null,
+                                friend_recommendations: backendResponse.friend_recommendations || null,
+                                blacklist: backendResponse.blacklist || []
+                            };
+                        }
+                        else if (type === 'guilds') {
+                            updateType = 'guilds';
+                            responseData = {
+                                active_guild: backendResponse.members ? backendResponse : (backendResponse.active_guild || null),
+                                guilds_search_list: backendResponse.guilds || [],
+                                guild_incoming_requests: backendResponse.requests || []
+                            };
+                        }
+                        else if (type === 'offers') {
+                            updateType = 'offers';
+                            responseData = {
+                                active_offers: backendResponse.active_offers || []
+                            };
+                        }
+                        else if (type === 'battlePass') {
+                            updateType = 'battlePass';
+                            responseData = {
+                                battle_passes: backendResponse.battle_passes || {}
+                            };
+                        }
+                        else if (type === 'bounty') {
+                            updateType = 'bounty';
+                            responseData = {
+                                bounty_missions: backendResponse.bounty_missions || []
+                            };
+                        }
+                        else if (type === 'quests') {
+                            updateType = 'quests';
+                            responseData = {
+                                quests: backendResponse.quests || {},
+                                daily_login: backendResponse.daily_login || {}
+                            };
+                        }
+                        else if (type === 'player') {
+                            updateType = 'player';
+                            responseData = backendResponse;
+                        }
+                        else {
+                            responseData = {
+                                resources: actualResources,
+                                inventory: actualInventory
+                            };
+                        }
+
+                        responseData.add_resources = backendResponse.rewards?.resources || backendResponse.gained || null;
+                        responseData.add_items = backendResponse.rewards?.items || null;
+
+                        // Выстреливаем идеально отформатированный пакет изменений в твой фронтенд!
+                        socket.emit('player_update', {
+                            username: username,
+                            type: updateType,
+                            data: responseData
+                        });
+                    }
+                };
+
+                // Запускаем метод контроллера! Он отработает на полную мощность,
+                // выполнит математику и сам вернет ответ через наш fakeRes.json
+                try {
+                    controller[method](fakeReq, fakeRes);
+                } catch (controllerErr) {
+                    console.error(`❌ [Socket Router] Ошибка внутри метода ${type}:${method}:`, controllerErr);
+                    global.io.to(sessionKey).emit('player_update', {
+                        username,
+                        type: 'error',
+                        data: { message: "Ошибка выполнения логики на сервере." }
+                    });
+                }
+            }
+            catch (e) {
+                console.error(e);
+            }
+
+        }); // Конец слушателя player_request
+
+        // 3. АВТОМАТИЧЕСКАЯ ОЧИСТКА ПАМЯТИ ПРИ ОТКЛЮЧЕНИИ УСТРОЙСТВА
+        socket.on('disconnect', async () => { // Убираем аргумент socket из колбэка, он доступен из замыкания
+            if (sessionRoomKey && global.onlinePlayers[sessionRoomKey]) {
+                delete global.onlinePlayers[sessionRoomKey];
+            }
+
+            if (clientDomain && global.onlineByDomains[clientDomain]) {
+                global.onlineByDomains[clientDomain] = global.onlineByDomains[clientDomain].filter(u => u !== currentUserName);
+                if (global.onlineByDomains[clientDomain].length === 0) {
+                    delete global.onlineByDomains[clientDomain];
+                }
+            }
+
+            if (redisClient.isOpen && redisClient.isReady) {
+                try {
+                    // Безопасное чтение данных
+                    const playerRaw = await redisClient.get(redisKey);
+
+                    if (playerRaw) {
+                        const playerObj = JSON.parse(playerRaw);
+                        const splitKey = redisKey.split(":");
+                        const targetServerId = splitKey[1] || activeServerId;
+
+                        await redisClient.sRem('online_players:' + targetServerId, String(playerObj.id));
+                    } else {
+                        console.warn(`[Socket Disconnect]: Ключ ${redisKey} не найден в Redis при отключении.`);
+                    }
+                } catch (err) {
+                    console.error("[Socket Router Redis Disconnect Error]:", err.message);
+                }
+            }
+
+            console.log(`🔴 [Socket Disconnected] Устройство игрока ${currentUserName} покинуло сеть домена ${clientDomain}`);
+        });
+
+    });
+
+    global.io = io;
+
+    // 4. ГЛОБАЛЬНЫЙ МИНУТНЫЙ ЦИКЛ РАССЫЛКИ БАЛАНСОВ ДЖЕКПОТОВ ПО КОМНАТАМ ПАРТНЕРОВ
+    setInterval(async () => {
+        if (!global.io) return;
+
+        try {
+            // Вытягиваем текущие суммы всех активных джекпотов из PostgreSQL
+            const res = await global.pool.query(
+                'SELECT partner_id, level_name, current_amount::numeric FROM b2b_jackpots WHERE is_active = 1'
+            );
+
+            if (res.rowCount === 0) return;
+
+            // Группируем балансы джекпотов по партнерам (B2B-сегментация)
+            const jackpotPack = {};
+            res.rows.forEach(row => {
+                if (!jackpotPack[row.partner_id]) jackpotPack[row.partner_id] = {};
+                jackpotPack[row.partner_id][row.level_name.toLowerCase()] = Number(row.current_amount);
+            });
+
+            // Выстреливаем балансы джекпотов раздельно в комнаты каждого партнера
+            for (const partnerId in jackpotPack) {
+                // Отправляем пакет вида { mini: 342.10, major: 4120.50, mega: 12450.00 }
+                global.io.emit(`jackpot_pulse_${partnerId}`, jackpotPack[partnerId]);
+            }
+        } catch (err) {
+            // Тихо перехватываем ошибку, чтобы не спамить консоль при перезагрузках базы данных
+            console.error("[Jackpot Pulse Error]:", err.message);
+        }
+    }, 60000); // Строго раз в минуту
+}
+
+/**
+ * МГНОВЕННЫЙ ЛИМИТЕР: Проверяет флуд от игрока через Redis.
+ * Разрешает максимум 10 запросов в секунду на одного пользователя.
+ */
+async function isRateLimited(userId, redisClient) {
+    const limitKey = `rl:${userId}`;
+    const MAX_REQUESTS_PER_SECOND = 10; // Настройка лимита
+
+    // Атомарно увеличиваем счетчик в Redis для этого юзера
+    const currentRequests = await redisClient.incr(limitKey);
+
+    // Если это первый запрос за секунду — ставим ключу время жизни 1 секунду
+    if (currentRequests === 1) {
+        await redisClient.expire(limitKey, 1);
+    }
+
+    // Если читер превысил лимит — возвращаем true (заблокировать)
+    if (currentRequests > MAX_REQUESTS_PER_SECOND) {
+        return true;
+    }
+    return false;
+}
+
+
+module.exports = init;

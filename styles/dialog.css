@@ -1,0 +1,276 @@
+/* Главный полноэкранный контейнер-оверлей игры */
+#game-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: flex; /* Выстраиваем шлюзы строго по горизонтали */
+    flex-direction: row;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* ОБЩИЙ КЛАСС ДЛЯ БОКОВЫХ ШЛЮЗОВ ПОРТРЕТОВ */
+.vn-portrait-slot {
+    width: 20%; /* Жесткие 20% ширины экрана под шлюз */
+    height: 100%;
+    display: flex;
+    align-items: flex-end; /* Сажаем карточку портрета на самый «пол» экрана */
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0; /* Запрещаем сжиматься по горизонтали */
+    box-sizing: border-box;
+    z-index: 20;
+}
+
+/* Изолированный контейнер-карточка портрета (Выровнен по нижней линии) */
+.vn-portrait-container {
+    width: 100%;
+    max-height: 40%; /* Жесткий лимит высоты — 40% от экрана */
+    margin-bottom: 1vh; /* Идеальный нижний отступ от края дисплея */
+    display: flex;
+    /*align-items: flex-end; !* Картинка внутри прочно опирается на дно карточки *!*/
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    overflow: hidden; /* Картинка никогда не вылезет за рамки терминала */
+    padding: 10px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Скругление углов по ТЗ */
+    animation: vnPortraitAppear 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Сама картинка аватара (.avatar) внутри карточки-контейнера */
+.vn-portrait-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Защита пропорций на 100%, никакого растягивания */
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.6));
+    transition: filter 0.25s ease, opacity 0.25s ease;
+}
+
+/* ЭФФЕКТЫ СВЕТА ДЛЯ УЧАСТНИКОВ ДИАЛОГА */
+/* Активный говорящий персонаж: подсвечивается неоновым синим */
+.vn-portrait-slot.active-speaker .vn-portrait-img {
+    filter: drop-shadow(0 0 12px var(--accent-blue));
+    opacity: 1;
+}
+
+/* Пассивный персонаж в фоне: уходит в тень и слегка обесцвечивается */
+.vn-portrait-slot.passive-speaker .vn-portrait-img {
+    filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)) grayscale(20%);
+    opacity: 0.4; /* Затемнение по ТЗ */
+}
+
+/* ЦЕНТРАЛЬНЫЙ ШЛЮЗ ПОВЕСТВОВАНИЯ (Строго 60% ширины) */
+.vn-story-center-slot {
+    width: 60%;
+    height: 100%;
+    position: relative;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+/* Коробка диалога внутри центрального шлюза */
+.dialog-box-node {
+    position: absolute;
+    bottom: 1%; /* Идеальное выравнивание на одной линии с портретами */
+    left: 0;
+    width: 60%; /* Занимает всю ширину центрального шлюза */
+    min-height: 150px;
+    max-height: 40%;
+    padding: 20px;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 8px; /* Скругление углов по ТЗ */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+/* Интерактивные кнопки вариантов ответов игрока (Choices) */
+.dialog-choice-btn {
+    width: 100%;
+    text-align: left;
+    padding: 8px 14px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    box-sizing: border-box;
+    transition: background 0.15s, transform 0.15s;
+}
+
+/* Эффект наведения на активную кнопку */
+.dialog-choice-btn:not([disabled]):hover {
+    background: var(--border-color) !important;
+    transform: translateX(4px);
+    color: #fff !important;
+}
+
+/* Легкий тактильный провал при клике на кнопку */
+.dialog-choice-btn:not([disabled]):active {
+    transform: translateX(2px);
+}
+
+#game-dialog-overlay:has(.choices-container) {
+    animation: none !important;
+}
+
+/* Анимация плавного появления карточек портретов */
+@keyframes vnPortraitAppear {
+    0% { opacity: 0; transform: translateY(10px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Тряска экрана */
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-4px, 3px) rotate(-0.5deg); }
+    40% { transform: translate(-3px, -2px) rotate(0.5deg); }
+    60% { transform: translate(3px, 2px) rotate(0deg); }
+    80% { transform: translate(2px, -3px) rotate(0.5deg); }
+}
+.fx-screen-shake {
+    animation: screenShake 0.3s ease-in-out;
+}
+
+/* Дрожь актера */
+@keyframes actorShiver {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+.fx-actor-shiver {
+    animation: actorShiver 0.1s ease-in-out;
+}
+
+/* Пульсация паники текста */
+@keyframes textPanic {
+    0%, 100% { color: var(--accent-red); text-shadow: 0 0 4px rgba(233,69,96,0.6); }
+    50% { color: #ff8899; text-shadow: 0 0 12px rgba(233,69,96,0.9); }
+}
+.fx-text-panic {
+    animation: textPanic 0.4s ease-in-out;
+}
+
+
+/* ==========================================================================
+   ШТИЛЬ И АНИМАЦИИ: ОБНОВЛЕННЫЙ ПАКЕТ ДЛЯ ТЕКСТА, СЕТОК И ПЕРЕХОДОВ
+   ========================================================================== */
+
+/* 1. АДАПТИВНЫЙ ШРИФТ ДЛЯ ТЕКСТОВОГО БОКСА */
+.dialog-box-node p.typewriter-text {
+    /* Автоматический расчет размера шрифта: плавно масштабируется от 12px до 18px в зависимости от ширины экрана */
+    font-size: clamp(12px, 1.1vmax, 18px) !important;
+    line-height: 1.6 !important;
+    margin: 0;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+/* Кастомные шрифтовые семейства для локальной настройки автором */
+.font-cyber-digital { font-family: 'Courier New', Courier, monospace !important; font-weight: bold; }
+.font-fantasy-gothic { font-family: 'Georgia', serif !important; font-style: italic; }
+.font-standard-sans  { font-family: sans-serif !important; }
+
+/* 2. ЛОКАЛЬНЫЕ СЕЛЕКТ-ЭФФЕКТЫ ДЛЯ ТЕКСТА */
+/* Эффект: Шёпот (Размытый, полупрозрачный текст) */
+.fx-text-whisper {
+    color: #8b949e !important;
+    filter: blur(0.4px);
+    opacity: 0.7;
+    text-shadow: 0 0 4px rgba(255,255,255,0.2);
+}
+
+/* Эффект: Кибер-Глитч (Цифровые помехи и искажение цвета) */
+@keyframes textGlitchEffect {
+    0%, 100% { text-shadow: 1px 0 0 #ff007f, -1px 0 0 #00f5d4; transform: translate(0,0); }
+    25% { text-shadow: -1px 0 0 #ff007f, 1px 0 0 #00f5d4; transform: translate(-0.5px, 0.5px); }
+    75% { text-shadow: 1px 0 0 #ff007f, -1px 0 0 #00f5d4; transform: translate(0.5px, -0.5px); }
+}
+.fx-text-glitch {
+    animation: textGlitchEffect 0.25s linear infinite;
+    color: #fff !important;
+}
+
+/* 3. УПРАВЛЕНИЕ СЕТКОЙ ВАРИАНТОВ ОТВЕТА (Choices Layout Mode) */
+/* Стандартный вывод: Строка за строкой (Column) */
+.choices-layout-column {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+/* ИСПРАВЛЕНО (2.2): Двухколоночная сетка коротких ответов (Grid 2-Col) */
+.choices-layout-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+}
+
+/* 4. ВИЗУАЛЬНЫЕ МАРКЕРЫ ДЛЯ МЕХАНИКИ DRAG-AND-DROP КАРТОЧЕК В АДМИНКЕ */
+/* Карточка страницы NPC в момент, когда её физически зажали и тащат мышкои */
+.timeline-frame-card.se-dragging {
+    opacity: 0.4 !important;
+    border: 1px dashed var(--accent-blue) !important;
+    background: #161b22 !important;
+    transform: scale(0.98);
+}
+
+/* Подсветка зоны, над которой прямо сейчас пролетает перетаскиваемая карточка */
+.timeline-frame-card.se-drag-over {
+    border-top: 3px solid var(--accent-blue) !important;
+    background: #1f242c !important;
+    margin-top: 4px;
+    margin-bottom: 14px;
+    transition: margin 0.15s ease, background 0.15s ease;
+}
+
+/* 5. ПОЛНОЭКРАННЫЕ ОВЕРЛЕИ АНИМАЦИЙ ПЕРЕХОДОВ МЕЖДУ СЦЕНАМИ / ФОНАМИ */
+.vn-transition-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000; /* Самый верхний слой, перекрывает даже текстовую плашку */
+    pointer-events: none;
+    opacity: 0;
+    box-sizing: border-box;
+}
+
+/* Переход: Fade-to-Black (Классическое плавное затемнение в черный) */
+@keyframes transitionFadeBlack {
+    0% { opacity: 0; }
+    40%, 60% { opacity: 1; background: #000; }
+    100% { opacity: 0; }
+}
+.vn-transition-overlay.fx-transition-fade {
+    pointer-events: auto; /* На время шторки блокируем любые случайные клики игрока */
+    animation: transitionFadeBlack 0.8s ease-in-out forwards;
+}
+
+/* Переход: Flash-White (Резкая белая вспышка для взрывов/шока) */
+@keyframes transitionFlashWhite {
+    0% { opacity: 0; }
+    15% { opacity: 1; background: #fff; filter: blur(2px); }
+    100% { opacity: 0; }
+}
+.vn-transition-overlay.fx-transition-flash {
+    pointer-events: auto;
+    animation: transitionFlashWhite 0.5s ease-out forwards;
+}
+
+@keyframes idlePulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-1%); }
+}
+.idle_pulse { animation: idlePulse 3s infinite ease-in-out; }

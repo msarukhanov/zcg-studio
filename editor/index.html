@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hex Civilization Editor</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/dialogEditor.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.13.2/pixi.min.js" integrity="sha512-rOMqai9NIPaFWpmvHUjdOa2dSuaaYo6i7E19jS1ZW9rjnrl4qAOOtsOeTk0QgIflFCe2ZYi/7or3CRF6VfBk9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+</head>
+<body>
+<div id="editor-layout">
+    <!-- TOP NAVIGATION BAR -->
+    <header id="top-bar">
+        <div class="menu-item">
+            <span>Project</span>
+            <div class="dropdown">
+                <!--<button id="btn-new">New</button>-->
+                <button id="btn-load">Load</button>
+                <button id="btn-save">Save</button>
+            </div>
+        </div>
+        <div class="menu-item">
+            <span>Edit</span>
+            <div class="dropdown">
+                <button id="btn-undo">Undo</button>
+                <button id="btn-redo">Redo</button>
+            </div>
+        </div>
+        <div class="menu-item">
+            <span>Map</span>
+            <div class="dropdown" id="map-select-dropdown"></div>
+        </div>
+        <div class="menu-item">
+            <span>Editors</span>
+            <div class="dropdown">
+                <button id="editors-localization" class="editors-btn" data-mode="localization">Localization</button>
+                <button id="editors-assets" class="editors-btn" data-mode="assets">Assets</button>
+                <button id="editors-screens" class="editors-btn" data-mode="screens">Screens</button>
+                <button id="editors-dialogs" class="editors-btn" data-mode="dialogs">Dialogs</button>
+            </div>
+        </div>
+        <div class="menu-item">
+            <span>Tools</span>
+            <div class="dropdown">
+                <button id="mode-terrain" class="mode-btn active" data-mode="Terrain">Terrain</button>
+                <button id="mode-objects" class="mode-btn" data-mode="Objects">Objects</button>
+                <button id="mode-characters" class="mode-btn" data-mode="Characters">Characters</button>
+            </div>
+        </div>
+        <div class="menu-item">
+            <span>Catalog</span>
+            <div class="dropdown">
+                <button id="catalog-provinces" class="catalog-btn" data-mode="ConfigTerrain">Terrain</button>
+                <button id="catalog-provinces" class="catalog-btn" data-mode="provinces">Provinces</button>
+                <button id="catalog-regions" class="catalog-btn" data-mode="regions">Regions</button>
+                <button id="catalog-objects" class="catalog-btn" data-mode="objects">Objects</button>
+
+                <button id="catalog-factions" class="catalog-btn" data-mode="factions">Factions</button>
+            </div>
+        </div>
+        <!--<div class="top-bar-title">Hex Editor v1.0</div>-->
+
+    </header>
+
+    <div id="tool-options-bar">
+        <!-- Content will be injected dynamically via EditorControls.js -->
+    </div>
+
+    <div id="main-container">
+        <!-- LEFT TOOLBAR -->
+        <aside id="left-sidebar">
+            <!--<div class="sidebar-section-title">Tools</div>-->
+            <div class="vertical-tool-list">
+                <!-- SELECT TOOL (POINTER ICON) -->
+                <button id="tool-select" class="tool-btn active" data-tool="Select" title="Select Tool">
+                    <svg viewBox="0 0 24 24"><path d="M7 2v15.58l4.47-4.47 3.73 8.35 2.23-1-3.73-8.35h6.3L7 2z"/></svg>
+                </button>
+                <!-- BRUSH TOOL (BRUSH ICON) -->
+                <button id="tool-brush" class="tool-btn" data-tool="Brush" title="Brush Tool">
+                    <svg viewBox="0 0 24 24"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92.71 2.3 1 3.5 1 2.5 0 4.5-2 4.5-4.5 0-.28-.05-.55-.15-.8L7 14zm14.35-8.81c.39-.39.39-1.02 0-1.41l-2.12-2.12a.996.996 0 0 0-1.41 0L10.3 9.17l3.75 3.75 7.3-7.73z"/></svg>
+                </button>
+                <!-- ERASER TOOL (ERASER ICON) -->
+                <button id="tool-eraser" class="tool-btn" data-tool="Eraser" title="Eraser Tool">
+                    <svg viewBox="0 0 24 24"><path d="M16.24 3.56L21.19 8.5c.39.39.39 1.02 0 1.41L13.4 17.7c-.2.2-.45.3-.71.3H7.5c-.55 0-1-.45-1-1v-5.19c0-.26.1-.52.29-.71l7.74-7.74c.39-.39 1.03-.39 1.41 0zM4 20h16v2H4v-2z"/></svg>
+                </button>
+            </div>
+
+            <!--&lt;!&ndash; DYNAMIC CONTENT AREA FOR PALETTES &ndash;&gt;-->
+            <!--<div id="left-dynamic-content"></div>-->
+        </aside>
+
+        <!-- CENTRAL WORKSPACE -->
+        <main id="canvas-wrapper">
+            <div id="app-container"></div>
+        </main>
+
+        <!-- RIGHT PROPERTIES PANEL -->
+        <aside id="right-sidebar">
+            <div class="sidebar-section-title">Properties</div>
+            <!-- Контейнер для динамического контента, управляемый через JS -->
+            <div id="inspector-content"></div>
+        </aside>
+
+    </div>
+</div>
+
+<script type="module" src="../scripts/editor/editor.js"></script>
+</body>
+</html>

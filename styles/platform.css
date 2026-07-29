@@ -1,0 +1,502 @@
+/* Базовые сбросы стилей для SPA лончера */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+:root {
+    --bg-main: #0d1117;
+    --bg-sidebar: #11141a;
+    --bg-card: #21262d;
+    --border-color: #30363d;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-green: #238636;
+    --accent-red: #e94560;
+    --accent-pink: #ff007f;
+    --neon-green: #00f5d4;
+
+    --sidebar-width: 260px;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    overflow: hidden; /* Запрещаем общий скролл окна, скроллиться будет только контентная зона */
+}
+
+/* 1. Глобальный Layout (Сайдбар + Контент) */
+.platform-layout {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* 2. Сайдбар навигации */
+.platform-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 16px;
+    flex-shrink: 0;
+}
+
+.sidebar-logo {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--text-main);
+    padding-bottom: 32px;
+    padding-left: 8px;
+
+    font-size: 24px;
+    font-weight: 900;
+    color: #4ecca3;
+    text-shadow: 0 0 10px rgba(78, 204, 163, 0.3);
+    letter-spacing: 1px;
+}
+
+.sidebar-logo span { color: #e94560; }
+
+.logo-neon {
+    color: var(--accent-pink);
+    text-shadow: 0 0 10px var(--accent-pink);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.nav-item {
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+
+.nav-item.active {
+    background-color: var(--bg-card);
+    color: var(--accent-blue);
+    border-left: 3px solid var(--accent-blue);
+    padding-left: 13px;
+}
+
+/* Скрытие элементов (например, Мастерская для гостей) */
+.id-hidden {
+    display: none !important;
+}
+
+/* Блок профиля внизу сайдбара */
+.sidebar-profile {
+    border-top: 1px solid var(--border-color);
+    padding-top: 16px;
+}
+
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+    object-fit: cover;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.user-balance {
+    font-size: 12px;
+    color: var(--neon-green);
+    font-weight: bold;
+}
+
+/* 3. Основная контентная область */
+.platform-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--bg-main);
+}
+
+/* Верхняя панель управления (Шапка) */
+.platform-header {
+    height: 64px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    flex-shrink: 0;
+}
+
+.language-switcher {
+    display: flex;
+    gap: 4px;
+    background-color: var(--bg-sidebar);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.lang-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lang-btn.active {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Главный скролл-контейнер для динамических скринов */
+.screen-container {
+    flex-grow: 1;
+    padding: 32px;
+    overflow-y: auto; /* Контент скринов будет плавно скроллиться внутри */
+}
+
+/* 4. Универсальные компоненты интерфейса (Карточки, Кнопки, Баджи) */
+.screen-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--text-main);
+}
+
+/* Сетка для каталога игр и маркетплейса */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+/* Базовые карточки (Data-driven контейнеры) */
+.zcg-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.zcg-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--text-muted);
+}
+
+.card-cover {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background-color: var(--bg-sidebar);
+}
+
+.card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.card-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    flex-grow: 1;
+}
+
+.card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+/* Кнопки */
+.zcg-btn {
+    background-color: var(--accent-blue);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.zcg-btn:hover {
+    opacity: 0.9;
+}
+
+.zcg-btn.btn-success {
+    background-color: var(--accent-green);
+}
+
+/* Плашки и бейджи */
+.badge-mature {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background-color: var(--accent-red);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--accent-red);
+}
+
+.card-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--neon-green);
+}
+
+.card-free {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+/* Галочка верифицированного разработчика в комментариях */
+.dev-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-blue);
+    margin-left: 6px;
+    font-size: 14px;
+}
+
+
+/* styles/styles.css -> Дописать в самый конец файла */
+
+/* Неоновая красная точка для индикации Unread постов */
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-red);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent-red), 0 0 20px var(--accent-red);
+    animation: neon-pulse 1.5s infinite alternate;
+    display: inline-block;
+}
+
+@keyframes neon-pulse {
+    0% {
+        transform: scale(0.9);
+        opacity: 0.6;
+    }
+    100% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* Специфические стили для карточек постов в Ленте новостей */
+.post-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.post-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.team-avatar-mini {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    object-fit: cover;
+}
+
+.post-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.post-team-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.post-team-name:hover {
+    color: var(--accent-blue);
+}
+
+.post-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.post-content {
+    font-size: 14px;
+    color: var(--text-main);
+    line-height: 1.5;
+    white-space: pre-wrap; /* Сохраняет абзацы при написании новостей */
+}
+
+.post-footer-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    display: flex;
+    gap: 16px;
+}
+
+.post-action-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+}
+
+.post-action-btn:hover {
+    color: var(--text-main);
+}
+
+/* styles/styles.css -> Дописать в самый конец файла */
+
+/* Базовая карточка тарифа inside grid */
+.tier-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.tier-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--text-muted);
+}
+
+/* 🔥 Неоновая подсветка активного тарифа команды */
+.tier-card.tier-active {
+    border-color: var(--neon-green);
+    box-shadow: 0 0 15px rgba(0, 245, 212, 0.15);
+}
+
+.tier-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.tier-price {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.tier-features {
+    font-size: 14px;
+    color: var(--text-muted);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-grow: 1; /* Выталкивает кнопку действия в самый низ карточки */
+}
+
+/* Кнопка действия внутри карточки тарифа */
+.tier-action-btn {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+}
+
+/* Секретный бадж сверху активной карточки */
+.tier-badge-active {
+    display: none;
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background-color: var(--neon-green);
+    color: #000;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tier-card.tier-active .tier-badge-active {
+    display: block; /* Показывается только на активной карточке */
+}
+

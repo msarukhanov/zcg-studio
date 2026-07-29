@@ -1,0 +1,1214 @@
+.story-engine-container {
+    position: relative; /* Чтобы инспектор позиционировался относительно него */
+    width: 100%;
+    height: calc(100vh - 100px);
+    background: #141414;
+    overflow: hidden;
+    font-family: sans-serif;
+    color: #e0e0e0;
+}
+
+/* Холст графа — занимает ВСЁ пространство */
+.graph-canvas-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: #1a1a1a;
+    background-image:
+            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.graph-toolbar {
+    position: sticky;
+    top: 0; left: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    background: rgba(20, 20, 20, 0.9);
+    border-bottom: 1px solid #2d2d2d;
+    backdrop-filter: blur(5px);
+}
+
+.toolbar-title {
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #ffcc00;
+}
+
+.graph-canvas {
+    position: relative;
+    width: 4000px;
+    height: 3000px;
+}
+
+/* Слой связей SVG */
+.graph-svg-connections {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.graph-svg-connections path {
+    stroke: #444;
+    stroke-width: 2;
+    fill: none;
+    transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+.graph-svg-connections path.active-route {
+    stroke: #ffcc00;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 4px rgba(255,204,0,0.4));
+}
+
+/* Слой компактных нод (Слева направо) */
+.graph-nodes-layer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+.story-node {
+    position: absolute;
+    width: 180px;
+    height: 65px;
+    padding: 10px;
+    background: #222;
+    border: 1px solid #3d3d3d;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    transition: transform 0.15s, border-color 0.15s, background-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.story-node:hover {
+    transform: scale(1.02);
+    border-color: #555;
+    background: #282828;
+}
+
+.story-node.active {
+    border-color: #ffcc00;
+    background: #26261d;
+    box-shadow: 0 0 12px rgba(255,204,0,0.2);
+}
+
+.node-id {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ffcc00;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.node-preview {
+    font-size: 10px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 2px 0;
+}
+
+.node-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.node-group-badge {
+    font-size: 8px;
+    font-weight: 600;
+    padding: 1px 4px;
+    background: #141414;
+    border-radius: 3px;
+    color: #777;
+    text-transform: uppercase;
+}
+
+.node-type-icon {
+    font-size: 9px;
+    color: #555;
+}
+
+/* ИНСПЕКТОР: Теперь он висит ПОВЕРХ графа на абсолютах справа */
+.scene-inspector-panel {
+    position: absolute;
+    top: 50px; /* Смещаем чуть ниже тулбара, чтобы не перекрывать кнопки */
+    right: 20px;
+    width: 420px;
+    max-height: calc(100% - 80px);
+    background: rgba(31, 31, 31, 0.95);
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: -5px 5px 25px rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    z-index: 100; /* Всегда выше холста графа */
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.inspector-empty-state {
+    padding: 30px;
+    text-align: center;
+    color: #666;
+    font-size: 12px;
+}
+
+.inspector-content {
+    padding: 20px;
+}
+
+.inspector-content.hidden {
+    display: none;
+}
+
+/* Вкладки языков */
+.lang-selector-global {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+}
+
+.lang-tab {
+    background: #2d2d2d;
+    border: 1px solid #444;
+    color: #aaa;
+    padding: 3px 8px;
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 10px;
+}
+
+.lang-tab.active {
+    background: #ffcc00;
+    color: #111;
+    border-color: #ffcc00;
+    font-weight: bold;
+}
+
+/* Жесткое скрытие для абсолютной панели */
+.scene-inspector-panel.hidden {
+    display: none !important;
+}
+
+/* Кнопка закрытия инспектора */
+.inspector-close-btn {
+    background: transparent;
+    border: none;
+    color: #888;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.inspector-close-btn:hover {
+    color: #ffcc00;
+}
+
+/* Контейнер строки условия или триггера */
+.logic-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 4px;
+    width: 100%;
+}
+
+/* Элементы внутри строки логики */
+.logic-row select {
+    flex-shrink: 0;
+    background: #111;
+    color: #fff;
+    border: 1px solid #444;
+    font-size: 10px;
+    padding: 2px;
+    height: 22px;
+    box-sizing: border-box;
+}
+
+.logic-row input {
+    background: #111;
+    color: #fff;
+    border: 1px solid #444;
+    font-size: 10px;
+    padding: 2px;
+    height: 22px;
+    box-sizing: border-box;
+}
+
+/* Фиксируем ширину типов и операторов, чтобы они не скакали */
+.logic-type-select { width: 75px; }
+.logic-op-select { width: 45px; }
+
+/* Текстовое поле ключа (стата или флага) занимает всё свободное место, но не сжимается меньше 80px */
+.logic-param-input {
+    flex: 1;
+    min-width: 80px;
+}
+
+/* Числовое поле значения */
+.logic-value-input {
+    width: 40px;
+    flex-shrink: 0;
+}
+
+/* Кнопка удаления */
+.logic-del-btn {
+    flex-shrink: 0;
+    padding: 1px 5px;
+    font-size: 9px;
+    height: 22px;
+}
+
+/* ИНСПЕКТОР: Фиксированная ширина поверх графа */
+.scene-inspector-panel {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    width: 440px; /* Фиксируем ширину жестко */
+    max-height: calc(100% - 80px);
+    background: rgba(31, 31, 31, 0.98);
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: -5px 5px 25px rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Запрещаем скролл самой панели */
+}
+
+/* Контент инспектора — СКРОЛЛИТСЯ ТОЛЬКО ОН */
+.inspector-content {
+    padding: 20px;
+    overflow-y: auto; /* Вертикальный скролл здесь */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Запрещаем строкам логики ломать верстку */
+.logic-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 6px;
+    width: 100%;
+    flex-shrink: 0; /* Строка никогда не сужается! */
+}
+
+/* Кастомизация текстовых полей */
+.inspector-content textarea {
+    width: 100%;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 6px;
+    font-size: 11px;
+    resize: vertical; /* Разрешаем геймдизайнеру тянуть инпут вниз */
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+
+/* Запрещаем сжиматься по высоте основным блокам инспектора */
+.inspector-content .form-grid,
+.inspector-content > div {
+    flex-shrink: 0 !important;
+}
+
+/* Карточка локализации (Блок Б) больше никогда не сплющится */
+.speech-sequence-box {
+    background: #262626;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Фикс сжатия по высоте */
+}
+
+/* Каждая страница текста внутри последовательности */
+.text-page-row {
+    background: #1e1e1e;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border: 1px solid #333;
+    flex-shrink: 0; /* Фикс сжатия по высоте */
+}
+
+/* Каждая карточка варианта ответа (Блок В) держит свою высоту */
+.choice-route-card {
+    background: #282828;
+    border-left: 3px solid #ffcc00;
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    border: 1px solid #333;
+    border-left-width: 3px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0; /* Фикс сжатия по высоте */
+}
+
+/* Утилита для полей в одной строке */
+.inline-fields-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    grid-column: span 2;
+    background: #252525;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #333;
+}
+
+/* Контейнер всей системы инспектора в углу */
+.inspector-system-wrapper {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    height: calc(100% - 70px);
+    display: flex;
+    gap: 10px;
+    pointer-events: none; /* Пропускаем клики на граф, если окна скрыты */
+    z-index: 100;
+}
+
+/* ГЛАВНЫЙ ПУЛЬТ (Правое верхнее окно) */
+.scene-inspector-panel {
+    width: 280px; /* Сделали уже, так как тут только база и кнопки */
+    height: fit-content;
+    max-height: 100%;
+    background: rgba(25px, 25px, 25px, 0.98);
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: -5px 5px 25px rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    pointer-events: auto; /* Включаем клики обратно */
+    display: flex;
+    flex-direction: column;
+}
+
+/* ДОПОЛНИТЕЛЬНОЕ ЛЕВОЕ ОКНО ДЕТАЛЕЙ */
+.scene-inspector-sub-panel {
+    width: 420px; /* Здесь много места для триггеров и текстов */
+    height: 100%;
+    background: rgba(31, 31, 31, 0.98);
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: -10px 5px 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Скрытия с гарантией */
+.scene-inspector-panel.hidden,
+.scene-inspector-sub-panel.hidden {
+    display: none !important;
+}
+
+/* Заголовки и контент левой панели */
+.sub-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #2d2d2d;
+    background: #252525;
+}
+.sub-panel-header span {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffcc00;
+    text-transform: uppercase;
+}
+.sub-panel-content {
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Красивые кнопки-вкладки на главном пульте */
+.inspector-menu-btn {
+    width: 100%;
+    background: #2a2a2a;
+    border: 1px solid #3d3d3d;
+    color: #e0e0e0;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.15s, border-color 0.15s;
+}
+.inspector-menu-btn:hover {
+    background: #333;
+    border-color: #ffcc00;
+    color: #fff;
+}
+.inspector-menu-btn.active {
+    background: #2d2d23;
+    border-color: #ffcc00;
+    color: #ffcc00;
+}
+.btn-badge {
+    font-size: 9px;
+    background: #141414;
+    padding: 1px 5px;
+    border-radius: 10px;
+    color: #888;
+}
+/* Контейнер всей системы инспектора в углу */
+.inspector-system-wrapper {
+    position: absolute;
+    top: 50px;
+    right: 20px;
+    height: calc(100% - 70px);
+    display: flex;
+    gap: 10px;
+    pointer-events: none; /* Пропускаем клики на граф, если окна скрыты */
+    z-index: 100;
+}
+
+/* ГЛАВНЫЙ ПУЛЬТ (Правое верхнее окно) */
+.scene-inspector-panel {
+    width: 280px; /* Сделали уже, так как тут только база и кнопки */
+    height: fit-content;
+    max-height: 100%;
+    background: rgba(25px, 25px, 25px, 0.98);
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: -5px 5px 25px rgba(0,0,0,0.6);
+    backdrop-filter: blur(10px);
+    pointer-events: auto; /* Включаем клики обратно */
+    display: flex;
+    flex-direction: column;
+}
+
+/* ДОПОЛНИТЕЛЬНОЕ ЛЕВОЕ ОКНО ДЕТАЛЕЙ */
+.scene-inspector-sub-panel {
+    width: 420px; /* Здесь много места для триггеров и текстов */
+    height: 100%;
+    background: rgba(31, 31, 31, 0.98);
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: -10px 5px 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Скрытия с гарантией */
+.scene-inspector-panel.hidden,
+.scene-inspector-sub-panel.hidden {
+    display: none !important;
+}
+
+/* Заголовки и контент левой панели */
+.sub-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid #2d2d2d;
+    background: #252525;
+}
+.sub-panel-header span {
+    font-size: 12px;
+    font-weight: bold;
+    color: #ffcc00;
+    text-transform: uppercase;
+}
+.sub-panel-content {
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Красивые кнопки-вкладки на главном пульте */
+.inspector-menu-btn {
+    width: 100%;
+    background: #2a2a2a;
+    border: 1px solid #3d3d3d;
+    color: #e0e0e0;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.15s, border-color 0.15s;
+}
+.inspector-menu-btn:hover {
+    background: #333;
+    border-color: #ffcc00;
+    color: #fff;
+}
+.inspector-menu-btn.active {
+    background: #2d2d23;
+    border-color: #ffcc00;
+    color: #ffcc00;
+}
+.btn-badge {
+    font-size: 9px;
+    background: #141414;
+    padding: 1px 5px;
+    border-radius: 10px;
+    color: #888;
+}
+
+
+
+/* --- СИСТЕМА КОМПЛЕКСА ПАНЕЛЕЙ --- */
+.inspector-system-wrapper {
+    position: absolute;
+    top: 60px; /* Отступ от шапки админки */
+    right: 20px;
+    height: calc(100vh - 100px);
+    display: flex;
+    gap: 15px; /* Зазор между левой и правой панелью */
+    pointer-events: none;
+    z-index: 100;
+}
+
+/* ОБЩИЙ КЛАСС ДЛЯ ОБОИХ ОКОН (Базовая изоляция) */
+.scene-inspector-panel,
+.scene-inspector-sub-panel {
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
+}
+
+.scene-inspector-panel {
+    width: 290px;
+    height: fit-content;
+    max-height: 100%;
+}
+
+.scene-inspector-sub-panel {
+    width: 440px;
+    height: 100%;
+}
+
+.scene-inspector-panel.hidden,
+.scene-inspector-sub-panel.hidden {
+    display: none !important;
+}
+
+/* ВНУТРЕННИЕ КОНТЕНТНЫЕ ЗОНЫ СО СКРОЛЛОМ */
+.inspector-content,
+.sub-panel-content {
+    padding: 15px;
+    overflow-y: auto;
+    display: block; /* Уходим от флекса, чтобы элементы не давили друг на друга */
+    box-sizing: border-box;
+}
+
+/* ИДЕАЛЬНЫЕ ОТСТУПЫ ДЛЯ ЛЮБЫХ ФОРМ */
+.form-group {
+    display: block;
+    margin-bottom: 12px; /* Четкий зазор между полями */
+    box-sizing: border-box;
+}
+
+.form-group label {
+    display: block;
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+/* Однообразные стили для всех инпутов и селектов */
+.inspector-system-wrapper input[type="text"],
+.inspector-system-wrapper input[type="number"],
+.inspector-system-wrapper select,
+.inspector-system-wrapper textarea {
+    width: 100%;
+    background: #141414;
+    border: 1px solid #3c3c3c;
+    color: #fff;
+    padding: 6px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 28px; /* Фиксированная высота для предотвращения сплющивания */
+}
+
+.inspector-system-wrapper textarea {
+    height: auto;
+    min-height: 50px;
+    resize: vertical;
+}
+
+/* ДВУХКОЛОНОЧНАЯ СЕТКА (БЕЗ НАПЛЫВОВ) */
+.form-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+/* --- КАРТОЧКИ И ВНУТРЕННИЕ БЛОКИ ЛОГИКИ --- */
+.text-page-row,
+.choice-route-card {
+    background: #252525;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px; /* Отступ между карточками в списке */
+    box-sizing: border-box;
+    display: block;
+}
+
+.choice-route-card {
+    border-left: 3px solid #ffcc00;
+}
+
+/* СТРОКИ СБОРОК ТРИГГЕРОВ/УСЛОВИЙ (Строгий Flex по горизонтали) */
+.logic-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+    width: 100%;
+}
+
+.logic-row select,
+.logic-row input {
+    height: 24px !important;
+    padding: 2px 4px !important;
+}
+
+/* Кнопки переключения на правом пульте */
+.inspector-menu-btn {
+    width: 100%;
+    background: #262626;
+    border: 1px solid #3a3a3a;
+    color: #ccc;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.inspector-menu-btn:hover {
+    border-color: #ffcc00;
+    color: #fff;
+    background: #2a2a2a;
+}
+
+.inspector-menu-btn.active {
+    background: #2d2d23;
+    border-color: #ffcc00;
+    color: #ffcc00;
+}
+
+
+
+
+/* Базовые CSS анимации */
+@keyframes screenShake {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    20% { transform: translate(-4px, 3px) rotate(-0.5deg); }
+    40% { transform: translate(-3px, -2px) rotate(0.5deg); }
+    60% { transform: translate(3px, 2px) rotate(0deg); }
+    80% { transform: translate(2px, -3px) rotate(0.5deg); }
+}
+.fx-screen-shake { animation: screenShake 0.3s ease-in-out infinite; }
+
+
+/* Дрожь персонажа (страх/паника) */
+@keyframes actorShiver {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+.fx-actor-shiver {
+    animation: actorShiver 0.1s ease-in-out infinite;
+}
+
+/* Паника текста (красная пульсация) */
+@keyframes textPanic {
+    0%, 100% { color: #ff4444; text-shadow: 0 0 4px rgba(255,0,0,0.6); }
+    50% { color: #ff8888; text-shadow: 0 0 12px rgba(255,0,0,0.9); }
+}
+.fx-text-panic {
+    animation: textPanic 0.4s ease-in-out infinite;
+}
+
+
+.scene-studio-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 2000; /* Поверх всего графа */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+/* Жесткое скрытие оверлея без конфликтов анимаций */
+.scene-studio-overlay.hidden {
+    display: none !important;
+    opacity: 0;
+    transform: scale(0.96); /* Лёгкое уменьшение в глубину при закрытии */
+}
+
+/* Само монолитное окно-окно студии */
+.scene-studio-window {
+    width: 94vw;
+    height: 90vh;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+/* ШАПКА ТЕРМИНАЛА СТУДИИ */
+.studio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: #161b22;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0; /* Шапка зафиксирована и не сжимается */
+}
+
+.studio-node-title h2 {
+    margin: 4px 0 0 0;
+    font-size: 16px;
+    color: var(--text-main);
+    letter-spacing: 0.5px;
+}
+
+.studio-badge {
+    font-size: 9px;
+    font-weight: bold;
+    color: var(--accent-pink);
+    letter-spacing: 1px;
+}
+
+.studio-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* ДВУХСЕКЦИОННЫЙ РАБОЧИЙ КОРПУС */
+.studio-body {
+    display: flex;
+    flex: 1;
+    width: 100%;
+    height: calc(100% - 60px); /* Вычитаем высоту шапки */
+    overflow: hidden; /* Корпус держит рамки, скроллы только внутри секций */
+}
+
+/* ЛЕВАЯ КОЛОНКА: СТРУКТУРА И ТАЙМЛАЙН КАДРОВ */
+.studio-left-structure {
+    width: 40%; /* Выделяем просторное место под структуру */
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-main);
+    box-sizing: border-box;
+}
+
+/* ПРАВАЯ КОЛОНКА: ДЕТАЛЬНЫЙ ИНСПЕКТОР ВЫБРАННОГО СЕГМЕНТА */
+.studio-right-inspector {
+    width: 60%;
+    height: 100%;
+    background: var(--bg-sidebar);
+    box-sizing: border-box;
+}
+
+/* ==========================================================================
+   ЧАСТЬ 3: ТАЙМЛАЙН, СТРОГИЕ ФОРМЫ, ФИКСЫ ВЫСОТЫ И RPG СПЕЦЭФФЕКТЫ
+   ========================================================================== */
+
+/* ВНУТРЕННИЕ ЗОНЫ СКРОЛЛА ДЛЯ ОБЕИХ КОЛОНОК */
+.studio-timeline-scroll-container,
+.inspector-panel-holder {
+    padding: 20px;
+    overflow-y: auto; /* Вертикальный скролл разрешен строго внутри */
+    display: block;   /* Блочный вывод сверху вниз исключает сдавливание по вертикали */
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+}
+
+/* Автономный контейнер для секций левой панели (условия входа, актеры) */
+.studio-section-card {
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 20px 0 20px;
+    box-sizing: border-box;
+    display: block;
+    flex-shrink: 0; /* Компонент никогда не сплющится по высоте */
+}
+
+.studio-card-title {
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+}
+
+/* --- КАРТОЧКИ КАДРОВ ТАЙМЛАЙНА NPC И КНОПКИ ИГРОКА --- */
+.timeline-frame-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: block;
+    flex-shrink: 0; /* Защита от вертикального сжатия */
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.timeline-frame-card:hover {
+    border-color: var(--text-muted);
+}
+
+/* Активный выбранный кадр или сегмент choices подсвечивается неоном */
+.timeline-frame-card.selected-segment {
+    border-color: var(--accent-blue);
+    background: #262c36;
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.1);
+}
+
+/* Финальная карточка реплик игрока (выделена цветом) */
+.timeline-player-card {
+    border-left: 4px solid var(--accent-pink);
+}
+
+.timeline-player-card.selected-segment {
+    border-color: var(--accent-pink);
+    background: #2d1a24;
+}
+
+/* --- ПОЛЯ ВВОДА И СЕЛЕКТЫ ИНСПЕКТОРОВ (ФОРСИРОВАННЫЙ РАЗМЕР) --- */
+.studio-right-inspector .form-group {
+    display: block;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+}
+
+.studio-right-inspector .form-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+/* Задаем фиксированную высоту однострочным элементам управления */
+.studio-right-inspector input[type="text"],
+.studio-right-inspector input[type="number"],
+.studio-right-inspector select {
+    width: 100%;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: 30px; /* Исключает сплющивание по высоте */
+}
+
+/* Полноценный textarea для реплик локализации */
+.studio-right-inspector textarea {
+    width: 100%;
+    background: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 10px;
+    font-size: 11px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    height: auto;
+    min-height: 60px;
+    resize: vertical;
+    font-family: sans-serif;
+}
+
+/* Сетки для группировки полей (2 колонки) */
+.studio-grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+/* --- СТРОКИ СБОРЩИКОВ RPG ТРИГГЕРОВ И УСЛОВИЙ --- */
+.logic-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+    width: 100%;
+    flex-shrink: 0; /* Строка логики никогда не зажмется по вертикали */
+}
+
+/* Компактный размер для вложенных инпутов сборщика логики */
+.logic-row select,
+.logic-row input {
+    height: 25px !important;
+    padding: 2px 6px !important;
+}
+
+/* Кнопка закрытия модальной студии */
+.studio-close-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.studio-close-btn:hover {
+    background: var(--bg-card);
+    border-color: var(--text-muted);
+}
+
+
+.story-engine-container {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 60px); /* Подстраивай под высоту своей шапки админки */
+    background: var(--bg-main);
+    overflow: hidden;
+    font-family: sans-serif;
+    color: var(--text-main);
+    box-sizing: border-box;
+}
+
+/* Обертка холста для бесконечного скролла карты сюжета во все стороны */
+.graph-canvas-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--bg-main);
+    /* Технологичная сетка на фоне */
+    background-image:
+            linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Верхний липкий тулбар над графом */
+.graph-toolbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    background: rgba(17, 20, 26, 0.85);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(8px);
+}
+
+.toolbar-title {
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-pink);
+}
+
+/* Физический размер карты, по которой расставляются кружочки сцен */
+.graph-canvas {
+    position: relative;
+    width: 4000px;
+    height: 3000px;
+}
+
+/* Слой для рисования автоматических линий Безье (Слева направо) */
+.graph-svg-connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Базовый стиль соединительных стрелок графа */
+.graph-svg-connections path {
+    stroke: var(--border-color);
+    stroke-width: 2;
+    fill: none;
+    transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+/* Подсветка связей выбранной на графе сцены */
+.graph-svg-connections path.active-route {
+    stroke: var(--accent-blue);
+    stroke-width: 3;
+    filter: drop-shadow(0 0 6px rgba(88, 166, 255, 0.4));
+}
+
+/* Слой, на котором рендерятся компактные карточки сцен */
+.graph-nodes-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}.story-engine-container {
+     position: relative;
+     width: 100%;
+     height: calc(100vh - 60px); /* Подстраивай под высоту своей шапки админки */
+     background: var(--bg-main);
+     overflow: hidden;
+     font-family: sans-serif;
+     color: var(--text-main);
+     box-sizing: border-box;
+ }
+
+/* Обертка холста для бесконечного скролла карты сюжета во все стороны */
+.graph-canvas-wrapper {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: var(--bg-main);
+    /* Технологичная сетка на фоне */
+    background-image:
+            linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* Верхний липкий тулбар над графом */
+.graph-toolbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 15px;
+    background: rgba(17, 20, 26, 0.85);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(8px);
+}
+
+.toolbar-title {
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent-pink);
+}
+
+.story-engine-container button {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    gap: 6px;
+}
+.story-engine-container button:hover {
+    background-color: #30363d;
+}
+.story-engine-container button.primary {
+    background-color: var(--accent-green);
+    border-color: #2ea44f;
+}
+.story-engine-container button.primary:hover {
+    background-color: #2c974b;
+}
+.story-engine-container button.danger {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--accent-red);
+}
+.story-engine-container button.danger:hover {
+    background-color: rgba(233, 69, 96, 0.1);
+}

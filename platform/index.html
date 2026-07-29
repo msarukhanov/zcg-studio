@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZCG Platform Launcher</title>
+    <link rel="stylesheet" href="../styles/platform.css">
+</head>
+<body>
+<div class="platform-layout">
+    <aside class="platform-sidebar">
+        <div class="sidebar-logo">
+            <span class="logo-neon">ZCG</span> Studio
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#feed" class="nav-item active" id="nav-feed" data-loc="feed_title">
+                <span class="nav-text-container" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <span data-loc="feed_title">Лента обновлений</span>
+                    <span class="unread-dot id-hidden" id="feed-unread-indicator"></span>
+                </span>
+            </a>
+
+            <a href="#catalog" class="nav-item" data-loc="catalog_title"></a>
+            <a href="#market" class="nav-item" data-loc="market_title"></a>
+            <a href="#team" class="nav-item id-hidden" id="nav-team" data-loc="team_title"></a>
+
+            <a href="#services" class="nav-item id-hidden" id="nav-services" data-loc="services_title"></a>
+            <a href="#workshop" class="nav-item id-hidden" id="nav-workshop" data-loc="workshop_title"></a>
+
+        </nav>
+        <div class="sidebar-profile" id="sidebar-user-block">
+        </div>
+    </aside>
+    <main class="platform-main">
+        <header class="platform-header">
+            <div class="header-search">
+            </div>
+            <div class="language-switcher">
+                <button class="lang-btn" id="btn-lang-en">EN</button>
+                <button class="lang-btn active" id="btn-lang-ru">RU</button>
+            </div>
+        </header>
+        <div class="screen-container" id="app-root">
+        </div>
+
+    </main>
+</div>
+<script type="module" src="../scripts/platform/main.js"></script>
+</body>
+</html>

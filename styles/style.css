@@ -1,0 +1,410 @@
+:root {
+    --bg-main: #0d1117;
+    --bg-sidebar: #11141a;
+    --bg-card: #21262d;
+    --border-color: #30363d;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --accent-blue: #58a6ff;
+    --accent-green: #238636;
+    --accent-red: #e94560;
+    --accent-pink: #ff007f;
+    --neon-green: #00f5d4;
+    --sidebar-width: 240px;
+    --topbar-height: 40px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body, html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+}
+
+#editor-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+/* TOP BAR NAVIGATION */
+#top-bar {
+    height: var(--topbar-height);
+    background-color: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    gap: 5px;
+    position: relative;
+    z-index: 10;
+}
+
+.top-bar-title {
+    position: absolute;
+    right: 15px;
+    color: var(--text-muted);
+    font-weight: bold;
+}
+
+.menu-item {
+    position: relative;
+    padding: 8px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+    background-color: var(--bg-card);
+}
+
+.dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--bg-sidebar);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-width: 130px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+    padding: 4px 0;
+}
+
+.menu-item:hover .dropdown {
+    display: block;
+}
+
+.dropdown button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.dropdown button:hover {
+    background-color: var(--accent-blue);
+    color: #fff;
+}
+
+.dropdown button.active {
+    color: var(--neon-green);
+    font-weight: bold;
+}
+
+/* LAYOUT CONTAINER */
+#main-container {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - var(--topbar-height));
+    width: 100%;
+}
+
+#left-sidebar, #right-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--bg-sidebar);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    z-index: 5;
+}
+
+#left-sidebar { border-right: 1px solid var(--border-color); }
+#right-sidebar { border-left: 1px solid var(--border-color); }
+
+.sidebar-section-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 4px;
+    margin-top: 5px;
+}
+
+/* VERTICAL TOOL LIST (ICONS ALIGNED VERTICALLY) */
+.vertical-tool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tool-btn {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.tool-btn:hover {
+    border-color: var(--text-muted);
+}
+
+.tool-btn.active {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: #fff;
+}
+
+/* PALETTE STRUCTURE BELOW TOOLS */
+.palette-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 6px;
+}
+
+.palette-item {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.palette-item:hover {
+    background-color: #2d333b;
+}
+
+.palette-item.active {
+    border-color: var(--neon-green);
+}
+
+/* VIEWPORT CANVAS COVER */
+#canvas-wrapper {
+    flex: 1;
+    position: relative;
+    background-color: var(--bg-main);
+    overflow: hidden;
+}
+
+#app-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* PROPERTIES INSPECTOR Panel */
+.empty-notice {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 20px;
+    line-height: 1.5;
+}
+
+.prop-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+
+.prop-group label {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.prop-group span {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--accent-blue);
+}
+
+.prop-group input {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    outline: none;
+}
+
+.prop-group input:focus {
+    border-color: var(--accent-blue);
+}
+
+/* Фиксируем ширину левой панели под иконки, правую оставляем под инспектор */
+#left-sidebar {
+    width: 70px; /* Уменьшили под вертикальный ряд иконок */
+    border-right: 1px solid var(--border-color);
+    align-items: center;
+}
+#right-sidebar {
+    width: var(--sidebar-width);
+    border-left: 1px solid var(--border-color);
+}
+
+.vertical-tool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+}
+
+/* Квадратные кнопки для иконок */
+.tool-btn {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+/* Настройка SVG иконок внутри кнопок */
+.tool-btn svg {
+    width: 18px;
+    height: 18px;
+    fill: var(--text-main);
+    transition: fill 0.2s;
+}
+
+.tool-btn:hover {
+    border-color: var(--text-muted);
+}
+
+.tool-btn.active {
+    background-color: var(--accent-blue);
+    border-color: var(--accent-blue);
+}
+
+.tool-btn.active svg {
+    fill: #ffffff;
+}
+
+/* Новые стили для контейнера динамической палитры, когда она появляется */
+#left-dynamic-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* HORIZONTAL TOOL OPTIONS BAR */
+#tool-options-bar {
+    height: 38px;
+    background-color: #161b22;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    gap: 15px;
+    z-index: 9;
+}
+
+/* Стили для элементов внутри верхней панели параметров кисти */
+.options-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.options-group label {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+select, .options-group select, .options-group input[type="number"] {
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    outline: none;
+}
+
+.options-group select:focus, .options-group input:focus {
+    border-color: var(--accent-blue);
+}
+
+/* Корректируем общую высоту контейнера с учетом динамического появления баров */
+#main-container {
+    display: flex;
+    flex: 1;
+    height: auto; /* Позволяет флекс-макету самому рассчитать остаток высоты */
+    width: 100%;
+}
+
+/* MODE TOGGLE SWITCH */
+#mode-toggle-container {
+    display: flex;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 2px;
+}
+.mode-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.mode-toggle-btn.active {
+    background-color: var(--accent-blue);
+    color: #fff;
+}
+
+
+
+input, textarea {
+    padding: 8px 12px;
+    background-color: rgb(27, 36, 50);
+    border: 1px solid rgb(45, 57, 75);
+    border-radius: 4px;
+    color: rgb(255, 255, 255);
+    font-size: 14px;
+    box-sizing: border-box;
+}
