@@ -53,7 +53,7 @@ export async function renderMarket(container) {
             card.className = 'zcg-card';
 
             card.innerHTML = `
-                <img src="${item.preview_url || '/assets/default-asset.png'}" class="card-cover" alt="Preview">
+                <img src="${window.URL_ASSETS+item.preview_url || '/assets/default-asset.png'}" class="card-cover" alt="Preview">
                 
                 <div class="card-body">
                     <span style="color: var(--accent-pink); font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">

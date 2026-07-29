@@ -53,7 +53,7 @@
 // module.exports = playerAuthMiddleware;
 
 
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const { logInServer } = require('../db/playersDB');
 
 async function playerAuthMiddleware(req, res, next) {

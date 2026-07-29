@@ -1,5 +1,5 @@
 const { Server } = require('socket.io');
-const { redisClient } = require('../redisClient');
+const { redisClient } = require('./redisClient');
 
 global.onlinePlayers = {};  // Реестр: { "demo_partner_Марк": "socket_id" }
 global.onlineByDomains = {}; // Реестр: { "localhost": ["Марк"] }
@@ -11,9 +11,6 @@ function init(server) {
     });
 
     global.io = io;
-
-    const virtualArena = require('./battles/virtualArena');
-    virtualArena.startArenaEngine(300000, io);
 
     io.on('connection', async (socket) => {
         // 🪄 МАГИЯ БЕЗОПАСНОСТИ: Вытаскиваем защищенный заголовок Origin или Referer
@@ -480,36 +477,6 @@ function init(server) {
     });
 
     global.io = io;
-
-    // 4. ГЛОБАЛЬНЫЙ МИНУТНЫЙ ЦИКЛ РАССЫЛКИ БАЛАНСОВ ДЖЕКПОТОВ ПО КОМНАТАМ ПАРТНЕРОВ
-    setInterval(async () => {
-        if (!global.io) return;
-
-        try {
-            // Вытягиваем текущие суммы всех активных джекпотов из PostgreSQL
-            const res = await global.pool.query(
-                'SELECT partner_id, level_name, current_amount::numeric FROM b2b_jackpots WHERE is_active = 1'
-            );
-
-            if (res.rowCount === 0) return;
-
-            // Группируем балансы джекпотов по партнерам (B2B-сегментация)
-            const jackpotPack = {};
-            res.rows.forEach(row => {
-                if (!jackpotPack[row.partner_id]) jackpotPack[row.partner_id] = {};
-                jackpotPack[row.partner_id][row.level_name.toLowerCase()] = Number(row.current_amount);
-            });
-
-            // Выстреливаем балансы джекпотов раздельно в комнаты каждого партнера
-            for (const partnerId in jackpotPack) {
-                // Отправляем пакет вида { mini: 342.10, major: 4120.50, mega: 12450.00 }
-                global.io.emit(`jackpot_pulse_${partnerId}`, jackpotPack[partnerId]);
-            }
-        } catch (err) {
-            // Тихо перехватываем ошибку, чтобы не спамить консоль при перезагрузках базы данных
-            console.error("[Jackpot Pulse Error]:", err.message);
-        }
-    }, 60000); // Строго раз в минуту
 }
 
 /**

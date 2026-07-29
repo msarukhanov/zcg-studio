@@ -7,7 +7,7 @@ const isDemo = true;
 const demoUrl = (isDemo ? 'https://mtw-gw.onrender.com' : 'http://localhost:3000') + '/api/auth';
 
 const {gamesConfigDB} = require('./configDB');
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const {getCurrentIdleRate} = require('./_shared');
 
 const Cache = require('./cacheManager');

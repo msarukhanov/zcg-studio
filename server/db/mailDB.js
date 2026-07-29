@@ -1,5 +1,5 @@
 // db/mailDB.js
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const Cache = require('./cacheManager'); // Твой рабочий кэш-менеджер игроков
 
 /**

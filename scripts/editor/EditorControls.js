@@ -109,6 +109,12 @@ export class EditorControls {
             AppState.engine.MapManager.loadMap();
         });
 
+        document.getElementById('btn-export').addEventListener('click', () => {
+            AppState.engine.MapManager.exportGame();
+        });
+
+        // window.exportGame = AppState.engine.MapManager.exportGame;
+
         // Кнопки инструментов (Select / Brush / Eraser)
         this.toolButtons.forEach(btn => {
             btn.addEventListener('click', () => {

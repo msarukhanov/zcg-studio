@@ -117,7 +117,7 @@ async function updateCatalogView() {
         card.className = 'zcg-card';
         card.innerHTML = `
             ${game.is_mature ? `<span class="badge-mature">${t('badge_mature')}</span>` : ''}
-            <img src="${game.cover_image || '/assets/default-cover.jpg'}" class="card-cover" alt="Cover">
+            <img src="${window.URL_ASSETS + game.cover_image}" class="card-cover" alt="Cover">
             <div class="card-body">
                 <h3 class="card-title">${locObj(game.title_loc)}</h3>
                 <p class="card-desc">${locObj(game.description_loc)}</p>

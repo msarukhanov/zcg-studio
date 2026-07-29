@@ -1,4 +1,4 @@
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const { markPlayerDirty } = require('./lazyWrite');
 
 // const PLAYER_TTL_SECONDS = 1200; // 20 минут

@@ -234,6 +234,7 @@ body {
     width: 100%;
     height: 160px;
     object-fit: cover;
+    object-position: top;
     background-color: var(--bg-sidebar);
 }
 
@@ -264,6 +265,12 @@ body {
     justify-content: space-between;
     margin-top: 8px;
 }
+
+#action-btn-container {
+    display: flex;
+    gap: 6px;
+}
+
 
 /* Кнопки */
 .zcg-btn {

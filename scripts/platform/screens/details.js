@@ -19,7 +19,7 @@ export async function renderDetails(container, gameId) {
         <div class="details-layout" style="display: flex; flex-direction: column; gap: 32px;">
             <div class="game-hero-block" style="display: flex; gap: 24px; background: var(--bg-card); padding: 24px; border-radius: 8px; border: 1px solid var(--border-color); position: relative;">
                 ${game.is_mature ? `<span class="badge-mature">${t('badge_mature')}</span>` : ''}
-                <img src="${game.cover_image || '/assets/default-cover.jpg'}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 6px;" alt="Cover">
+                <img src="${window.URL_ASSETS+game.cover_image}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 6px;" alt="Cover">
                 
                 <div style="display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
                     <div>
@@ -47,10 +47,11 @@ export async function renderDetails(container, gameId) {
                     <h2 style="font-size: 18px; margin-bottom: 12px; color: var(--text-main);">Media Gallery</h2>
                     <div style="display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px;">
                         ${game.screenshots.map(url => {
+                            
         if (url.endsWith('.mp4') || url.endsWith('.mov') || url.includes('/video/')) {
-            return `<video src="${url}" controls muted style="width: 240px; height: 135px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); background: #000;"></video>`;
+            return `<video src="${window.URL_ASSETS+url}" controls muted style="width: 240px; height: 135px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); background: #000;"></video>`;
         }
-        return `<img src="${url}" style="width: 240px; height: 135px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="Media">`;
+        return `<img src="${window.URL_ASSETS+url}" style="width: 240px; height: 135px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color);" alt="Media">`;
     }).join('')}
                     </div>
                 </div>
@@ -130,27 +131,61 @@ function initActionZone(gameId, isPurchased, price, devId, teamId) {
     const userTeamId = window.App?.user?.team_id;
     const isDeveloper = (userId && userId === devId) || (userTeamId && userTeamId === teamId);
 
-    if (isDeveloper) {
-        container.innerHTML = `<button class="zcg-btn btn-success" id="btn-action-main">${t('btn_editor_open')}</button>`;
-        document.getElementById('btn-action-main')?.addEventListener('click', () => {
-            alert(t('alert_editor_run', gameId));
+    container.innerHTML = '';
+
+    // 1. Создаем и настраиваем основную кнопку (Play или Buy)
+    const mainBtn = document.createElement('button');
+    mainBtn.classList.add('zcg-btn');
+
+    const isFreeOrPurchased = parseFloat(price) === 0 || isPurchased;
+
+    if (isFreeOrPurchased) {
+        mainBtn.id = 'btn-action-play';
+        mainBtn.textContent = t('btn_play');
+
+        mainBtn.addEventListener('click', async () => {
+            if (!token) {
+                window.location.hash = '#auth';
+                return;
+            }
+            console.log(window.URL_ASSETS + '/play/?gameId=' + gameId);
+            window.location.href = window.URL_ASSETS + '/play/?gameId=' + gameId;
         });
-        return;
+    } else {
+        mainBtn.id = 'btn-action-buy';
+        mainBtn.classList.add('btn-success');
+        mainBtn.textContent = t('btn_buy', `$${parseFloat(price).toFixed(2)}`);
+
+        mainBtn.addEventListener('click', async () => {
+            if (!token) {
+                window.location.hash = '#auth';
+                return;
+            }
+            const res = await API.actionPlayOrBuy(gameId);
+            if (!res.err) {
+                renderDetails(document.getElementById('app-root'), gameId);
+            } else {
+                alert(t('alert_tx_failed', res.message || ''));
+            }
+        });
     }
 
-    container.innerHTML = (parseFloat(price) === 0 || isPurchased)
-        ? `<button class="zcg-btn" id="btn-action-main">${t('btn_play')}</button>`
-        : `<button class="zcg-btn btn-success" id="btn-action-main">${t('btn_buy', `$${parseFloat(price).toFixed(2)}`)}</button>`;
+// Добавляем основную кнопку в контейнер
+    container.appendChild(mainBtn);
 
-    document.getElementById('btn-action-main')?.addEventListener('click', async () => {
-        if (!token) { window.location.hash = '#auth'; return; }
-        const res = await API.actionPlayOrBuy(gameId);
-        if (!res.err) {
-            renderDetails(document.getElementById('app-root'), gameId);
-        } else {
-            alert(t('alert_tx_failed', res.message || ''));
-        }
-    });
+// 2. Если пользователь разработчик — создаем и добавляем кнопку редактора
+    if (isDeveloper) {
+        const editBtn = document.createElement('button');
+        editBtn.id = 'btn-action-edit';
+        editBtn.className = 'zcg-btn btn-success';
+        editBtn.textContent = t('btn_editor_open');
+
+        editBtn.addEventListener('click', () => {
+            window.location.href = window.URL_ASSETS + '/editor/?gameId=' + gameId;
+        });
+
+        container.appendChild(editBtn);
+    }
 }
 
 function initPlayerProfiles(profiles) {

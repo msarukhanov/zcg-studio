@@ -17,7 +17,60 @@ import {RenderFunctions} from '../engine/RenderFunctions.js';
 window.AppState = AppState;
 
 let screenManager = null;
+let GameId = null;
+
+
+async function importGame(gameId='temp') {
+    if(gameId!=='temp') {
+        try {
+            const currentUrl = new URL(window.location.href);
+            const folderPath = currentUrl.pathname.substring(0, currentUrl.pathname.lastIndexOf('/') + 1);
+
+            const response = await fetch(folderPath.replace("/play","").replace("/editor","") + 'demo/games/' + gameId + '.json');
+            if (!response.ok) throw new Error('Error');
+
+            const SaveFile = await response.json();
+
+            Object.keys(SaveFile).forEach(key=>{
+                AppState[key] = SaveFile[key];
+            });
+
+            Object.keys(SaveFile.maps).forEach(mapId=>{
+                AppState.maps[mapId] = SaveFile.maps[mapId];
+                AppState.maps[mapId].tiles = new Map(SaveFile.maps[mapId].tiles);
+            });
+
+            if(!SaveFile.player?.mapId) {
+                AppState.map = {
+                    mapId: 'world_map'
+                }
+            }
+
+            AppState.map.tiles = null;
+
+            GameId = gameId;
+            init();
+
+        } catch (error) {
+            console.error('JSON error:', error);
+        }
+    }
+}
+
 async function init() {
+    if (!GameId) {
+        const url = new URL(window.location.href);
+
+        const params = Object.fromEntries(url.searchParams.entries());
+
+        if (params.gameId) {
+            await importGame(params.gameId);
+            return;
+        } else {
+            console.error("gameId не найден в адресной строке!");
+        }
+    }
+
     window.applyGlobalAutoRotation();
     window.loaderControl.start();
 
@@ -117,7 +170,7 @@ async function init2(isNewGame = false) {
 
     AppState.engine.combatManager.redrawMap = renderMap;
 
-    AppState.engine.MapManager.loadMap();
+    // AppState.engine.MapManager.loadMap();
     //
     if(isNewGame) {
         console.log("NEW GAME =====")
@@ -128,6 +181,12 @@ async function init2(isNewGame = false) {
         Object.values(AppState.factions).forEach(f => {
             AppState.engine.factionManager.updateFactionProduction(f.id);
         });
+
+        AppState.player.exploredTiles = new Set();
+
+        AppState.play.activeCharacterId = AppState.player.character;
+        AppState.play.activeFactionId = AppState.player.faction;
+        AppState.play.visibleTiles = new Set();
     }
 
     AppState.engine.MapManager.switchMap('world_map');
@@ -1242,7 +1301,6 @@ window.loaderControl = {
 
 window.applyGlobalAutoRotation = function() {
     const app = AppState.engine?.app;
-    console.log(app);
     // if (!app) return;
 
     const w = window.innerWidth;

@@ -182,10 +182,12 @@ export class UIManager {
         const energyPercent = Math.max(0, Math.min(100, (char.stats.energy / (char.stats.maxEnergy || 100)) * 100));
         const expPercent = Math.max(0, Math.min(100, (char.exp / char.requiredExp) * 100));
 
+        const imgUrl = window.gameAssets[char.avatar || char.icon];
+
         charWindow.innerHTML = `
       <!-- Круглый аватар слева с золотым ободком -->
       <div style="width: 62px; height: 62px; border-radius: 50%; border: 2px solid #d4af37; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 8px rgba(0,0,0,0.5);" id="hud-avatar-circle">
-        <img src="${char.avatar || char.icon}" alt=""
+        <img src="${imgUrl}" alt=""
              style="width: 100%; height: 100%; object-fit: cover;"
              onerror="this.src='assets/avatars/default_avatar.png'; this.onerror=null;">
              
@@ -1057,9 +1059,11 @@ export class UIManager {
                 boxSizing: 'border-box'
             });
 
+            const imgUrl = window.gameAssets[char.avatar || char.icon];
+
             // Рендерим картинку из .image или фолбэкаемся на иконку/букву
-            const imgHtml = char.icon
-                ? `<img src="${char.icon}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" />`
+            const imgHtml = imgUrl
+                ? `<img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover; pointer-events:none;" />`
                 : `<span style="font-size:18px; pointer-events:none;">${char.icon || char.name[0]}</span>`;
 
             charBtn.innerHTML = imgHtml;

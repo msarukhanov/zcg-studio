@@ -1,5 +1,5 @@
 const {gamesConfigDB} = require('./configDB');
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const Cache = require('./cacheManager');
 
 function getSecondsUntilMidnight() {

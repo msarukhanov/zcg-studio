@@ -41,10 +41,12 @@ export class AssetLoaderManager {
             return url;
         }
 
+        const url2 = url.replace("/play","").replace("/editor","");
+
         return new Promise((resolve) => {
             const tx = db.transaction('resources', 'readonly');
             const store = tx.objectStore('resources');
-            const req = store.get(url);
+            const req = store.get(url2);
 
             req.onsuccess = async () => {
                 if (req.result) {
@@ -53,17 +55,20 @@ export class AssetLoaderManager {
                 } else {
                     // Файла нет в кэше — качаем из сети
                     try {
-                        const res = await fetch(url);
+                        const currentPath2 = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+                        const currentPath = currentPath2.replace("/play","").replace("/editor","");
+
+                        const res = await fetch(currentPath + url2);
                         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
                         const blob = await res.blob();
 
                         // Сохраняем скачанный Blob в IndexedDB для будущих запусков
                         const writeTx = db.transaction('resources', 'readwrite');
-                        writeTx.objectStore('resources').put(blob, url);
+                        writeTx.objectStore('resources').put(blob, url2);
 
                         resolve(URL.createObjectURL(blob));
                     } catch (err) {
-                        console.error(`[AssetLoader] Не удалось скачать ресурс [${url}]:`, err);
+                        // console.error(`[AssetLoader] Не удалось скачать ресурс [${url2}]:`, err);
                         resolve(url); // Фолбэк на сеть в случае сбоя
                     }
                 }
@@ -117,7 +122,10 @@ export class AssetLoaderManager {
 
         // const currentPath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
         // await PIXI.Assets.init({ basePath: currentPath });
-        const currentPath = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+        const currentPath2 = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+
+        const currentPath = currentPath2.replace("/play","").replace("/editor","");
+
         await PIXI.Assets.init({ basePath: currentPath });
 
         const uniquePaths = new Set();
@@ -125,6 +133,16 @@ export class AssetLoaderManager {
         this._collectUniqueUrls(AppState.ConfigObject, uniquePaths);
         this._collectUniqueUrls(AppState.ConfigCharacter, uniquePaths);
         // this._collectUniqueUrls(AppState.characters, uniquePaths);
+        if(AppState.ui?.landscape) {
+            const lsScreens = {};
+            AppState.ui.landscape.forEach(s => {
+                lsScreens[s.id] = s;
+            });
+            this._collectUniqueUrls(lsScreens, uniquePaths)
+        }
+        if(AppState.ui?.portrait) {
+            AppState.ui.portrait.forEach(s=>this._collectUniqueUrls({s}, uniquePaths));
+        }
         // this._collectUniqueUrls(AppState.objects, uniquePaths);
         this._collectUniqueUrls(AppState.playerGallery, uniquePaths);
         this._collectUniqueUrls(AppState.projectiles, uniquePaths);

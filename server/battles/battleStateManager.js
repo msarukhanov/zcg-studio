@@ -1,5 +1,5 @@
 // battleStateManager.js
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 
 const BATTLE_KEY_PREFIX = 'battle:session:';
 const BATTLE_TTL = 1800; // 30 минут жизни на один бой

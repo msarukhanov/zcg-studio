@@ -27,7 +27,7 @@ export async function renderTeamProfile(container, teamId) {
             <!-- Карточка студии с кнопкой Подписки -->
             <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 24px; border-radius: 8px; border: 1px solid var(--border-color);">
                 <div style="display: flex; gap: 24px;">
-                    <img src="${team.logo_url || '/assets/teams/default-logo.png'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);" alt="Logo">
+                    <img src="${URL_ASSETS+team.logo_url || '/assets/teams/default-logo.png'}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border-color);" alt="Logo">
                     <div style="display: flex; flex-direction: column; justify-content: center; gap: 6px;">
                         <h1 style="font-size: 22px; color: var(--text-main); margin: 0;">${team.name}</h1>
                         <p style="color: var(--text-muted); font-size: 14px; margin: 0;">${locObj(team.description_loc)}</p>
@@ -50,7 +50,7 @@ export async function renderTeamProfile(container, teamId) {
                     <div style="display: flex; flex-direction: column; gap: 10px;">
                         ${members.map(m => `
                             <div style="display: flex; align-items: center; gap: 10px; font-size: 14px;">
-                                <img src="${m.avatar_url || '/assets/default-avatar.png'}" style="width: 22px; height: 22px; border-radius: 50%;" alt="Avatar">
+                                <img src="${window.URL_ASSETS+m.avatar_url || '/assets/default-avatar.png'}" style="width: 22px; height: 22px; border-radius: 50%;" alt="Avatar">
                                 <span style="font-weight: 600; color: var(--text-main);">${m.display_name}</span>
                             </div>
                         `).join('')}
@@ -64,7 +64,7 @@ export async function renderTeamProfile(container, teamId) {
                         ${games.map(game => `
                             <div class="zcg-card">
                                 ${game.is_mature ? `<span class="badge-mature">${t('badge_mature')}</span>` : ''}
-                                <img src="${game.cover_image || '/assets/default-cover.jpg'}" class="card-cover" alt="Cover">
+                                <img src="${window.URL_ASSETS + game.cover_image}" class="card-cover" alt="Cover">
                                 <div class="card-body">
                                     <h3 class="card-title">${locObj(game.title_loc)}</h3>
                                     <div class="card-footer" style="margin-top: auto; padding-top: 12px;">

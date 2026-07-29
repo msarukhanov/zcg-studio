@@ -65,7 +65,7 @@ export async function renderTeam(container) {
                         ${teamData.members.map(m => `
                             <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-sidebar); padding: 10px 14px; border-radius: 6px; border: 1px solid var(--border-color);">
                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                    <img src="${m.avatar_url || '/assets/default-avatar.png'}" style="width: 24px; height: 24px; border-radius: 50%;" alt="Avatar">
+                                    <img src="${window.URL_ASSETS+m.avatar_url || '/assets/default-avatar.png'}" style="width: 24px; height: 24px; border-radius: 50%;" alt="Avatar">
                                     <span style="font-size: 14px; font-weight: 600;">${m.display_name}</span>
                                 </div>
                                 <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">
@@ -175,7 +175,7 @@ async function loadIncomingApplications() {
     listContainer.innerHTML = res.applications.map(app => `
         <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-sidebar); padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <img src="${app.avatar_url || '/assets/default-avatar.png'}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" alt="Avatar">
+                <img src="${window.URL_ASSETS+app.avatar_url || '/assets/default-avatar.png'}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" alt="Avatar">
                 <span style="font-size: 14px; font-weight: 600; color: var(--text-main);">${app.display_name}</span>
             </div>
             

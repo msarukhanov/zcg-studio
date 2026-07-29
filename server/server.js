@@ -19,9 +19,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-require('../DB');
+require('./DB');
 
-const { connectRedis } = require('../redisClient');
+const { connectRedis } = require('./redisClient');
 const { initLazyWriteTimer } = require('./db/lazyWrite');
 
 connectRedis(() => {

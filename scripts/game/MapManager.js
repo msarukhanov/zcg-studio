@@ -183,6 +183,79 @@ export const MapManager = {
         }
     },
 
+    async importGame(gameId='temp') {
+        if(gameId!=='temp') {
+            try {
+                const currentUrl = new URL(window.location.href);
+                const folderPath = currentUrl.pathname.substring(0, currentUrl.pathname.lastIndexOf('/') + 1);
+
+                const response = await fetch(folderPath + 'demo/games/' + gameId + '.json');
+                if (!response.ok) throw new Error('Error');
+
+                // Превращает JSON-строку в готовый JS-объект
+                const SaveFile = await response.json();
+
+                Object.keys(SaveFile).forEach(key=>{
+                    AppState[key] = SaveFile[key];
+                });
+
+                Object.keys(SaveFile.maps).forEach(mapId=>{
+                    AppState.maps[mapId] = SaveFile.maps[mapId];
+                    AppState.maps[mapId].tiles = new Map(SaveFile.maps[mapId].tiles);
+                });
+
+                AppState.map.tiles = null;
+
+                if(window.init) window.init();
+
+            } catch (error) {
+                console.error('JSON error:', error);
+            }
+        }
+        else {
+            this.loadMap();
+        }
+    },
+
+    exportGame(gameId='temp') {
+        const SaveFile = {};
+
+        Object.keys(AppState).forEach(key=>{
+            if(!['editor','engine'].includes(key)) {
+                SaveFile[key] = AppState[key];
+            }
+        });
+
+        console.log(SaveFile);
+
+        SaveFile.map.tiles = [...SaveFile.map.tiles];
+
+        Object.keys(SaveFile.maps).forEach(mapId=>{
+            SaveFile.maps[mapId].tiles = [...SaveFile.maps[mapId].tiles];
+        });
+
+        try {
+            const str = JSON.stringify(SaveFile);
+
+            localStorage.setItem('zcgstudio_' + gameId, str);
+
+            if(gameId!=='temp') {
+                const blob = new Blob([str], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = gameId + ".json";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        }
+        catch(e) {
+            console.log(e);
+        }
+    },
+
     /**
      * 🏃‍♂️ 2. ТЕЛЕПОРТАЦИЯ ПЕРСОНАЖА (И его сопартийцев) НА КАРТУ И КЛЕТКУ
      */

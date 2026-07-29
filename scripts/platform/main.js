@@ -12,6 +12,10 @@ import { renderWorkshop } from './screens/workshop.js'; // 🔥 Подключа
 import { renderTeamProfile } from './screens/teamProfile.js';
 import { renderServices } from './screens/services.js';
 
+const preUrl = location.href.split("/platform")[0];
+// window.URL_ASSETS = location.href.replace("/platform","").replace("#game","");
+window.URL_ASSETS = preUrl + '/';
+
 window.App = {
     user: null,
     token: null,

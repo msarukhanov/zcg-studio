@@ -49,7 +49,7 @@ async function updateFeedView() {
 
         card.innerHTML = `
             <div class="post-header">
-                <img src="${post.team_logo || '/assets/teams/default-logo.png'}" class="team-avatar-mini" alt="Logo">
+                <img src="${window.URL_ASSETS+post.team_logo}" class="team-avatar-mini" alt="Logo">
                 <div class="post-meta">
                     <span class="post-team-name" id="click-team-${post.id}">${post.team_name}</span>
                     <span class="post-date">${postDate}</span>
@@ -146,7 +146,7 @@ async function loadPostComments(postId) {
     list.innerHTML = comments.map(c => `
         <div style="background: var(--bg-sidebar); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 13px;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                <img src="${c.avatar_url || '/assets/default-avatar.png'}" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;" alt="Avatar">
+                <img src="${window.URL_ASSETS+c.avatar_url}" style="width: 20px; height: 20px; border-radius: 50%; object-fit: cover;" alt="Avatar">
                 <strong style="color: var(--text-main);">${c.display_name}</strong>
                 <span style="color: var(--text-muted); font-size: 11px;">
                     ${new Date(c.created_at).toLocaleDateString()}

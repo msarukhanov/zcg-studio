@@ -2,7 +2,7 @@ const crypto = require('crypto');
 
 const { gamesConfigDB } = require('./configDB');
 const guildDB = require('./guildsDB');
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const { getCurrentIdleRate } = require('./_shared');
 const Cache = require('./cacheManager');
 

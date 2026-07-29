@@ -1,7 +1,7 @@
 // backend/db/gachaDB.js
 const {recalculateAndSaveCombatPower} = require('./_shared');
 const { playersDB } = require('./playersDB');
-const { redisClient } = require('../../redisClient');
+const { redisClient } = require('../redisClient');
 const { gamesConfigDB } = require('./configDB');
 const Cache = require('./cacheManager');
 

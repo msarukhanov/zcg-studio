@@ -72,7 +72,9 @@ export class ScreenManager {
 
         // Получаем закэшированный фон через твой window.gameAssets
         const rawBg = screenConfig.backgroundImage || '';
-        const cachedBg = window.gameAssets[rawBg] || rawBg;
+
+        const cachedBg = window.gameAssets[rawBg];
+        console.log(rawBg, cachedBg);
 
         Object.assign(screenWrapper.style, {
             position: 'absolute',

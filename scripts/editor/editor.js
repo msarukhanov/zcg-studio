@@ -23,7 +23,59 @@ import {RenderFunctions} from '../engine/RenderFunctions.js';
 
 window.getActiveMap = getActiveMap;
 
+let GameId = null;
+
+async function importGame(gameId='temp') {
+    if(gameId!=='temp') {
+        try {
+            const currentUrl = new URL(window.location.href);
+            const folderPath = currentUrl.pathname.substring(0, currentUrl.pathname.lastIndexOf('/') + 1);
+
+            const response = await fetch(folderPath.replace("/play","").replace("/editor","") + 'demo/games/' + gameId + '.json');
+            if (!response.ok) throw new Error('Error');
+
+            const SaveFile = await response.json();
+
+            Object.keys(SaveFile).forEach(key=>{
+                AppState[key] = SaveFile[key];
+            });
+
+            Object.keys(SaveFile.maps).forEach(mapId=>{
+                AppState.maps[mapId] = SaveFile.maps[mapId];
+                AppState.maps[mapId].tiles = new Map(SaveFile.maps[mapId].tiles);
+            });
+
+            if(!SaveFile.player?.mapId) {
+                AppState.map = {
+                    mapId: 'world_map'
+                }
+            }
+
+            AppState.map.tiles = null;
+
+            GameId = gameId;
+            init();
+
+        } catch (error) {
+            console.error('JSON error:', error);
+        }
+    }
+}
+
 async function init() {
+    if (!GameId) {
+        const url = new URL(window.location.href);
+
+        const params = Object.fromEntries(url.searchParams.entries());
+
+        if (params.gameId) {
+            await importGame(params.gameId);
+            return;
+        } else {
+            console.error("gameId не найден в адресной строке!");
+        }
+    }
+
     AppState.editor.globalMode = 'Editor';
     AppState.editor.currentTool = 'Select';
     AppState.editor.currentMode = 'Terrain';
