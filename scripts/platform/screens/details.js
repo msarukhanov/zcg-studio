@@ -148,8 +148,8 @@ function initActionZone(gameId, isPurchased, price, devId, teamId) {
                 window.location.hash = '#auth';
                 return;
             }
-            console.log(window.URL_ASSETS + '/play/?gameId=' + gameId);
-            window.location.href = window.URL_ASSETS + '/play/?gameId=' + gameId;
+            console.log(window.URL_ASSETS + 'play/?gameId=' + gameId);
+            window.location.href = window.URL_ASSETS + 'play/?gameId=' + gameId;
         });
     } else {
         mainBtn.id = 'btn-action-buy';
@@ -181,7 +181,7 @@ function initActionZone(gameId, isPurchased, price, devId, teamId) {
         editBtn.textContent = t('btn_editor_open');
 
         editBtn.addEventListener('click', () => {
-            window.location.href = window.URL_ASSETS + '/editor/?gameId=' + gameId;
+            window.location.href = window.URL_ASSETS + 'editor/?gameId=' + gameId;
         });
 
         container.appendChild(editBtn);
