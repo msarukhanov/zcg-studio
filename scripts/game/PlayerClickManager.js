@@ -33,6 +33,8 @@ export class PlayerClickManager {
 
         this.handleMapHover(mouseX, mouseY);
 
+        console.log(char, char.currentActivePath);
+
         let clickInPath = false;
         if (char && char.currentActivePath && char.currentActivePath.length > 0) {
             clickInPath = char.currentActivePath.some(p => p.q === tile.q && p.r === tile.r);
@@ -188,7 +190,7 @@ export class PlayerClickManager {
         if (char.movement.current > 0 && AppState.engine.movementManager && AppState.engine.pathRenderer) {
             const reachableTiles = AppState.engine.movementManager.getReachableTiles(char);
             AppState.play.cachedReachableTiles = reachableTiles;
-
+            char.cachedReachableTiles = reachableTiles;
             AppState.engine.pathRenderer.drawMovementZone(reachableTiles);
         }
 
@@ -228,6 +230,7 @@ export class PlayerClickManager {
 
         if (targetTile && (targetTile.q !== char.mapPosition.q || targetTile.r !== char.mapPosition.r)) {
             const path = AppState.engine.movementManager.findPath(char.mapPosition.q, char.mapPosition.r, targetTile.q, targetTile.r, char);
+            console.log(char.mapPosition.q, char.mapPosition.r, targetTile.q, targetTile.r);
             if (path) {
                 char.currentActivePath = path;
                 AppState.engine.pathRenderer.drawPath(path, char, AppState.engine.movementManager);

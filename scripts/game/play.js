@@ -173,8 +173,35 @@ async function init2(isNewGame = false) {
     // AppState.engine.MapManager.loadMap();
     //
     if(isNewGame) {
-        console.log("NEW GAME =====")
+        console.log("NEW GAME =====");
+        const defaultCharacterProperties = {
+            cachedReachableTiles: null,
+            action: 'idle',
+            currentMovementVisualPath: [],
+            movementLerpTime: 0,
+            visualX: 0,
+            visualY: 0,
+            direction: 'right',
+
+            currentFrameIndex: 0,
+            frameTimer: 0,
+            frameDuration: 100,
+            animations: {
+                idle: { left: [], right: [] },
+                move: { left: [], right: [] }
+            }
+        };
+
         Object.values(AppState.characters).forEach(char => {
+            const defaults = structuredClone(defaultCharacterProperties);
+            Object.assign(char, {
+                ...defaults,
+                ...char,
+                animations: {
+                    idle: { ...defaults.animations.idle, ...(char.animations?.idle || {}) },
+                    move: { ...defaults.animations.move, ...(char.animations?.move || {}) }
+                }
+            });
             AppState.engine.CharacterLevelUpManager.initCharacterExpAndStats(char);
         });
 
@@ -187,6 +214,32 @@ async function init2(isNewGame = false) {
         AppState.play.activeCharacterId = AppState.player.character;
         AppState.play.activeFactionId = AppState.player.faction;
         AppState.play.visibleTiles = new Set();
+
+        AppState.player = {
+            id: 'p1',
+            name: 'Mark',
+
+            faction: 'lorencia',
+            character: 'rafael',
+
+            quests: ["quest_moon_medicine", "quest_dwarf_info", "quest_sail_north"],
+            exploredTiles: new Set()
+        };
+
+        AppState.play = {
+            activeCharacterId: null,
+            activeFactionId: null,
+            activeSkillId: null,
+            currentActivePath: [],
+            visibleTiles: new Set(),
+            cachedReachableTiles: []
+        };
+
+        AppState.camera = {
+            currentZoom: 1.0,
+            x: 0,
+            y: 0
+        };
     }
 
     AppState.engine.MapManager.switchMap('world_map');
@@ -959,7 +1012,7 @@ async function init2(isNewGame = false) {
             }
         } else {
             // 🌟 СТРОГИЙ ФИКС HOVER: Подсовываем менеджеру подсветки гексов правильные координаты
-            playerClickManager.handleMapHover(currentVirtualX, currentVirtualY);
+            // playerClickManager.handleMapHover(currentVirtualX, currentVirtualY);
         }
     });
 

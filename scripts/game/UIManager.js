@@ -1083,25 +1083,28 @@ export class UIManager {
 
             // 🚀 КЛИК-ПЕРЕХВАТ: Мгновенное переключение активного персонажа и фокус камеры
             charBtn.onclick = () => {
-                if (char.id === AppState.play.activeCharacterId) return; // Уже выбран
 
-                console.log(`🔄 [CharacterSelector] Переключение управления на героя: ${char.name}`);
+                AppState.engine.playerClickManager.executeCharacterSelect(char.id);
 
-                // 1. Меняем ID активного лидера в стейте игры
-                AppState.play.activeCharacterId = char.id;
-
-                // 2. Принудительно центрируем камеру PixiJS на новых координатах гекса
-                if (char.mapPosition && AppState.engine?.mapManager?.centerCameraOnTile) {
-                    AppState.engine.mapManager.centerCameraOnTile(char.mapPosition.q, char.mapPosition.r);
-                }
-
-                // 3. Обновляем все UI-слои, чтобы верхняя панель и этот сайдбар перерисовались синхронно
-                if (AppState.engine?.uiManager?.updateAll) {
-                    AppState.engine.uiManager.updateAll();
-                } else {
-                    // Если общего метода нет, дергаем этот же виджет точечно для смены рамки
-                    PlayerCharactersWidget.update();
-                }
+                // if (char.id === AppState.play.activeCharacterId) return; // Уже выбран
+                //
+                // console.log(`🔄 [CharacterSelector] Переключение управления на героя: ${char.name}`);
+                //
+                // // 1. Меняем ID активного лидера в стейте игры
+                // AppState.play.activeCharacterId = char.id;
+                //
+                // // 2. Принудительно центрируем камеру PixiJS на новых координатах гекса
+                // if (char.mapPosition && AppState.engine?.mapManager?.centerCameraOnTile) {
+                //     AppState.engine.mapManager.centerCameraOnTile(char.mapPosition.q, char.mapPosition.r);
+                // }
+                //
+                // // 3. Обновляем все UI-слои, чтобы верхняя панель и этот сайдбар перерисовались синхронно
+                // if (AppState.engine?.uiManager?.updateAll) {
+                //     AppState.engine.uiManager.updateAll();
+                // } else {
+                //     // Если общего метода нет, дергаем этот же виджет точечно для смены рамки
+                //     PlayerCharactersWidget.update();
+                // }
             };
 
             container.appendChild(charBtn);
