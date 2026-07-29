@@ -1,7 +1,7 @@
 // scripts/api.js
 
 // Базовый URL для всех запросов к API платформы
-const baseUrl = (location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://zcg-studio.onrender.com';
+const baseUrl = (location.hostname === 'localhost') ? 'http://localhost:3000' : 'https://zcg-api.onrender.com';
 
 const BASE_URL = baseUrl + '/api/platform';
 
