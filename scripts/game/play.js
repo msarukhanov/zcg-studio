@@ -1343,9 +1343,9 @@ async function init2(isNewGame = false) {
         AppState.engine.AudioManager.playContext('background');
     }
 
-    // AppState.engine.dialogManager.trigger("PROLOGUE_CINEMATIC");
+    AppState.engine.dialogManager.trigger("PROLOGUE_CINEMATIC");
     // AppState.engine.dialogManager.trigger("SCENE_3_0");
-    AppState.engine.dialogManager.trigger("SCENE_CLASS_START");
+    // AppState.engine.dialogManager.trigger("SCENE_CLASS_START");
 }
 
 window.init2 = init2;
