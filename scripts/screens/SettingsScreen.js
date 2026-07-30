@@ -57,6 +57,10 @@ export function renderSettingsScreen() {
         AppState.engine.TranslateManager.setLanguage(AppState.game_settings.language === 'ru' ? 'en' : 'ru');
         AppState.game_settings.language = AppState.game_settings.language === 'ru' ? 'en' : 'ru';
 
+        const dialogOverlay = document.getElementById('game-dialog-overlay');
+        if(dialogOverlay) {
+            AppState.engine.dialogManager.trigger(AppState.engine.dialogManager.currentSceneKey);
+        }
 
         // Перерисовываем экран настроек, чтобы мгновенно обновить тексты!
         screenManager.rootContainer.removeChild(settingsWrapper);

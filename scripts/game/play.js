@@ -35,18 +35,21 @@ async function importGame(gameId='temp') {
                 AppState[key] = SaveFile[key];
             });
 
-            Object.keys(SaveFile.maps).forEach(mapId=>{
-                AppState.maps[mapId] = SaveFile.maps[mapId];
-                AppState.maps[mapId].tiles = new Map(SaveFile.maps[mapId].tiles);
-            });
+            if(SaveFile.maps) {
 
-            if(!SaveFile.player?.mapId) {
-                AppState.map = {
-                    mapId: 'world_map'
+                Object.keys(SaveFile.maps).forEach(mapId=>{
+                    AppState.maps[mapId] = SaveFile.maps[mapId];
+                    AppState.maps[mapId].tiles = new Map(SaveFile.maps[mapId].tiles);
+                });
+
+                if(!SaveFile.player?.mapId) {
+                    AppState.map = {
+                        mapId: 'world_map'
+                    }
                 }
-            }
 
-            AppState.map.tiles = null;
+                AppState.map.tiles = null;
+            }
 
             GameId = gameId;
             init();
@@ -99,67 +102,68 @@ async function init2(isNewGame = false) {
     //
     // const loader = new AssetLoaderManager();
     // await loader.loadAllGameAssets(TerrainConfig, ObjectConfig);
+    if(AppState.maps) {
+        const container = document.getElementById('app-container');
+        const wrapper = document.getElementById('canvas-wrapper');
 
-    const container = document.getElementById('app-container');
-    const wrapper = document.getElementById('canvas-wrapper');
+        const size = wrapper.clientHeight / 2 / 6;
+        const charHeight = AppState.sizes.char.height * size / AppState.sizes.hex;
 
-    const size = wrapper.clientHeight / 2 / 6;
-    const charHeight = AppState.sizes.char.height * size / AppState.sizes.hex;
+        AppState.sizes = {
+            hex: size,
+            char: {
+                width: charHeight * 9 / 16,
+                height: charHeight,
+            },
+        };
 
-    AppState.sizes = {
-        hex: size,
-        char:{
-            width: charHeight * 9/16,
-            height: charHeight,
-        },
-    };
+        console.log(size, charHeight, AppState.sizes);
 
-    console.log(size, charHeight, AppState.sizes);
+        const app = new PIXI.Application();
 
-    const app = new PIXI.Application();
-
-    await app.init({
-        resizeTo: wrapper,
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-        backgroundColor: 0x0d1117,
-        antialias: true
-    });
-
-
-
-    container.appendChild(app.canvas);
+        await app.init({
+            resizeTo: wrapper,
+            resolution: window.devicePixelRatio || 1,
+            autoDensity: true,
+            backgroundColor: 0x0d1117,
+            antialias: true
+        });
 
 
+        container.appendChild(app.canvas);
 
-    // const mapData = new MapData(12, 8);
-    // const mapData = AppState.maps['world_map'];
-    // const mapData = new MapData(1, 1, AppState.maps['world_map'].tiles);
-    // // AppState.maps['world_map'].tiles = mapData.tiles;
-    // AppState.map.tiles = AppState.maps['world_map'].tiles;
 
-    // window.mapDataRef = mapData;
 
-    const hexMath = new HexMath(AppState.sizes.hex);
+        // const mapData = new MapData(12, 8);
+        // const mapData = AppState.maps['world_map'];
+        // const mapData = new MapData(1, 1, AppState.maps['world_map'].tiles);
+        // // AppState.maps['world_map'].tiles = mapData.tiles;
+        // AppState.map.tiles = AppState.maps['world_map'].tiles;
 
-    const worldMapContainer = new PIXI.Container();
-    worldMapContainer.x = hexMath.size;
-    worldMapContainer.y = hexMath.height / 2;
-    worldMapContainer.sortableChildren = true;
-    app.stage.addChild(worldMapContainer);
-    AppState.engine.worldMapContainer = worldMapContainer;
+        // window.mapDataRef = mapData;
 
-    const uiLayerContainer = new PIXI.Container();
-    uiLayerContainer.x = worldMapContainer.x;
-    uiLayerContainer.y = worldMapContainer.y;
-    uiLayerContainer.sortableChildren = true;
-    uiLayerContainer.eventMode = 'passive';
-    AppState.engine.uiLayerContainer = uiLayerContainer;
+        const hexMath = new HexMath(AppState.sizes.hex);
 
-    app.stage.addChild(uiLayerContainer);
+        const worldMapContainer = new PIXI.Container();
+        worldMapContainer.x = hexMath.size;
+        worldMapContainer.y = hexMath.height / 2;
+        worldMapContainer.sortableChildren = true;
+        app.stage.addChild(worldMapContainer);
+        AppState.engine.worldMapContainer = worldMapContainer;
 
-    AppState.engine.app = app;
-    AppState.engine.hexMath = hexMath;
+        const uiLayerContainer = new PIXI.Container();
+        uiLayerContainer.x = worldMapContainer.x;
+        uiLayerContainer.y = worldMapContainer.y;
+        uiLayerContainer.sortableChildren = true;
+        uiLayerContainer.eventMode = 'passive';
+        AppState.engine.uiLayerContainer = uiLayerContainer;
+
+        app.stage.addChild(uiLayerContainer);
+
+        AppState.engine.app = app;
+        AppState.engine.hexMath = hexMath;
+
+    }
 
     window.applyGlobalAutoRotation();
 
@@ -192,22 +196,27 @@ async function init2(isNewGame = false) {
             }
         };
 
-        Object.values(AppState.characters).forEach(char => {
-            const defaults = structuredClone(defaultCharacterProperties);
-            Object.assign(char, {
-                ...defaults,
-                ...char,
-                animations: {
-                    idle: { ...defaults.animations.idle, ...(char.animations?.idle || {}) },
-                    move: { ...defaults.animations.move, ...(char.animations?.move || {}) }
-                }
+        if(AppState.characters) {
+            Object.values(AppState.characters).forEach(char => {
+                const defaults = structuredClone(defaultCharacterProperties);
+                Object.assign(char, {
+                    ...defaults,
+                    ...char,
+                    animations: {
+                        idle: { ...defaults.animations.idle, ...(char.animations?.idle || {}) },
+                        move: { ...defaults.animations.move, ...(char.animations?.move || {}) }
+                    }
+                });
+                AppState.engine.CharacterLevelUpManager.initCharacterExpAndStats(char);
             });
-            AppState.engine.CharacterLevelUpManager.initCharacterExpAndStats(char);
-        });
+        }
 
-        Object.values(AppState.factions).forEach(f => {
-            AppState.engine.factionManager.updateFactionProduction(f.id);
-        });
+
+        if(AppState.factions) {
+            Object.values(AppState.factions).forEach(f => {
+                AppState.engine.factionManager.updateFactionProduction(f.id);
+            });
+        }
 
         AppState.player.exploredTiles = new Set();
 
@@ -242,33 +251,40 @@ async function init2(isNewGame = false) {
         };
     }
 
-    AppState.engine.MapManager.switchMap('world_map');
+    if(AppState.maps) {
+        AppState.engine.MapManager.switchMap('world_map');
 
+        const playerClickManager = new PlayerClickManager(renderMap);
 
+        AppState.engine.playerClickManager = playerClickManager;
 
-    const playerClickManager = new PlayerClickManager(renderMap);
+        window.playerClickManagerRef = playerClickManager;
 
-    AppState.engine.playerClickManager = playerClickManager;
+        if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
+            playerClickManager.executeCharacterSelect(AppState.player?.character);
+            console.log(`👤 [Auth] Режим "character": На старте автоматически выбран ваш герой: ${AppState.player?.character}`);
 
-    window.playerClickManagerRef = playerClickManager;
-
-    if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
-        playerClickManager.executeCharacterSelect(AppState.player?.character);
-        console.log(`👤 [Auth] Режим "character": На старте автоматически выбран ваш герой: ${AppState.player?.character}`);
-
-        if (AppState.engine.centerCameraOnCharacter) {
-            AppState.engine.centerCameraOnCharacter(AppState.play.activeCharacterId);
+            if (AppState.engine.centerCameraOnCharacter) {
+                AppState.engine.centerCameraOnCharacter(AppState.play.activeCharacterId);
+            }
         }
+
+        AppState.engine.visionManager.updateFogOfWar();
     }
-
-
 
     AppState.engine.uiManager.init();
     AppState.engine.questManager.refreshQuestChains();
-    AppState.engine.visionManager.updateFogOfWar();
 
+
+    let isDragging = false;
+    let hasMoved = false; // Флаг, чтобы отличать перетаскивание карты от точечного клика
+    let dragStartPos = { x: 0, y: 0 };
+    let mapStartPos = { x: 0, y: 0 };
+    let currentZoom = 1.0;
 
     function renderMap() {
+        if(!AppState.maps) return;
+
         worldMapContainer.removeChildren();
 
         uiLayerContainer.visible = true;
@@ -897,8 +913,412 @@ async function init2(isNewGame = false) {
         app.render();
     }
 
-    renderMap();
-    window.renderMap = renderMap;
+    if(AppState.maps) {
+        renderMap();
+        window.renderMap = renderMap;
+
+        app.stage.eventMode = 'static';
+        app.stage.hitArea = app.screen;
+
+        app.stage.on('pointerdown', (event) => {
+            isDragging = true;
+            hasMoved = false; // Обнуляем при каждом нажатии
+
+            // 🌟 СТРОГИЙ ФИКС: Запоминаем стартовую позицию драга в виртуальном масштабе
+            if (window.windowResized) {
+                dragStartPos.x = event.global.y / window.innerWidth * window.innerHeight;
+                dragStartPos.y = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
+            } else {
+                dragStartPos.x = event.global.x;
+                dragStartPos.y = event.global.y;
+            }
+
+            mapStartPos.x = worldMapContainer.x;
+            mapStartPos.y = worldMapContainer.y;
+        });
+
+        app.stage.on('pointerup', (event) => {
+            isDragging = false;
+            if (!hasMoved) {
+                let canvasX = event.global.x;
+                let canvasY = event.global.y;
+
+                if (window.windowResized) {
+                    canvasX = event.global.y / window.innerWidth * window.innerHeight;
+                    canvasY = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
+                }
+                playerClickManager.handleMapClick(canvasX, canvasY);
+            }
+        });
+
+        app.stage.on('pointermove', (event) => {
+            // if (isDragging) {
+            //     const settings = AppState.game_settings;
+            //     if (settings.playerCamera === 'fixed') {
+            //         return
+            //     }
+            //     const dx = event.global.x - dragStartPos.x;
+            //     const dy = event.global.y - dragStartPos.y;
+            //     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+            //
+            //     worldMapContainer.x = mapStartPos.x + dx;
+            //     worldMapContainer.y = mapStartPos.y + dy;
+            //
+            //     // Синхронизируем UI-слой, если он используется
+            //     if (typeof uiLayerContainer !== 'undefined') {
+            //         uiLayerContainer.x = worldMapContainer.x;
+            //         uiLayerContainer.y = worldMapContainer.y;
+            //     }
+            // } else {
+            //     const canvasX = event.data.global.x;
+            //     const canvasY = event.data.global.y;
+            //
+            //     playerClickManager.handleMapHover(canvasX, canvasY);
+            // }
+
+            const settings = AppState.game_settings;
+
+            let currentVirtualX = event.global.x;
+            let currentVirtualY = event.global.y;
+
+            if (window.windowResized) {
+                currentVirtualX = event.global.y / window.innerWidth * window.innerHeight;
+                currentVirtualY = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
+            }
+
+            if (isDragging) {
+                if (settings.playerCamera === 'fixed') {
+                    return;
+                }
+                // Разница вычисляется между виртуальными координатами
+                const dx = currentVirtualX - dragStartPos.x;
+                const dy = currentVirtualY - dragStartPos.y;
+
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+
+                // Драг самого контейнера идет по стандартным осям, так как CSS уже повернул контейнер
+                worldMapContainer.x = mapStartPos.x + dx;
+                worldMapContainer.y = mapStartPos.y + dy;
+
+                // Синхронизируем UI-слой, если он используется
+                if (typeof uiLayerContainer !== 'undefined') {
+                    uiLayerContainer.x = worldMapContainer.x;
+                    uiLayerContainer.y = worldMapContainer.y;
+                }
+            } else {
+                // 🌟 СТРОГИЙ ФИКС HOVER: Подсовываем менеджеру подсветки гексов правильные координаты
+                // playerClickManager.handleMapHover(currentVirtualX, currentVirtualY);
+            }
+        });
+
+        app.stage.on('pointerupoutside', () => isDragging = false);
+
+        // Зум к курсору
+        app.canvas.addEventListener('wheel', (event) => {
+            const settings = AppState.game_settings;
+            if (settings.playerCamera === 'fixed') {
+                return
+            }
+            event.preventDefault();
+            // const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
+            // const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
+            // const mouseX = event.clientX - wrapper.getBoundingClientRect().left;
+            // const opacityY = event.clientY - wrapper.getBoundingClientRect().top;
+            // const localX = (mouseX - worldMapContainer.x) / currentZoom;
+            // const localY = (opacityY - worldMapContainer.y) / currentZoom;
+            // currentZoom = newZoom;
+            //
+            // AppState.camera.currentZoom = currentZoom;
+            //
+            // worldMapContainer.scale.set(currentZoom);
+            // worldMapContainer.x = mouseX - localX * currentZoom;
+            // worldMapContainer.y = opacityY - localY * currentZoom;
+            //
+            // uiLayerContainer.scale.set(currentZoom);
+            // uiLayerContainer.x = worldMapContainer.x;
+            // uiLayerContainer.y = worldMapContainer.y;
+
+            const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
+            const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
+
+            // clientX и clientY — это сырые координаты окна браузера.
+            // Если у тебя CSS повернул body/wrapper, то mouseX и mouseY для зума нужно скорректировать по твоей же схеме
+            let mouseX = event.clientX - wrapper.getBoundingClientRect().left;
+            let mouseY = event.clientY - wrapper.getBoundingClientRect().top;
+
+            if (window.windowResized) {
+                const rawX = mouseX;
+                const rawY = mouseY;
+                // Разворачиваем оси координат мыши относительно физического окна обертки
+                mouseX = rawY / window.innerWidth * window.innerHeight;
+                mouseY = window.innerWidth - rawX / window.innerHeight * window.innerWidth;
+            }
+
+            const localX = (mouseX - worldMapContainer.x) / currentZoom;
+            const localY = (mouseY - worldMapContainer.y) / currentZoom;
+            currentZoom = newZoom;
+
+            AppState.camera.currentZoom = currentZoom;
+
+            worldMapContainer.scale.set(currentZoom);
+            worldMapContainer.x = mouseX - localX * currentZoom;
+            worldMapContainer.y = mouseY - localY * currentZoom;
+
+            if (typeof uiLayerContainer !== 'undefined') {
+                uiLayerContainer.scale.set(currentZoom);
+                uiLayerContainer.x = worldMapContainer.x;
+                uiLayerContainer.y = worldMapContainer.y;
+            }
+        }, { passive: false });
+
+        // =========================================================================
+        // 🔄 ЕДИНЫЙ ИГРОВОЙ ТИКЕР: ПЛАВНОЕ ДВИЖЕНИЕ, ДИНАМИЧЕСКИЙ Z-INDEX И ОБНОВЛЕНИЕ ЗОНЫ
+        // =========================================================================
+        app.ticker.add((ticker) => {
+            const deltaMS = ticker.deltaTime * (1000 / 60);
+            const hexMath = AppState.engine.hexMath;
+            let needRedraw = false;
+
+            // Сканируем всех персонажей в глобальном стейте AppState
+            Object.keys(AppState.entities).forEach(charId => {
+                const char = AppState.entities[charId];
+                if(!char) return;
+
+                if (char.damageFlashTimer > 0) {
+                    char.damageFlashTimer = Math.max(0, char.damageFlashTimer - deltaMS);
+                    needRedraw = true; // Пока персонаж горит красным — заставляем холст обновляться
+                }
+
+                if (char.healFlashTimer > 0) {
+                    char.healFlashTimer = Math.max(0, char.healFlashTimer - deltaMS);
+                    needRedraw = true; // Пока персонаж горит зеленым — заставляем холст обновляться
+                }
+
+
+
+
+                if (char.animations && char.animations[char.action]) {
+                    const currentActionAnims = char.animations[char.action][char.direction];
+
+                    if (currentActionAnims && currentActionAnims.length > 1) {
+                        char.frameTimer += deltaMS;
+
+                        if (char.frameTimer >= char.frameDuration) {
+                            char.frameTimer = 0;
+                            // Циклически переключаем индекс кадра вперед
+                            char.currentFrameIndex = (char.currentFrameIndex + 1) % currentActionAnims.length;
+                            needRedraw = true; // Заставляем PixiJS перерисовать кадр анимации
+                        }
+                    } else {
+                        char.currentFrameIndex = 0; // Если кадр один — жестко держим индекс 0
+                    }
+                }
+
+                // Если у персонажа есть очередь клеток для плавного марш-броска
+                if (char.action === 'move' && char.currentMovementVisualPath.length > 0) {
+
+                    // 1. Находим целевую соседнюю клетку из очереди пути (индекс [0])
+                    const nextTile = char.currentMovementVisualPath[0];
+                    if (!nextTile) return;
+
+
+
+                    // =========================================================================
+                    // 🌟 ЖЕСТКИЙ ПЕРЕХВАТ НА СТАРТЕ КАДРА: Защита от наползания ближников в RTS
+                    // =========================================================================
+                    // Проверка срабатывает КАЖДЫЙ КАДР ТИКЕРА, как только юнит начинает или продолжает лерп к nextTile
+                    if (AppState.turn_settings?.turn_mode === "realtime") {
+                        const movementManager = AppState.engine.movementManager;
+                        if (movementManager) {
+                            const currentTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+
+                            // Проверяем клетку, к которой юнит летит ПРЯМО СЕЙЧАС в этом кадре
+                            const stepCheck = movementManager.canStepBetween(currentTile, nextTile, char);
+
+                            // Если пока фигурка скользила по экрану, клетку nextTile КТО-ТО УСПЕЛ ЗАНЯТЬ
+                            // (вернулся false, "enemy", "ally", "other" или любое значение, кроме "walkable")
+                            if (stepCheck !== "walkable") {
+                                console.warn(`🏃‍♂️ [Movement Grid Lock] Путь перекрыт! Гекс (${nextTile.q}, ${nextTile.r}) занят статусом [${stepCheck}]. Экстренная остановка ${char.name}.`);
+
+                                // Мгновенно обнуляем массив пути, намертво блокируя дальнейший лерп пикселей в этом кадре
+                                char.currentMovementVisualPath = [];
+                                char.action = 'idle'; // Принудительно возвращаем в покой БЕЗ изменения пикселей visualX/Y!
+
+                                if (char.mvmReadyTimer !== undefined) {
+                                    char.mvmReadyTimer = 0;
+                                }
+
+                                needRedraw = true;
+                                return; // МГНОВЕННО ОБРЫВАЕМ ВЫПОЛНЕНИЕ КАДРА ТИКЕРА, не пуская код к расчету лерпа ниже!
+                            }
+                        }
+                    }
+
+                    // --- ДАЛЕЕ ИДЕТ ВАШ ОРИГИНАЛЬНЫЙ НЕПРИКОСНОВЕННЫЙ КОД РАСЧЕТА ЛЕРПА ---
+                    needRedraw = true; // Заставляем холст перерисовываться каждый кадр
+
+                    // Находим стартовую точку текущего микро-шага
+                    const fromPixel = hexMath.cubeToPixel(char.mapPosition.q, char.mapPosition.r);
+                    const fromTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+                    const fromLiftY = fromTile ? (fromTile.height - 1) * (hexMath.size * 0.25) : 0;
+                    const startX = fromPixel.x;
+                    const startY = fromPixel.y - fromLiftY;
+
+                    const toPixel = hexMath.cubeToPixel(nextTile.q, nextTile.r);
+                    const toLiftY = (nextTile.height - 1) * (hexMath.size * 0.25);
+                    const endX = toPixel.x;
+                    const endY = toPixel.y - toLiftY;
+
+                    // Поворот взгляда змейкой
+                    char.direction = '';
+                    char.directionV = '';
+
+                    if (nextTile.q > char.mapPosition.q) {
+                        char.direction = 'right';
+                    }
+                    else if (nextTile.q < char.mapPosition.q) {
+                        char.direction = 'left';
+                    }
+                    else if (nextTile.r > char.mapPosition.r) {
+                        char.directionV = 'forward';
+                    }
+                    else if (nextTile.r < char.mapPosition.r) {
+                        char.directionV = 'back';
+                    }
+
+                    // 3. Расчет шага интерполяции
+                    const stepDuration = AppState.config.animationSpeed.movePerHex;
+                    char.movementLerpTime += deltaMS / stepDuration;
+
+                    // 4. Плавно смещаем пиксели фишки
+                    if (char.movementLerpTime < 1.0) {
+                        char.visualX = startX + (endX - startX) * char.movementLerpTime;
+                        char.visualY = startY + (endY - startY) * char.movementLerpTime;
+                    } else {
+                        // 5. МИКРО-ШАГ ЗАВЕРШЕН: Юнит наступил на гекс соседа
+                        char.visualX = endX;
+                        char.visualY = endY;
+                        char.movementLerpTime = 0;
+
+                        char.mapHistory.push({ q: char.mapPosition.q, r: char.mapPosition.r });
+
+                        char.mapPosition.q = nextTile.q;
+                        char.mapPosition.r = nextTile.r;
+
+                        // Открываем Туман Войны на ходу
+                        if (AppState.engine.visionManager) AppState.engine.visionManager.updateFogOfWar();
+
+                        // Удаляем пройденный гекс
+                        char.currentMovementVisualPath.shift();
+
+                        AppState.engine.triggerManager.processEvent('tile_enter', {
+                            subject: char,      // Кто наступил (например, Рафаэль)
+                            tile: char.mapPosition    // На какой гекс наступил (3:2)
+                        });
+
+                        // =========================================================================
+                        // 🚪 АВТОМАТИЧЕСКИЙ ПЕРЕХОД ПО КАРТАМ (Входы/Выходы через mapTo)
+                        // =========================================================================
+                        // Проверяем это ТОЛЬКО для активного персонажа игрока, чтобы боты случайно не улетали в порталы
+                        if (char.id === AppState.play?.activeCharacterId) {
+                            const currentQ = char.mapPosition.q;
+                            const currentR = char.mapPosition.r;
+
+                            // Благодаря твоему объектному entities, мы мгновенно находим, есть ли объект на этой клетке
+                            // let triggerObject = null;
+                            //
+                            // Object.values(AppState.entities).forEach(entity => {
+                            //     if (entity && entity.mapPosition && entity.mapPosition.q === currentQ && entity.mapPosition.r === currentR) {
+                            //         // Ищем объект с типом данжа, портала или выхода, у которого прописана точка назначения
+                            //         if (entity.mapTo) {
+                            //             triggerObject = entity;
+                            //         }
+                            //     }
+                            // });
+
+                            // if (triggerObject) {
+                            //     const destination = triggerObject.mapTo;
+                            //     if(destination) {
+                            //         console.log(`[MovementManager] 🚀 Игрок наступил на объект "${triggerObject.name}". Запуск перехода на карту: ${destination.mapId}`, destination);
+                            //
+                            //         // 1. Останавливаем текущие таймеры или тикеры движения, если они крутятся
+                            //         char.action = 'idle';
+                            //         char.currentActivePath = [];
+                            //         char.currentMovementVisualPath = [];
+                            //
+                            //         // 2. Вызываем наш MapManager для переключения слоев Map в AppState
+                            //         AppState.engine.MapManager.switchMap(destination.mapId);
+                            //
+                            //         // 3. Телепортируем Рафаэля и всю его банду сопартийцев на новые координаты
+                            //         AppState.engine.MapManager.teleportCharacter(charId, destination.mapId, destination.q, destination.r);
+                            //
+                            //         // 4. Полностью обновляем холст PixiJS, туман войны и HUD на новой локации!
+                            //         AppState.engine.MapManager.refreshWorldRender(charId);
+                            //     }
+                            // }
+
+                            let objectUnderFeet = null;
+                            Object.values(AppState.entities).forEach(entity => {
+                                if (entity && entity.mapPosition && entity.mapPosition.q === currentQ && entity.mapPosition.r === currentR) {
+                                    // Нас интересуют только интерактивные сущности, а не сам Рафаэль
+                                    if (entity.id !== charId) {
+                                        objectUnderFeet = entity;
+                                    }
+                                }
+                            });
+                            AppState.engine.uiManager.showInteractionMenu();
+// Если под ногами сундук, труп или лестница — выводим мобильное контекстное меню!
+//                         if (objectUnderFeet) {
+//                             AppState.engine.uiManager.showInteractionMenu(objectUnderFeet, nextTile);
+//                         } else {
+//                             // Если сошли с объекта на чистую траву — прячем меню автоматического действия
+//                             AppState.engine.uiManager.hideInteractionMenu();
+//                         }
+                        }
+                        // =========================================================================
+
+
+                        // 6. МАРШРУТ ПОЛНОСТЬЮ ЗАВЕРШЕН: Очередь пуста, юнит остановился
+                        if (char.currentMovementVisualPath.length === 0) {
+                            char.action = 'idle'; // Переводим в покой
+
+                            const activeChar = AppState.entities[AppState.play.activeCharacterId];
+                            const reachableTiles = AppState.engine.movementManager.getReachableTiles(activeChar);
+                            AppState.play.cachedReachableTiles = reachableTiles;
+                            AppState.engine.pathRenderer.drawMovementZone(reachableTiles);
+
+                            if (charId === AppState.play.activeCharacterId && playerClickManager) {
+                                const finalTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+                                if (finalTile) {
+                                    playerClickManager.executeCharacterSelect(charId);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (AppState.play.activeCharacterId && AppState.engine.updateCameraSystem && (AppState.game_settings.playerCamera === 'fixed')) {
+                    AppState.engine.updateCameraSystem(ticker);
+                }
+            });
+
+            if (needRedraw) {
+                renderMap();
+            } else if (playerClickManager && AppState.play.activeCharacterId) {
+                AppState.engine.visionManager.updateFogOfWar();
+
+                app.render();
+            }
+        });
+
+
+        window.stopTicker = () => {
+            app.ticker.stop();
+        }
+        window.resumeTicker = () => {
+            app.ticker.start();
+        }
+    }
 
 
     const btnEndTurn = document.getElementById('btn-end-turn');
@@ -916,420 +1336,16 @@ async function init2(isNewGame = false) {
     // =========================================================================
     // 🎮 ОБРАБОТКА СУЩЕСТВУЮЩЕЙ КАМЕРЫ + КЛИКОВ ПО КАНВАСУ
     // =========================================================================
-    app.stage.eventMode = 'static';
-    app.stage.hitArea = app.screen;
 
-    let isDragging = false;
-    let hasMoved = false; // Флаг, чтобы отличать перетаскивание карты от точечного клика
-    let dragStartPos = { x: 0, y: 0 };
-    let mapStartPos = { x: 0, y: 0 };
-    let currentZoom = 1.0;
-
-    app.stage.on('pointerdown', (event) => {
-        isDragging = true;
-        hasMoved = false; // Обнуляем при каждом нажатии
-
-        // 🌟 СТРОГИЙ ФИКС: Запоминаем стартовую позицию драга в виртуальном масштабе
-        if (window.windowResized) {
-            dragStartPos.x = event.global.y / window.innerWidth * window.innerHeight;
-            dragStartPos.y = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
-        } else {
-            dragStartPos.x = event.global.x;
-            dragStartPos.y = event.global.y;
-        }
-
-        mapStartPos.x = worldMapContainer.x;
-        mapStartPos.y = worldMapContainer.y;
-    });
-
-    app.stage.on('pointerup', (event) => {
-        isDragging = false;
-        if (!hasMoved) {
-            let canvasX = event.global.x;
-            let canvasY = event.global.y;
-
-            if (window.windowResized) {
-                canvasX = event.global.y / window.innerWidth * window.innerHeight;
-                canvasY = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
-            }
-            playerClickManager.handleMapClick(canvasX, canvasY);
-        }
-    });
-
-    app.stage.on('pointermove', (event) => {
-        // if (isDragging) {
-        //     const settings = AppState.game_settings;
-        //     if (settings.playerCamera === 'fixed') {
-        //         return
-        //     }
-        //     const dx = event.global.x - dragStartPos.x;
-        //     const dy = event.global.y - dragStartPos.y;
-        //     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
-        //
-        //     worldMapContainer.x = mapStartPos.x + dx;
-        //     worldMapContainer.y = mapStartPos.y + dy;
-        //
-        //     // Синхронизируем UI-слой, если он используется
-        //     if (typeof uiLayerContainer !== 'undefined') {
-        //         uiLayerContainer.x = worldMapContainer.x;
-        //         uiLayerContainer.y = worldMapContainer.y;
-        //     }
-        // } else {
-        //     const canvasX = event.data.global.x;
-        //     const canvasY = event.data.global.y;
-        //
-        //     playerClickManager.handleMapHover(canvasX, canvasY);
-        // }
-
-        const settings = AppState.game_settings;
-
-        let currentVirtualX = event.global.x;
-        let currentVirtualY = event.global.y;
-
-        if (window.windowResized) {
-            currentVirtualX = event.global.y / window.innerWidth * window.innerHeight;
-            currentVirtualY = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
-        }
-
-        if (isDragging) {
-            if (settings.playerCamera === 'fixed') {
-                return;
-            }
-            // Разница вычисляется между виртуальными координатами
-            const dx = currentVirtualX - dragStartPos.x;
-            const dy = currentVirtualY - dragStartPos.y;
-
-            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
-
-            // Драг самого контейнера идет по стандартным осям, так как CSS уже повернул контейнер
-            worldMapContainer.x = mapStartPos.x + dx;
-            worldMapContainer.y = mapStartPos.y + dy;
-
-            // Синхронизируем UI-слой, если он используется
-            if (typeof uiLayerContainer !== 'undefined') {
-                uiLayerContainer.x = worldMapContainer.x;
-                uiLayerContainer.y = worldMapContainer.y;
-            }
-        } else {
-            // 🌟 СТРОГИЙ ФИКС HOVER: Подсовываем менеджеру подсветки гексов правильные координаты
-            // playerClickManager.handleMapHover(currentVirtualX, currentVirtualY);
-        }
-    });
-
-    app.stage.on('pointerupoutside', () => isDragging = false);
-
-    // Зум к курсору
-    app.canvas.addEventListener('wheel', (event) => {
-        const settings = AppState.game_settings;
-        if (settings.playerCamera === 'fixed') {
-            return
-        }
-        event.preventDefault();
-        // const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
-        // const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-        // const mouseX = event.clientX - wrapper.getBoundingClientRect().left;
-        // const opacityY = event.clientY - wrapper.getBoundingClientRect().top;
-        // const localX = (mouseX - worldMapContainer.x) / currentZoom;
-        // const localY = (opacityY - worldMapContainer.y) / currentZoom;
-        // currentZoom = newZoom;
-        //
-        // AppState.camera.currentZoom = currentZoom;
-        //
-        // worldMapContainer.scale.set(currentZoom);
-        // worldMapContainer.x = mouseX - localX * currentZoom;
-        // worldMapContainer.y = opacityY - localY * currentZoom;
-        //
-        // uiLayerContainer.scale.set(currentZoom);
-        // uiLayerContainer.x = worldMapContainer.x;
-        // uiLayerContainer.y = worldMapContainer.y;
-
-        const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
-        const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-
-        // clientX и clientY — это сырые координаты окна браузера.
-        // Если у тебя CSS повернул body/wrapper, то mouseX и mouseY для зума нужно скорректировать по твоей же схеме
-        let mouseX = event.clientX - wrapper.getBoundingClientRect().left;
-        let mouseY = event.clientY - wrapper.getBoundingClientRect().top;
-
-        if (window.windowResized) {
-            const rawX = mouseX;
-            const rawY = mouseY;
-            // Разворачиваем оси координат мыши относительно физического окна обертки
-            mouseX = rawY / window.innerWidth * window.innerHeight;
-            mouseY = window.innerWidth - rawX / window.innerHeight * window.innerWidth;
-        }
-
-        const localX = (mouseX - worldMapContainer.x) / currentZoom;
-        const localY = (mouseY - worldMapContainer.y) / currentZoom;
-        currentZoom = newZoom;
-
-        AppState.camera.currentZoom = currentZoom;
-
-        worldMapContainer.scale.set(currentZoom);
-        worldMapContainer.x = mouseX - localX * currentZoom;
-        worldMapContainer.y = mouseY - localY * currentZoom;
-
-        if (typeof uiLayerContainer !== 'undefined') {
-            uiLayerContainer.scale.set(currentZoom);
-            uiLayerContainer.x = worldMapContainer.x;
-            uiLayerContainer.y = worldMapContainer.y;
-        }
-    }, { passive: false });
-
-    // =========================================================================
-    // 🔄 ЕДИНЫЙ ИГРОВОЙ ТИКЕР: ПЛАВНОЕ ДВИЖЕНИЕ, ДИНАМИЧЕСКИЙ Z-INDEX И ОБНОВЛЕНИЕ ЗОНЫ
-    // =========================================================================
-    app.ticker.add((ticker) => {
-        const deltaMS = ticker.deltaTime * (1000 / 60);
-        const hexMath = AppState.engine.hexMath;
-        let needRedraw = false;
-
-        // Сканируем всех персонажей в глобальном стейте AppState
-        Object.keys(AppState.entities).forEach(charId => {
-            const char = AppState.entities[charId];
-            if(!char) return;
-
-            if (char.damageFlashTimer > 0) {
-                char.damageFlashTimer = Math.max(0, char.damageFlashTimer - deltaMS);
-                needRedraw = true; // Пока персонаж горит красным — заставляем холст обновляться
-            }
-
-            if (char.healFlashTimer > 0) {
-                char.healFlashTimer = Math.max(0, char.healFlashTimer - deltaMS);
-                needRedraw = true; // Пока персонаж горит зеленым — заставляем холст обновляться
-            }
-
-
-
-
-            if (char.animations && char.animations[char.action]) {
-                const currentActionAnims = char.animations[char.action][char.direction];
-
-                if (currentActionAnims && currentActionAnims.length > 1) {
-                    char.frameTimer += deltaMS;
-
-                    if (char.frameTimer >= char.frameDuration) {
-                        char.frameTimer = 0;
-                        // Циклически переключаем индекс кадра вперед
-                        char.currentFrameIndex = (char.currentFrameIndex + 1) % currentActionAnims.length;
-                        needRedraw = true; // Заставляем PixiJS перерисовать кадр анимации
-                    }
-                } else {
-                    char.currentFrameIndex = 0; // Если кадр один — жестко держим индекс 0
-                }
-            }
-
-            // Если у персонажа есть очередь клеток для плавного марш-броска
-            if (char.action === 'move' && char.currentMovementVisualPath.length > 0) {
-
-                // 1. Находим целевую соседнюю клетку из очереди пути (индекс [0])
-                const nextTile = char.currentMovementVisualPath[0];
-                if (!nextTile) return;
-
-
-
-                // =========================================================================
-                // 🌟 ЖЕСТКИЙ ПЕРЕХВАТ НА СТАРТЕ КАДРА: Защита от наползания ближников в RTS
-                // =========================================================================
-                // Проверка срабатывает КАЖДЫЙ КАДР ТИКЕРА, как только юнит начинает или продолжает лерп к nextTile
-                if (AppState.turn_settings?.turn_mode === "realtime") {
-                    const movementManager = AppState.engine.movementManager;
-                    if (movementManager) {
-                        const currentTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
-
-                        // Проверяем клетку, к которой юнит летит ПРЯМО СЕЙЧАС в этом кадре
-                        const stepCheck = movementManager.canStepBetween(currentTile, nextTile, char);
-
-                        // Если пока фигурка скользила по экрану, клетку nextTile КТО-ТО УСПЕЛ ЗАНЯТЬ
-                        // (вернулся false, "enemy", "ally", "other" или любое значение, кроме "walkable")
-                        if (stepCheck !== "walkable") {
-                            console.warn(`🏃‍♂️ [Movement Grid Lock] Путь перекрыт! Гекс (${nextTile.q}, ${nextTile.r}) занят статусом [${stepCheck}]. Экстренная остановка ${char.name}.`);
-
-                            // Мгновенно обнуляем массив пути, намертво блокируя дальнейший лерп пикселей в этом кадре
-                            char.currentMovementVisualPath = [];
-                            char.action = 'idle'; // Принудительно возвращаем в покой БЕЗ изменения пикселей visualX/Y!
-
-                            if (char.mvmReadyTimer !== undefined) {
-                                char.mvmReadyTimer = 0;
-                            }
-
-                            needRedraw = true;
-                            return; // МГНОВЕННО ОБРЫВАЕМ ВЫПОЛНЕНИЕ КАДРА ТИКЕРА, не пуская код к расчету лерпа ниже!
-                        }
-                    }
-                }
-
-                // --- ДАЛЕЕ ИДЕТ ВАШ ОРИГИНАЛЬНЫЙ НЕПРИКОСНОВЕННЫЙ КОД РАСЧЕТА ЛЕРПА ---
-                needRedraw = true; // Заставляем холст перерисовываться каждый кадр
-
-                // Находим стартовую точку текущего микро-шага
-                const fromPixel = hexMath.cubeToPixel(char.mapPosition.q, char.mapPosition.r);
-                const fromTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
-                const fromLiftY = fromTile ? (fromTile.height - 1) * (hexMath.size * 0.25) : 0;
-                const startX = fromPixel.x;
-                const startY = fromPixel.y - fromLiftY;
-
-                const toPixel = hexMath.cubeToPixel(nextTile.q, nextTile.r);
-                const toLiftY = (nextTile.height - 1) * (hexMath.size * 0.25);
-                const endX = toPixel.x;
-                const endY = toPixel.y - toLiftY;
-
-                // Поворот взгляда змейкой
-                char.direction = '';
-                char.directionV = '';
-
-                if (nextTile.q > char.mapPosition.q) {
-                    char.direction = 'right';
-                }
-                else if (nextTile.q < char.mapPosition.q) {
-                    char.direction = 'left';
-                }
-                else if (nextTile.r > char.mapPosition.r) {
-                    char.directionV = 'forward';
-                }
-                else if (nextTile.r < char.mapPosition.r) {
-                    char.directionV = 'back';
-                }
-
-                // 3. Расчет шага интерполяции
-                const stepDuration = AppState.config.animationSpeed.movePerHex;
-                char.movementLerpTime += deltaMS / stepDuration;
-
-                // 4. Плавно смещаем пиксели фишки
-                if (char.movementLerpTime < 1.0) {
-                    char.visualX = startX + (endX - startX) * char.movementLerpTime;
-                    char.visualY = startY + (endY - startY) * char.movementLerpTime;
-                } else {
-                    // 5. МИКРО-ШАГ ЗАВЕРШЕН: Юнит наступил на гекс соседа
-                    char.visualX = endX;
-                    char.visualY = endY;
-                    char.movementLerpTime = 0;
-
-                    char.mapHistory.push({ q: char.mapPosition.q, r: char.mapPosition.r });
-
-                    char.mapPosition.q = nextTile.q;
-                    char.mapPosition.r = nextTile.r;
-
-                    // Открываем Туман Войны на ходу
-                    if (AppState.engine.visionManager) AppState.engine.visionManager.updateFogOfWar();
-
-                    // Удаляем пройденный гекс
-                    char.currentMovementVisualPath.shift();
-
-                    AppState.engine.triggerManager.processEvent('tile_enter', {
-                        subject: char,      // Кто наступил (например, Рафаэль)
-                        tile: char.mapPosition    // На какой гекс наступил (3:2)
-                    });
-
-                    // =========================================================================
-                    // 🚪 АВТОМАТИЧЕСКИЙ ПЕРЕХОД ПО КАРТАМ (Входы/Выходы через mapTo)
-                    // =========================================================================
-                    // Проверяем это ТОЛЬКО для активного персонажа игрока, чтобы боты случайно не улетали в порталы
-                    if (char.id === AppState.play?.activeCharacterId) {
-                        const currentQ = char.mapPosition.q;
-                        const currentR = char.mapPosition.r;
-
-                        // Благодаря твоему объектному entities, мы мгновенно находим, есть ли объект на этой клетке
-                        // let triggerObject = null;
-                        //
-                        // Object.values(AppState.entities).forEach(entity => {
-                        //     if (entity && entity.mapPosition && entity.mapPosition.q === currentQ && entity.mapPosition.r === currentR) {
-                        //         // Ищем объект с типом данжа, портала или выхода, у которого прописана точка назначения
-                        //         if (entity.mapTo) {
-                        //             triggerObject = entity;
-                        //         }
-                        //     }
-                        // });
-
-                        // if (triggerObject) {
-                        //     const destination = triggerObject.mapTo;
-                        //     if(destination) {
-                        //         console.log(`[MovementManager] 🚀 Игрок наступил на объект "${triggerObject.name}". Запуск перехода на карту: ${destination.mapId}`, destination);
-                        //
-                        //         // 1. Останавливаем текущие таймеры или тикеры движения, если они крутятся
-                        //         char.action = 'idle';
-                        //         char.currentActivePath = [];
-                        //         char.currentMovementVisualPath = [];
-                        //
-                        //         // 2. Вызываем наш MapManager для переключения слоев Map в AppState
-                        //         AppState.engine.MapManager.switchMap(destination.mapId);
-                        //
-                        //         // 3. Телепортируем Рафаэля и всю его банду сопартийцев на новые координаты
-                        //         AppState.engine.MapManager.teleportCharacter(charId, destination.mapId, destination.q, destination.r);
-                        //
-                        //         // 4. Полностью обновляем холст PixiJS, туман войны и HUD на новой локации!
-                        //         AppState.engine.MapManager.refreshWorldRender(charId);
-                        //     }
-                        // }
-
-                        let objectUnderFeet = null;
-                        Object.values(AppState.entities).forEach(entity => {
-                            if (entity && entity.mapPosition && entity.mapPosition.q === currentQ && entity.mapPosition.r === currentR) {
-                                // Нас интересуют только интерактивные сущности, а не сам Рафаэль
-                                if (entity.id !== charId) {
-                                    objectUnderFeet = entity;
-                                }
-                            }
-                        });
-                        AppState.engine.uiManager.showInteractionMenu();
-// Если под ногами сундук, труп или лестница — выводим мобильное контекстное меню!
-//                         if (objectUnderFeet) {
-//                             AppState.engine.uiManager.showInteractionMenu(objectUnderFeet, nextTile);
-//                         } else {
-//                             // Если сошли с объекта на чистую траву — прячем меню автоматического действия
-//                             AppState.engine.uiManager.hideInteractionMenu();
-//                         }
-                    }
-                    // =========================================================================
-
-
-                    // 6. МАРШРУТ ПОЛНОСТЬЮ ЗАВЕРШЕН: Очередь пуста, юнит остановился
-                    if (char.currentMovementVisualPath.length === 0) {
-                        char.action = 'idle'; // Переводим в покой
-
-                        const activeChar = AppState.entities[AppState.play.activeCharacterId];
-                        const reachableTiles = AppState.engine.movementManager.getReachableTiles(activeChar);
-                        AppState.play.cachedReachableTiles = reachableTiles;
-                        AppState.engine.pathRenderer.drawMovementZone(reachableTiles);
-
-                        if (charId === AppState.play.activeCharacterId && playerClickManager) {
-                            const finalTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
-                            if (finalTile) {
-                                playerClickManager.executeCharacterSelect(charId);
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (AppState.play.activeCharacterId && AppState.engine.updateCameraSystem && (AppState.game_settings.playerCamera === 'fixed')) {
-                AppState.engine.updateCameraSystem(ticker);
-            }
-        });
-
-        if (needRedraw) {
-            renderMap();
-        } else if (playerClickManager && AppState.play.activeCharacterId) {
-            AppState.engine.visionManager.updateFogOfWar();
-
-            app.render();
-        }
-    });
-
-
-    window.stopTicker = () => {
-        app.ticker.stop();
-    }
-    window.resumeTicker = () => {
-        app.ticker.start();
-    }
 
     if (AppState.game_settings?.audio?.music?.mute === false) {
         console.log("music start");
         AppState.engine.AudioManager.playContext('background');
     }
 
-    AppState.engine.dialogManager.trigger("PROLOGUE_CINEMATIC");
+    // AppState.engine.dialogManager.trigger("PROLOGUE_CINEMATIC");
+    // AppState.engine.dialogManager.trigger("SCENE_3_0");
+    AppState.engine.dialogManager.trigger("SCENE_CLASS_START");
 }
 
 window.init2 = init2;
@@ -1418,7 +1434,7 @@ window.applyGlobalAutoRotation = function() {
     }
 
     // Перерисовываем сетку гексов под новое пространство
-    if (window.renderMap) window.renderMap();
+    if (window.renderMap && AppState.maps) window.renderMap();
 };
 
 // Вешаем на системный ресайз, чтобы игра адаптировалась, если телефон физически повернули

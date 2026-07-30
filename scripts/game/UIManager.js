@@ -42,6 +42,8 @@ export class UIManager {
         // Полностью очищаем старый HTML-слой перед перерисовкой кадра
         this.rootContainer.innerHTML = '';
 
+        this.renderSettingsTrigger();
+
         const activeId = AppState.play?.activeCharacterId;
         if (!activeId) return;
 
@@ -64,7 +66,7 @@ export class UIManager {
 
         this.renderEndTurnButton(char, isMobile);
 
-        this.renderSettingsTrigger();
+
 
         this.renderQuestTracker();
 
@@ -699,7 +701,7 @@ export class UIManager {
         triggerBtn.onclick = (e) => {
             e.stopPropagation();
             if (AppState.engine.ScreenManager) {
-                window.stopTicker();
+                if(window.stopTicker) window.stopTicker();
                 AppState.engine.ScreenManager.renderScreen('in_game_menu');
             }
         };

@@ -131,7 +131,12 @@ export class AssetLoaderManager {
         const uniquePaths = new Set();
         this._collectUniqueUrls(AppState.ConfigTerrain, uniquePaths);
         this._collectUniqueUrls(AppState.ConfigObject, uniquePaths);
-        this._collectUniqueUrls(AppState.ConfigCharacter, uniquePaths);
+        if(AppState.ConfigCharacter) {
+            this._collectUniqueUrls(AppState.ConfigCharacter, uniquePaths);
+        }
+        else if(AppState.characters) {
+            this._collectUniqueUrls(AppState.characters, uniquePaths);
+        }
         // this._collectUniqueUrls(AppState.characters, uniquePaths);
         if(AppState.ui?.landscape) {
             const lsScreens = {};

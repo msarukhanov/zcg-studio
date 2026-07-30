@@ -98,7 +98,7 @@ export class ScreenManager {
             heroContainer.className = `hud-hero-avatar ${heroLayout.animation || ''}`;
 
             // Вытаскиваем аватар текущего активного игрока из AppState
-            const activeChar = AppState.characters[AppState.play?.activeCharacterId || 'rafael'];
+            const activeChar = AppState.characters[AppState.play?.activeCharacterId || heroLayout.character];
             const rawHeroImg = activeChar?.image || '';
             const cachedHeroImg = window.gameAssets[rawHeroImg] || rawHeroImg;
 
@@ -260,7 +260,7 @@ export class ScreenManager {
             case 'close_menu':
                 // Просто закрываем текущий экран и возвращаемся на карту
                 this.clearCurrentScreen();
-                window.resumeTicker();
+                if(window.resumeTicker) window.resumeTicker();
                 break;
 
             case 'game_save':

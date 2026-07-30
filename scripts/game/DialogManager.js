@@ -34,7 +34,7 @@ export const DialogManager = {
         this.currentPageIdx = 0;
         this.onCompleteCallback = onComplete;
 
-        window.stopTicker();
+        if(window.stopTicker) window.stopTicker();
 
         this.renderFrame();
     },
@@ -89,6 +89,13 @@ export const DialogManager = {
 
         let backgroundRenderHtml = '';
         let overlayStyle = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; box-sizing: border-box;';
+
+        if(!AppState.map) {
+            overlayStyle = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; overflow: hidden; display: flex; align-items: flex-end; justify-content: center; box-sizing: border-box;';
+            if(document.getElementById('hud-settings-trigger')) {
+                document.getElementById('hud-settings-trigger').style.right = '10px';
+            }
+        }
 
         if (!isBgTransparent) {
             const bgAsset = ws.backgroundImage || "";
@@ -412,7 +419,8 @@ export const DialogManager = {
 
         // Приглушаем персонажей заднего плана, давая слово Рафаэлю
         document.querySelectorAll('.dialog-backdrop-stage img').forEach(img => {
-            img.style.opacity = '0.35';
+            // img.style.opacity = '0.35';
+            img.style.opacity = '0.95';
             img.style.filter = 'grayscale(50%)';
         });
 
@@ -587,7 +595,7 @@ export const DialogManager = {
         // else {
             // Если на сцене не было актеров (это была просто катсцена-кино) — полностью тушим весь оверлей
             overlay.remove();
-            window.resumeTicker();
+            if(window.resumeTicker) window.resumeTicker();
             if (this.onCompleteCallback) this.onCompleteCallback();
         // }
     }

@@ -130,7 +130,7 @@ export const ArenaManager = {
             // AppState.engine.playerClickManager.executeCharacterSelect(AppState.player?.character);
             //
             // window.renderMap();
-            window.resumeTicker();
+            if(window.resumeTicker) window.resumeTicker();
         }, 100);
     },
 
@@ -354,7 +354,7 @@ export const ArenaManager = {
         const playerLeader = AppState.entities?.[playerLeaderId];
         const enemyLeader = AppState.entities?.[enemyLeaderId];
         if (!playerLeader && !enemyLeader) return;
-        window.stopTicker();
+        if(window.stopTicker) window.stopTicker();
 
         const winnerLeader = playerLeader || enemyLeader;
         const isPlayerWinner = winnerLeader.id === AppState.player?.character;
@@ -442,7 +442,7 @@ export const ArenaManager = {
             // AppState.engine.playerClickManager.executeCharacterSelect(AppState.player?.character);
             //
             // window.renderMap();
-            window.resumeTicker();
+            if(window.resumeTicker) window.resumeTicker();
         }, 100);
     }
 };

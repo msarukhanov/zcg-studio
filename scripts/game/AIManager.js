@@ -188,7 +188,7 @@ export class AIManager {
         if(isTacticalMode && !isTacticalMap) {
             maxAtkRange = 1;
             if (minDistance <= maxAtkRange) {
-                window.stopTicker();
+                if(window.stopTicker) window.stopTicker();
                 AppState.engine.ArenaManager.enterTacticalArena(botChar.id, closestEnemy.id);
                 return;
             }
@@ -503,7 +503,7 @@ export class AIManager {
         if (isTacticalMode && !isTacticalMap) {
             maxAtkRange = 1;
             if (minDistance <= maxAtkRange) {
-                window.stopTicker();
+                if(window.stopTicker) window.stopTicker();
                 // Разворачиваем динамическую тактическую арену 10х5, которую мы настроили
                 AppState.engine.ArenaManager.enterTacticalArena(botChar.id, closestEnemy.id, 10, 5);
                 return;

@@ -35,20 +35,27 @@ import { ObjectManager } from '../game/ObjectManager.js';
 
 export function InitEngine() {
 
-    AppState.engine.mapData = new MapData();
+    if(AppState.maps) {
+        AppState.engine.mapData = new MapData();
+        AppState.engine.pathRenderer = new PathRenderer();
+        AppState.engine.visionManager = new VisionManager();
+        AppState.engine.movementManager = new MovementManager();
+
+        AppState.engine.timeManager = new TimeManager();
+    }
+
 
     AppState.engine.TranslateManager = new TranslateManager();
     AppState.engine.TranslateManager.setLanguage('en');
 
     AppState.engine.AudioManager = AudioManager;
-    AppState.engine.pathRenderer = new PathRenderer();
+
     AppState.engine.factionManager = new FactionManager();
-    AppState.engine.visionManager = new VisionManager();
-    AppState.engine.movementManager = new MovementManager();
+
     AppState.engine.combatManager = new CombatManager();
     AppState.engine.skillManager = new SkillManager();
 
-    AppState.engine.timeManager = new TimeManager();
+
     AppState.engine.turnManager = new TurnManager();
     AppState.engine.aiManager = new AIManager();
 

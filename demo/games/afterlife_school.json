@@ -1,0 +1,2964 @@
+{
+  "engine": {
+    "app": "",
+    "hexMath": "",
+    "worldMapContainer": "",
+    "uiLayerContainer": ""
+  },
+  "camera": {
+    "currentZoom": 1,
+    "x": 0,
+    "y": 0
+  },
+  "playerGallery": {
+    "lizzy_poster_0": {
+      "id": "lizzy_poster_1",
+      "name": "Poster: Lizzy Full-Height Art",
+      "type": "poster",
+      "text": "A rare collectible poster featuring Lizzy, discovered hidden behind a loose brick in the tavern's secret basement chambers.",
+      "image": "assets/images/posters/lizzy_poster_0.png",
+      "index": 1,
+      "locked": false
+    },
+    "lizzy_love_letter_1": {
+      "id": "lizzy_love_letter_1",
+      "name": "Letter: Lizzy's Secret Message",
+      "type": "letter",
+      "text": "Dearest Raphael...\\n\\nIf you are reading this note, it means my message successfully bypassed the guards via the commercial port merchants. The Grand Master of the Order is watching my every step within the Lorencia stronghold, and the net is tightening by the hour.\\n\\nMeet me near the eastern coastline as soon as your caravel docks at the harbor. Please, stay safe.",
+      "image": "",
+      "index": 2,
+      "locked": false
+    },
+    "erin_poster_0": {
+      "id": "erin_poster_0",
+      "name": "Poster: Lizzy Full-Height Art",
+      "type": "poster",
+      "text": "A rare collectible poster featuring Erin, discovered hidden behind a loose brick in the tavern's secret basement chambers.",
+      "image": "assets/images/posters/erin_poster_0.png",
+      "index": 3,
+      "locked": false
+    }
+  },
+  "game_settings": {
+    "playerType": "faction",
+    "playerAttack": "manual",
+    "playerCamera": "fixed",
+    "playerZoom": false,
+    "battleType": "instant",
+    "battleOpenMap": true,
+    "battleFreeMove": true,
+    "ui": {
+      "character": "left-top",
+      "lang": "en"
+    },
+    "nextLevelXpFormula": "100 * Math.pow(L, 1.5)",
+    "killExpFormula": "10 * Math.pow(L1, 1.5) / Math.pow(L2, 1.5)",
+    "killExpShare": true,
+    "killExpTiming": "instant",
+    "audio": {
+      "music": {
+        "mute": true,
+        "volume": 70,
+        "currentTrack": null
+      },
+      "sfx": {
+        "mute": false,
+        "volume": 80
+      },
+      "speech": {
+        "mute": false,
+        "volume": 100
+      }
+    }
+  },
+  "sound": {
+    "background": {
+      "tracks": [
+        "assets/audio/background/track01.m4a"
+      ],
+      "currentTime": 0,
+      "currentIndex": 0
+    },
+    "battle": [],
+    "hub": []
+  },
+  "player": {
+    "id": "p1",
+    "name": "Mark",
+    "faction": "lorencia",
+    "character": "raphael",
+    "quests": [
+      "quest_moon_medicine",
+      "quest_dwarf_info",
+      "quest_sail_north"
+    ],
+    "exploredTiles": {}
+  },
+  "play": {},
+  "entities": {},
+  "characters": {
+    "raphael": {
+      "id": "raphael",
+      "name": "Raphael Afterlife",
+      "icon": "assets/demo/afterlife_school/images/avatars/raphael.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/raphael.png"
+    },
+    "quentin": {
+      "id": "quentin",
+      "name": "Quentin Blackwell",
+      "icon": "assets/demo/afterlife_school/images/avatars/quentin.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/quentin.png"
+    },
+    "erin": {
+      "id": "erin",
+      "name": "Erin Faidaen",
+      "icon": "assets/demo/afterlife_school/images/avatars/erin.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/erin.png"
+    },
+    "adelina": {
+      "id": "adelina",
+      "name": "adelina d'Lys",
+      "icon": "assets/demo/afterlife_school/images/avatars/adelina.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/adelina.png"
+    },
+    "eleniel": {
+      "id": "eleniel",
+      "name": "Eleniel Falanar",
+      "icon": "assets/demo/afterlife_school/images/avatars/eleniel.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/eleniel.png"
+    },
+    "sephirot": {
+      "id": "sephirot",
+      "name": "Mr. Sephirot",
+      "icon": "assets/demo/afterlife_school/images/avatars/sephirot.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/sephirot.png"
+    },
+    "lazarus": {
+      "id": "lazarus",
+      "name": "Lazarus Midnight",
+      "icon": "assets/demo/afterlife_school/images/avatars/lazarus.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/lazarus.png"
+    },
+    "selena": {
+      "id": "selena",
+      "name": "Selena Ember",
+      "icon": "assets/demo/afterlife_school/images/avatars/selena.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/selena.png"
+    }
+  },
+
+  
+  "triggers": {},
+
+  "ui": {
+    "landscape": [
+      {
+        "id": "main_menu",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/dark_class_room.png",
+        "bg_width": 1200,
+        "scrollable": false,
+        "active_width": 1000,
+        "widgets": [
+          {
+            "id": "btn_new_game",
+            "type": "button",
+            "label_loc_key": "btn_new_game_label",
+            "action": "new_game",
+            "layout": {
+              "bottom": "300px",
+              "left": "50% - 80px",
+              "width": "160px",
+              "height": "50px",
+              "shape": "square",
+              "textColor": "#E60000",
+              "textSize": "18px",
+              "textPosition": "center",
+              "backgroundColor": "rgba(0, 0, 0, .6)",
+              "border": "1px solid #E60000",
+              "borderRadius": "4px",
+              "zIndex": 10
+            }
+          },
+          {
+            "id": "btn_load_main",
+            "type": "button",
+            "label_loc_key": "menu_load_label",
+            "action": "game_load",
+            "layout": {
+              "bottom": "240px",
+              "left": "50% - 80px",
+              "width": "160px",
+              "height": "50px",
+              "shape": "square",
+              "textColor": "#E60000",
+              "textSize": "18px",
+              "textPosition": "center",
+              "backgroundColor": "rgba(0, 0, 0, .6)",
+              "border": "1px solid #E60000",
+              "borderRadius": "4px",
+              "zIndex": 10
+            }
+          },
+          {
+            "id": "btn_settings_main",
+            "type": "button",
+            "label_loc_key": "menu_settings_label",
+            "action": "open_settings",
+            "layout": {
+              "bottom": "180px",
+              "left": "50% - 80px",
+              "width": "160px",
+              "height": "50px",
+              "shape": "square",
+              "textColor": "#E60000",
+              "textSize": "18px",
+              "textPosition": "center",
+              "backgroundColor": "rgba(0, 0, 0, .6)",
+              "border": "1px solid #E60000",
+              "borderRadius": "4px",
+              "zIndex": 10
+            }
+          },
+          {
+            "id": "btn_gallery_main",
+            "type": "button",
+            "label_loc_key": "menu_gallery_label",
+            "action": "open_player_gallery",
+            "layout": {
+              "bottom": "120px",
+              "left": "50% - 80px",
+              "width": "160px",
+              "height": "50px",
+              "shape": "square",
+              "textColor": "#E60000",
+              "textSize": "18px",
+              "textPosition": "center",
+              "backgroundColor": "rgba(0, 0, 0, .6)",
+              "border": "1px solid #E60000",
+              "borderRadius": "4px",
+              "zIndex": 10
+            }
+          }
+        ]
+      },
+      {
+        "id": "in_game_menu",
+        "backgroundImage": "",
+        "scrollable": false,
+        "zIndex": 5000,
+        "widgets": [
+          {
+            "id": "menu_screen_overlay",
+            "type": "panel",
+            "layout": {
+              "top": "0",
+              "left": "0",
+              "width": "100%",
+              "height": "100%",
+              "backgroundColor": "rgba(0, 0, 0, 0.6)",
+              "zIndex": 550
+            }
+          },
+          {
+            "id": "menu_modal_bg",
+            "type": "panel",
+            "layout": {
+              "top": "50% - 180px",
+              "left": "50% - 150px",
+              "width": "300px",
+              "height": "360px",
+              "backgroundColor": "rgba(15, 20, 28, 0.95)",
+              "border": "2px solid #34495e",
+              "borderRadius": "12px",
+              "zIndex": 600
+            }
+          },
+          {
+            "id": "btn_save",
+            "type": "button",
+            "label_loc_key": "menu_save_label",
+            "action": "game_save",
+            "layout": {
+              "top": "50% - 140px",
+              "left": "50% - 110px",
+              "width": "220px",
+              "height": "44px",
+              "backgroundColor": "rgba(44, 62, 80, 0.6)",
+              "border": "1px solid #3a4759",
+              "borderRadius": "6px",
+              "textColor": "#fff",
+              "textSize": "14px",
+              "zIndex": 610
+            }
+          },
+          {
+            "id": "btn_load",
+            "type": "button",
+            "label_loc_key": "menu_load_label",
+            "action": "game_load",
+            "layout": {
+              "top": "50% - 85px",
+              "left": "50% - 110px",
+              "width": "220px",
+              "height": "44px",
+              "backgroundColor": "rgba(44, 62, 80, 0.6)",
+              "border": "1px solid #3a4759",
+              "borderRadius": "6px",
+              "textColor": "#fff",
+              "textSize": "14px",
+              "zIndex": 610
+            }
+          },
+          {
+            "id": "btn_settings",
+            "type": "button",
+            "label_loc_key": "menu_settings_label",
+            "action": "open_settings",
+            "layout": {
+              "top": "50% - 30px",
+              "left": "50% - 110px",
+              "width": "220px",
+              "height": "44px",
+              "backgroundColor": "rgba(44, 62, 80, 0.6)",
+              "border": "1px solid #3a4759",
+              "borderRadius": "6px",
+              "textColor": "#fff",
+              "textSize": "14px",
+              "zIndex": 610
+            }
+          },
+          {
+            "id": "btn_resume_game",
+            "type": "button",
+            "label_loc_key": "menu_resume_label",
+            "action": "close_menu",
+            "layout": {
+              "top": "50% + 100px",
+              "left": "50% - 110px",
+              "width": "220px",
+              "height": "40px",
+              "backgroundColor": "rgba(192, 57, 43, 0.5)",
+              "border": "1px solid #c0392b",
+              "borderRadius": "6px",
+              "textColor": "#fff",
+              "textSize": "13px",
+              "zIndex": 610
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "localization": {
+    "ui": {
+      "en": {
+        "btn_new_game_label": "NEW GAME",
+        "menu_save_label": "SAVE GAME",
+        "menu_load_label": "LOAD GAME",
+        "menu_fullscreen_label": "FULLSCREEN",
+        "menu_mute_label": "SOUND: ON/OFF",
+        "menu_resume_label": "RESUME GAME",
+        "menu_settings_label": "Settings",
+        "menu_gallery_label": "Gallery",
+        "btn_game_settings": "GAME SETTINGS",
+        "game_language": "Game Language",
+        "full_screen": "🖥️ Fullscreen",
+        "not_full_screen": "Display Mode",
+        "music": "🎵 Music",
+        "sfx": "⚔️ SFX",
+        "speech": "💬 Speech",
+        "saveExit": "⬅️ Save & Exit",
+        "select_save_slot": "Select Save Slot",
+        "no_save_slots": "No save slots found",
+        "saves_back": "⬅️ Back",
+        "gallery": "🏆 GALLERY",
+        "gallery_empty": "Gallery empty. Explore the map to find secrets!",
+        "gallery_description": "Collectible posters, secret scrolls, and unlocked game lore"
+      },
+      "ru": {
+        "btn_new_game_label": "НОВАЯ ИГРА",
+        "menu_save_label": "СОХРАНИТЬ",
+        "menu_load_label": "ЗАГРУЗИТЬ",
+        "menu_fullscreen_label": "ПОЛНЫЙ ЭКРАН",
+        "menu_mute_label": "ЗВУК: ВКЛ/ВЫКЛ",
+        "menu_resume_label": "ВЕРНУТЬСЯ",
+        "menu_settings_label": "НАСТРОЙКИ",
+        "menu_gallery_label": "Галерея",
+        "btn_game_settings": "НАСТРОЙКИ ИГРЫ",
+        "game_language": "Язык интерфейса",
+        "full_screen": "🖥️ Развернуть",
+        "not_full_screen": "Экранный режим",
+        "music": "🎵 Музыка",
+        "sfx": "⚔️ Эффекты",
+        "speech": "💬 Озвучка",
+        "saveExit": "⬅️ Сохранить и выйти",
+        "select_save_slot": "Выберите сохранение",
+        "no_save_slots": "Нет доступных сохранений",
+        "saves_back": "⬅️ Назад",
+        "gallery": "🏆 ГАЛЕРЕЯ",
+        "gallery_empty": "Галерея пуста. Находите секреты на карте мира!",
+        "gallery_description": "Коллекционные постеры, секретные записки и открытый лор вселенной"
+      }
+    },
+    "interactions": {
+      "en": {
+        "hire_ship": "Hire корабль",
+        "board_ship": "Board Ship",
+        "disembark_ship": "Disembark",
+        "manage": "Manage",
+        "capture": "Capture",
+        "trade": "Trade",
+        "talk": "Talk",
+        "enter": "Enter",
+        "loot": "Loot",
+        "stop": "Stop",
+        "sell": "Sell",
+        "buy": "Buy",
+        "deal_balance": "Accept Deal",
+        "deal": "Accept Deal",
+        "you_pay": "You PAY",
+        "you_receive": "You RECEIVE"
+      },
+      "ru": {
+        "hire_ship": "Нанять корабль",
+        "board_ship": "Сесть в корабль",
+        "disembark_ship": "Высадиться на берег",
+        "manage": "Управление",
+        "capture": "Захватить",
+        "trade": "Торговля",
+        "talk": "Диалог",
+        "enter": "Войти",
+        "loot": "Обыскать",
+        "stop": "Стоп",
+        "sell": "Продажа",
+        "buy": "Покупка",
+        "deal": "Заключить Сделку",
+        "you_pay": "Вы ЗАПЛАТИТЕ",
+        "you_receive": "Вы ПОЛУЧИТЕ"
+      }
+    },
+    "trade": {
+      "en": {
+        "trade_header": "Trade",
+        "current_deal": "⚖️ Current deal",
+        "sell": "Sell",
+        "buy": "Buy",
+        "deal": "Accept Deal",
+        "you_pay": "You PAY",
+        "you_receive": "You RECEIVE",
+        "deal_balance": "Deal Balance"
+      },
+      "ru": {
+        "trade_header": "Торговля",
+        "current_deal": "⚖️ ТЕКУЩИЙ ОБМЕН",
+        "sell": "Продажа",
+        "buy": "Покупка",
+        "deal": "Заключить Сделку",
+        "you_pay": "Вы ЗАПЛАТИТЕ",
+        "you_receive": "Вы ПОЛУЧИТЕ",
+        "deal_balance": "Баланс сделки"
+      }
+    },
+    "editor": {
+      "en": {
+        "": ""
+      },
+      "ru": {
+        "": ""
+      }
+    },
+    "stats": {
+      "en": {
+        "exp": "⭐ Exp",
+        "hp": "❤️ HP",
+        "energy": "💙 MP",
+        "atk": "⚔️ Attack",
+        "def": "🛡️ Armor",
+        "speed": "🥾 Speed",
+        "crit": "⚡ Crit"
+      },
+      "ru": {
+        "exp": "⭐ Опыт",
+        "hp": "❤️ Здоровье",
+        "energy": "💙 Мана",
+        "atk": "⚔️ Атака",
+        "def": "🛡️ Защита",
+        "speed": "🥾 Скорость",
+        "crit": "⚡ Крит"
+      }
+    },
+    "map": {
+      "en": {
+        "province": "Province",
+        "owner": "Owner"
+      },
+      "ru": {
+        "province": "Провинция",
+        "owner": "Владелец"
+      }
+    },
+    "resources": {
+      "en": {
+        "gold": "Gold",
+        "wood": "Wood",
+        "ore": "Ore",
+        "food": "Food"
+      },
+      "ru": {
+        "gold": "Золото",
+        "wood": "Древесина",
+        "ore": "Железо",
+        "food": "Провизия"
+      }
+    },
+    "factions": {
+      "en": {
+        "ruler": "Ruler",
+        "sovereign": "Sovereign",
+        "vassal": "Vassal",
+        "politics": "POLITICS",
+        "status": "Status",
+        "territories": "Territories",
+        "capital": "Capital",
+        "finance_header": "FINANCES & INCOME",
+        "population": "Population",
+        "provinces": "PROVINCES",
+        "no_provinces": "No controlled provinces",
+        "diplomacy_header": "DIPLOMACY",
+        "current_pact": "Current Pact",
+        "opinion": "Opinion",
+        "break_trade": "❌ Break Trade",
+        "establish_trade": "Establish Trade",
+        "break_alliance": "🤝 Break Alliance",
+        "form_alliance": "🛡️ Form Alliance",
+        "access_granted": "🥾 Access Granted by Alliance",
+        "revoke_access": "❌ Revoke Military Access",
+        "request_access": "🥾 Request Military Access",
+        "propose_peace": "🕊️ Propose Peace",
+        "demand_vassalage": "👑 Demand Vassalage",
+        "diplomacy_back": "⬅️ Back to Report"
+      },
+      "ru": {
+        "ruler": "Правитель",
+        "sovereign": "Сюзерен",
+        "vassal": "Вассал",
+        "politics": "ПОЛИТИКА",
+        "status": "Статус",
+        "territories": "Территории",
+        "capital": "Столица",
+        "finance_header": "ФИНАНСЫ И ДОХОД",
+        "population": "Население",
+        "provinces": "ПРОВИНЦИИ",
+        "no_provinces": "Нет подконтрольных провинций",
+        "diplomacy_header": "ДИПЛОМАТИЯ",
+        "current_pact": "Текущий пакт",
+        "opinion": "Мнение",
+        "break_trade": "❌ Разорвать торговлю",
+        "establish_trade": "Заключить торговлю",
+        "break_alliance": "🤝 Разорвать альянс",
+        "form_alliance": "🛡️ Заключить альянс",
+        "access_granted": "🥾 Проход открыт союзом",
+        "revoke_access": "❌ Отозвать право прохода",
+        "request_access": "🥾 Запросить право прохода",
+        "propose_peace": "🕊️ Заключить мир",
+        "demand_vassalage": "👑 Потребовать вассалитет",
+        "diplomacy_back": "⬅️ Назад к сводкам"
+      }
+    },
+    "objects": {
+      "en": {
+        "type_city": "City Stronghold",
+        "type_mine": "Resource Mine",
+        "type_port": "Commercial Port",
+        "tab_info": "📋 Summary",
+        "no_production": "No production",
+        "resource_production": "Resource Production",
+        "object_stats": "OBJECT STATS",
+        "object_upgrade": "Building upgrade",
+        "max_level_reached": "Max level reached",
+        "upgrade_to": "Upgrade to Level",
+        "current_rank": "Current Rank",
+        "enemy_structure": "Enemy Structure",
+        "recruit": "⚔️ Recruit",
+        "garrison_hero_army": "HERO ARMY",
+        "garrison_no_hero": "NO HERO PRESENT",
+        "garrison_heroes": "Available",
+        "garrison_units": "GARRISON"
+      },
+      "ru": {
+        "type_city": "Город/Замок",
+        "type_mine": "Ресурсная шахта",
+        "type_port": "Торговый порт",
+        "tab_info": "📋 Сводка",
+        "no_production": "Нет производства",
+        "resource_production": "Производство ресурсов",
+        "object_stats": "Характеристики",
+        "object_upgrade": "Улучшение здания",
+        "max_level_reached": "Достигнут максимальный уровень",
+        "upgrade_to": "Улучшить до Уровня",
+        "current_rank": "Текущий уровень",
+        "enemy_structure": "Чужой объект",
+        "recruit": "⚔️ Нанять",
+        "garrison_hero_army": "АРМИЯ ГЕРОЯ",
+        "garrison_no_hero": "НЕТ ГЕРОЯ РЯДОМ",
+        "garrison_heroes": "В наличии",
+        "garrison_units": "ГАРНИЗОН"
+      }
+    },
+    "units": {
+      "en": {
+        "lvl": "Lvl",
+        "corpse": "Corpse",
+        "backpack": "Backpack",
+        "empty_backpack": "Backpack is empty",
+        "equip": "",
+        "skills": "Skills",
+        "no_skills": "No skills available",
+        "passive": "Passive",
+        "cast": "Cast",
+        "units": "⚔️ ARMY SQUADS",
+        "no_units": "No recruited squads",
+        "count": "Count",
+        "dismiss": "Dismiss",
+        "dismiss_confirm": "Dismiss"
+      },
+      "ru": {
+        "lvl": "Ур",
+        "corpse": "Труп",
+        "backpack": "Рюкзак",
+        "empty_backpack": "Рюкзак пуст",
+        "equip": "",
+        "skills": "Навыки",
+        "no_skills": "Нет доступных навыков",
+        "passive": "Пассивный",
+        "cast": "Каст",
+        "units": "⚔️ ОТРЯДЫ АРМИИ",
+        "no_units": "Нет нанятых отрядов",
+        "count": "Численность",
+        "dismiss": "Уволить",
+        "dismiss_confirm": "Распустить отряд"
+      }
+    },
+    "quests": {
+      "en": {
+        "no_active": "No active quests",
+        "quest": "Quest",
+        "global": "Global",
+        "local": "Local",
+        "journal": "Journal",
+        "empty_journal": "No quests in journal",
+        "status_completed": "Completed",
+        "status_active": "Active",
+        "objectives": "Objectives"
+      },
+      "ru": {
+        "no_active": "Нет активных квестов",
+        "quest": "Задание",
+        "global": "Глобальный",
+        "local": "Локальный",
+        "journal": "Задания",
+        "empty_journal": "Журнал заданий пуст",
+        "status_completed": "Выполнено",
+        "status_active": "Активен",
+        "objectives": "Задачи"
+      }
+    }
+  },
+
+  "dialogs": {
+    "PROLOGUE_CINEMATIC": {
+      "activation_conditions": [
+        {
+          "type": "flag",
+          "param": "PROLOGUE_WATCHED",
+          "value": false
+        }
+      ],
+      "meta": {
+        "group": "prologue",
+        "type": "katscene"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/raphael_room.png",
+        "actors_registry": [
+          {
+            "id": "raphael",
+            "left": 45,
+            "top": 20,
+            "height": 100
+          }
+        ],
+        "panel_height": 30,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль появляется на фоне своей комнаты. Обычная квартира: рабочий стол, компьютер, разбросанные книги и тетради, шкаф с зеркалом и окно, за которым брезжит тусклое утро.",
+            "en": "Raphael appears against the background of his room. A normal apartment: a desk, a computer, scattered books and notebooks, a wardrobe with a mirror, and a window with a dim morning light outside."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "normal",
+          "text": {
+            "ru": "*Резко открывает глаза* Я проснулся...",
+            "en": "*Snaps eyes open* I'm awake..."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "sad",
+          "text": {
+            "ru": "Снова... Снова эти кошмары снились. Я забываю их сразу же, но это гнетущее чувство внутри не проходит.",
+            "en": "Again... Those nightmares again. I forget them instantly, but this heavy feeling inside won't go away."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "Я больше не могу нормально спать последние две недели. Что-то определенно не так со мной.",
+            "en": "I haven't been able to sleep properly for the last two weeks. Something is definitely wrong with me."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Встать с кровати",
+            "en": "Get out of bed"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              {
+                "type": "set_flag",
+                "param": "PROLOGUE_WATCHED",
+                "value": true
+              }
+            ],
+            "next_scene": "SCENE_1_0"
+          }
+        }
+      ]
+    },
+    "SCENE_1_0": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/raphael_room.png",
+        "actors_registry": [
+          {
+            "id": "raphael",
+            "left": 45,
+            "top": 20,
+            "height": 100
+          }
+        ],
+        "panel_height": 30,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль идет в ванную, чтобы умыться ледяной водой, после чего молча возвращается в свою комнату.",
+            "en": "Raphael goes to the bathroom to wash his face with ice-cold water, then silently returns to his room."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "*Смотрит в зеркало* Меня не покидает мысль... это не мое лицо. Совсем не мое.",
+            "en": "*Looks in the mirror* A thought keeps haunting me... this is not my face. Not mine at all."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "normal",
+          "text": {
+            "ru": "По логике, мне должно быть страшно от таких мыслей. Любой бы пришел в ужас, перестав узнавать себя в зеркале.",
+            "en": "Logically, such thoughts should make me scared. Anyone would be terrified if they stopped recognizing themselves in the mirror."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "Но мне не страшно. Разум остается абсолютно холодным. И вот именно это... именно это меня и пугает.",
+            "en": "But I'm not scared. My mind remains completely cold. And that exact thing... that's what actually scares me."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Собираться в школу",
+            "en": "Get ready for school"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_2_0"
+          }
+        }
+      ]
+    },
+    "SCENE_2_0": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 100 }
+        ],
+        "panel_height": 30,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль направляется в школу. Улицы заполнены людьми, мимо проходят магазины с яркими витринами и группы красиво одетых девушек.",
+            "en": "Raphael heads to school. The streets are filled with people, passing by bright storefronts and groups of beautiful girls."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "normal",
+          "text": {
+            "ru": "Прохожие девочки... они то и дело оборачиваются мне вслед и перешептываются. Странно. Я никогда не привыкну к такому пристальному вниманию.",
+            "en": "The girls passing by... they keep turning around to look at me and whispering. Strange. I will never get used to such intense attention."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "Дело даже не в том, что мне как-то плохо. Нет. Внутри меня зреет отчетливое ощущение, что все это... просто неправильно. Но я никак не могу ухватить суть.",
+            "en": "It's not even that I feel bad. No. Inside me, a clear feeling is growing that all of this... is just wrong. But I can't seem to grasp the core of it."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль резко останавливается возле одной из стеклянных витрин магазина. Он вглядывается в свое отражение, не отрывая взгляда несколько долгих секунд.",
+            "en": "Raphael stops abruptly near one of the glass storefronts. He stares into his reflection, without breaking eye contact for a few long seconds."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "Вроде бы это мое лицо. Серые глаза, аккуратные черты. Все на месте. Но глубоко внутри я чувствую... что-то здесь кардинально не так.",
+            "en": "It seems to be my face. Gray eyes, neat features. Everything is in place. But deep down inside, I feel... something here is fundamentally wrong."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [{
+        "text": {
+          "ru": "Продолжить путь к школе",
+          "en": "Continue to school"
+        },
+        "kind": "neutral",
+        "conditions": [],
+        "on_success": {
+          "triggers": [],
+          "next_scene": "SCENE_3_0"
+        }
+      }]
+    },
+    "SCENE_3_0": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/st_messiah_gate.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль подходит к величественному зданию Школы Святого Мессии. Во дворе полно учеников, спешащих на занятия.",
+            "en": "Raphael approaches the majestic building of St. Messiah High School. The courtyard is full of students rushing to classes."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Вокруг стоит оглушительный гул: все кричат, смеются, громко разговаривают. Этот внезапный хаос звуков резко бьет по ушам, и у Рафаэля начинает сильно болеть голова.",
+            "en": "A deafening roar fills the air: everyone is shouting, laughing, talking loudly. This sudden chaos of sounds hits his ears sharply, and Raphael starts to get a severe headache."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "sad",
+          "text": {
+            "ru": "Черт... От этого шума виски просто разрывает. Мне резко стало не по себе.",
+            "en": "Damn... My temples are just bursting from this noise. I suddenly feel really sick."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэлю становится совсем плохо. Он медленно поднимает дрожащую руку и трогает свое лицо, пытаясь унять нарастающее головокружение.",
+            "en": "Raphael feels completely unwell. He slowly raises a trembling hand and touches his face, trying to soothe the rising dizziness."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Сквозь давящий школьный шум до него доносится знакомый голос, выкрикивающий его имя. Кто-то зовет его, но из-за пелены перед глазами Рафаэль пока не видит говорящего.",
+            "en": "Through the oppressive school noise, a familiar voice shouting his name reaches him. Someone is calling him, but due to the haze before his eyes, Raphael cannot see the speaker yet."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "normal",
+          "text": {
+            "ru": "— Эй, Рафаэль! Ты чего там застыл посреди двора?",
+            "en": "— Hey, Raphael! Why are you frozen out there in the middle of the yard?"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [{
+        "text": {
+          "ru": "Оглянуться на голос",
+          "en": "Look around for the voice"
+        },
+        "kind": "neutral",
+        "conditions": [],
+        "on_success": {
+          "triggers": [],
+          "next_scene": "SCENE_4_0"
+        }
+      }]
+    },
+    "SCENE_4_0": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/st_messiah_gate.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 100 },
+          { "id": "quentin", "left": 65, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "Рафаэль, ты сам не свой. Бледный как мертвец, ещё и за лицо хватаешься. Как ты себя чувствуешь?",
+            "en": "Raphael, you're not yourself. Pale as a corpse, and you're holding your face. How are you feeling?"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Нормально",
+            "en": "I'm fine"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_4_BRANCH_AB"
+          }
+        },
+        {
+          "text": {
+            "ru": "Не очень хорошо",
+            "en": "Not very well"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_4_BRANCH_AB"
+          }
+        },
+        {
+          "text": {
+            "ru": "Есть кое-что, что меня беспокоит очень",
+            "en": "There is something that bothers me a lot"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_4_BRANCH_V"
+          }
+        }
+      ]
+    },
+
+    "SCENE_4_BRANCH_AB": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/st_messiah_gate.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 100 },
+          { "id": "quentin", "left": 65, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "Ага, «нормально» он говорит, а сам на ногах едва держится. Разговоры в сторону, я веду тебя в медпункт. Возражения не принимаются.",
+            "en": "Yeah, 'fine' he says, while barely staying on his feet. Cut the talk, I'm taking you to the infirmary. No excuses."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Пойти в медпункт вместе с Квентином",
+            "en": "Go to the infirmary with Quentin"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_INFIRMARY_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_4_BRANCH_V": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/st_messiah_gate.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 100 },
+          { "id": "quentin", "left": 65, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "Раз так, то выкладывай. Рассказывай всё прямо здесь.",
+            "en": "If that's the case, spill it out. Tell me everything right here."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "Я глубоко вздохнул и рассказал Квентину обо всём. Про две недели без сна, про фальшивые лица в зеркале и стойкое ощущение, что всё вокруг нас — иллюзия. Я ждал, что он поднимет меня на смех или скажет, что я сошёл с ума.",
+            "en": "I took a deep breath and told Quentin everything. About the two weeks without sleep, the fake faces in the mirror, and the persistent feeling that everything around us is an illusion. I expected him to laugh at me or say I've gone mad."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "Знаешь что... Это совсем не звучит как бред. Я верю твоему чутью. Ладно, я обдумаю твои слова на досуге, а сейчас пошли в класс, скоро звонок.",
+            "en": "You know what... This doesn't sound like nonsense at all. I trust your gut. Alright, I'll think over your words later, but for now let's get to class, the bell's about to ring."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Пойти в класс",
+            "en": "Go to class"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_CLASS_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_INFIRMARY_START": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/school_infirmary.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 5, "top": 20, "height": 100 },
+          { "id": "quentin", "left": 20, "top": 20, "height": 100 },
+          { "id": "lazarus", "left": 65, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Квентин заводит Рафаэля в школьный медпункт. Вокруг стерильная чистота, кушетка, рабочий стол с записями. Однако вместо привычной медсестры за столом сидит их классный руководитель.",
+            "en": "Quentin leads Raphael into the school infirmary. It is sterile clean, with a cot, and a desk with records. However, instead of the usual nurse, their homeroom teacher is sitting at the desk."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "normal",
+          "text": {
+            "ru": "Учитель Миднайт? А где наша медсестра?",
+            "en": "Teacher Midnight? Where is our nurse?"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "serious",
+          "text": {
+            "ru": "Она заболела.",
+            "en": "She fell ill."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "normal",
+          "text": {
+            "ru": "Вот как... И чем же она заболела?",
+            "en": "I see... And what did she come down with?"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "serious",
+          "text": {
+            "ru": "*Пауза* Её бросил парень. Если говорить прямо — она в запое. Поэтому сегодня я заменяю её здесь.",
+            "en": "*Pause* Her boyfriend dumped her. To put it bluntly — she's on a drinking binge. So today I am filling in for her here."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "Понятно... Вопросов больше нет. В общем, мы пришли, потому что Рафаэлю нехорошо. На ногах еле стоит.",
+            "en": "Understood... No more questions. Anyway, we came because Raphael isn't feeling well. He can barely stand on his feet."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Выслушать Лазариуса",
+            "en": "Listen to Lazarus"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_INFIRMARY_TALK"
+          }
+        }
+      ]
+    },
+
+    "SCENE_INFIRMARY_TALK": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/school_infirmary.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 35, "top": 20, "height": 100 },
+          { "id": "quentin", "left": 5, "top": 20, "height": 100 },
+          { "id": "lazarus", "left": 65, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "lazarus",
+          "expression": "serious",
+          "text": {
+            "ru": "Рафаэль. Живо сядь на кушетку и рассказывай, что именно с тобой случилось.",
+            "en": "Raphael. Sit on the cot right now and tell me exactly what happened to you."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "serious",
+          "text": {
+            "ru": "Я сел и без утайки выложил учителю всё: про постоянные кошмары, про чужое лицо в зеркале витрины и полное отсутствие страха перед этим безумием.",
+            "en": "I sat down and openly told the teacher everything: about the constant nightmares, the stranger's face in the storefront mirror, and the complete lack of fear in the face of this madness."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Узнать вердикт учителя",
+            "en": "Hear the teacher's verdict"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_INFIRMARY_VERDICT"
+          }
+        }
+      ]
+    },
+
+    "SCENE_INFIRMARY_VERDICT": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/school_infirmary.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 5, "top": 20, "height": 100 },
+          { "id": "quentin", "left": 20, "top": 20, "height": 100 },
+          { "id": "lazarus", "left": 65, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "Знаете, учитель... Это совсем не похоже на бред сумасшедшего. Тут явно что-то глубокое.",
+            "en": "You know, teacher... This doesn't sound like a madman's rambling at all. There's clearly something deep here."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "serious",
+          "text": {
+            "ru": "Рафаэль, прямо сейчас у тебя сильный стресс. В таком состоянии таблетки тебе не помогут, да и в этом медпункте я ничем не смогу содействовать.",
+            "en": "Raphael, you are under severe stress right now. In this state, pills won't help you, and there is nothing I can do to assist you here in this infirmary."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "normal",
+          "text": {
+            "ru": "Вместо лекарств тебе лучше пойти поговорить с какой-нибудь девочкой, отвлечься от этих мыслей, а потом сосредоточиться на уроке. Ступайте.",
+            "en": "Instead of medicine, you'd better go talk to some girl, distract yourself from these thoughts, and then focus on the lesson. Off you go."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "normal",
+          "text": {
+            "ru": "Спасибо, учитель Миднайт.",
+            "en": "Thank you, Teacher Midnight."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "normal",
+          "text": {
+            "ru": "Благодарим. Пошли, Рафаэль.",
+            "en": "Thank you. Let's go, Raphael."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Направиться в класс",
+            "en": "Head to class"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "TOLD_LAZARIUS_AT_START", "value": true }
+            ],
+            "next_scene": "SCENE_CLASS_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_CLASS_START": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 80, "top": 20, "height": 70 },
+          { "id": "quentin", "left": 70, "top": 20, "height": 70 },
+          { "id": "adelina", "left": 10, "top": 20, "height": 70 },
+          { "id": "erin", "left": 0, "top": 20, "height": 70 },
+          { "id": "eleniel", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль и Квентин входят в класс. Внутри шумно, все ученики уже на своих местах. У большого окна стоит Эрин, а перед ней скрестила руки Аделина.",
+            "en": "Raphael and Quentin enter the classroom. It's noisy inside, all students are already in their seats. Erin is standing by the large window, and Adelina stands in front of her with crossed arms."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "adelina",
+          "expression": "serious",
+          "text": {
+            "ru": "Эрин, ты меня вообще слышишь?! Ты совершенно не думаешь об учёбе! С твоим отношение ты завалишь все экзамены!",
+            "en": "Erin, are you even listening to me?! You don't care about studying at all! With your attitude, you'll fail all the exams!"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Эрин смотрит в окно на падающие листья, полностью игнорируя старосту. На её лице абсолютное безразличие, ей откровенно пофиг.",
+            "en": "Erin looks out the window at the falling leaves, completely ignoring the class president. Absolute indifference is on her face, she frankly doesn't care."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "eleniel",
+          "expression": "serious",
+          "text": {
+            "ru": "Ой, Аделина, избавь нас от своих лекций. Тебя же никто не слушает. Твои нравоучения уже у всех в печёнках сидят, никому ты со своим занудством не сдалась.",
+            "en": "Oh, Adelina, spare us your lectures. Nobody is listening to you anyway. Everyone is sick of your moralizing, no one needs your boring attitude."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "adelina",
+          "expression": "serious",
+          "text": {
+            "ru": "Фаланар! Как староста класса, я обязана следить за порядком и успеваемостью!",
+            "en": "Falanar! As the class president, it is my duty to maintain order and academic performance!"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "serious",
+          "text": {
+            "ru": "А ну заткнулись все! Рты закрыли!",
+            "en": "Shut up, everyone! Close your mouths!"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "В классе моментально воцаряется гробовая тишина. Все ученики испуганно затихают. Только Элениэль ни капли не боится Квентина — она лишь вызывающе ухмыляется.",
+            "en": "A dead silence instantly falls over the classroom. All the students quiet down in fear. Only Eleniel isn't a bit afraid of Quentin — she just smirks defiantly."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Квентин и Элениэль, сверля друг друга взглядами, молча отходят в дальний угол класса, чтобы в очередной раз жёстко выяснить свои отношения.",
+            "en": "Quentin and Eleniel, glaring at each other, silently walk away to the far corner of the classroom to once again aggressively sort out their relationship."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Подождать, пока подойдёт Эрин",
+            "en": "Wait for Erin to approach"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_CLASS_ERIN_APPROACH"
+          }
+        }
+      ]
+    },
+
+    "SCENE_CLASS_ERIN_APPROACH": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 80, "top": 20, "height": 70 },
+          { "id": "erin", "left": 70, "top": 20, "height": 70 },
+          { "id": "adelina", "left": 50, "top": 20, "height": 70 },
+          { "id": "quentin", "left": 5, "top": 20, "height": 70 },
+          { "id": "eleniel", "left": 15, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Заметив вошедшего Рафаэля, Эрин резко меняется в лице. Она буквально расцветает, её хмурое настроение мгновенно испаряется, и она подходит вплотную к нему, заглядывая в глаза.",
+            "en": "Noticing Raphael entering, Erin's facial expression changes sharply. She literally brightens up, her gloomy mood instantly vanishes, and she steps close to him, looking into his eyes."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "erin",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль! Ты наконец-то пришёл. Я так рада тебя видеть.",
+            "en": "Raphael! You're finally here. I'm so glad to see you."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Поздороваться только с Эрин",
+            "en": "Greet only Erin"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "GREETED_ONLY_ERIN", "value": true },
+              { "type": "set_flag", "param": "ADELINA_OFFENDED", "value": true }
+            ],
+            "next_scene": "SCENE_CLASS_GREET_ONLY_ERIN"
+          }
+        },
+        {
+          "text": {
+            "ru": "Поздороваться с Эрин и Аделиной",
+            "en": "Greet Erin and Adelina"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "GREETED_BOTH_GIRLS", "value": true },
+              { "type": "set_flag", "param": "ADELINA_RESPECTED", "value": true }
+            ],
+            "next_scene": "SCENE_CLASS_GREET_BOTH"
+          }
+        }
+      ]
+    },
+
+    "SCENE_CLASS_GREET_ONLY_ERIN": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 35, "top": 20, "height": 70 },
+          { "id": "erin", "left": 55, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "adelina",
+          "expression": "serious",
+          "text": {
+            "ru": "*Фыркает*",
+            "en": "*Snorts*"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Аделина фыркает и уходит. На сцене остаются только Рафаэль и Эрин, они стоят близко в центре кадра.",
+            "en": "Adelina snorts and walks away. Only Raphael and Erin remain on the stage, standing close in the center of the frame."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "erin",
+          "expression": "serious",
+          "text": {
+            "ru": "Рафаэль, ты просто вот обязан пойти со мной на выставку сегодня! Это вопрос жизни и смерти для меня, ты вот можешь меня спасти!",
+            "en": "Raphael, you just absolutely have to go to the exhibition with me today! This is a matter of life and death for me, you are the one who can save me!"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Согласиться пойти с ней",
+            "en": "Agree to go with her"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "ERIN_EXHIBITION_AGREED", "value": true }
+            ],
+            "next_scene": "SCENE_ERIN_ROUTE_AGREE"
+          }
+        },
+        {
+          "text": {
+            "ru": "Отказаться",
+            "en": "Refuse"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "ERIN_EXHIBITION_REFUSED", "value": true }
+            ],
+            "next_scene": "SCENE_ERIN_ROUTE_REFUSE"
+          }
+        }
+      ]
+    },
+
+    "SCENE_ERIN_ROUTE_AGREE": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 35, "top": 20, "height": 70 },
+          { "id": "erin", "left": 55, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Эрин счастлива, она запомнит это. Она начинает долго и безостановочно флиртовать с ним, но так, прилично.",
+            "en": "Erin is happy, she will remember this. She starts flirting with him long and non-stop, but decently."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Начать урок",
+            "en": "Start the lesson"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_LESSON_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_ERIN_ROUTE_REFUSE": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 35, "top": 20, "height": 100 },
+          { "id": "erin", "left": 55, "top": 20, "height": 100 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Эрин обижается и больше не разговаривает с Рафаэлем.",
+            "en": "Erin gets offended and stops talking to Raphael altogether."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Начать урок",
+            "en": "Start the lesson"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_LESSON_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_CLASS_GREET_BOTH": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 },
+          { "id": "adelina", "left": 45, "top": 20, "height": 70 },
+          { "id": "erin", "left": 75, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Эрин обижается на Рафаэля и отворачивается. Она больше с ним не разговаривает.",
+            "en": "Erin gets offended by Raphael and turns away. She doesn't talk to him anymore."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "adelina",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль, ты подготовился к сегодняшней самостоятельной по математике? Предыдущую тему многие завалили.",
+            "en": "Raphael, did you prepare for today's math test? Many failed the previous topic."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "raphael",
+          "expression": "normal",
+          "text": {
+            "ru": "Да, я полностью разобрал весь материал. Проблем возникнуть не должно.",
+            "en": "Yes, I've completely reviewed all the material. There shouldn't be any problems."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "adelina",
+          "expression": "normal",
+          "text": {
+            "ru": "Отлично. Рассчитываю, что наш класс покажет лучший результат в параллели.",
+            "en": "Great. I'm counting on our class to show the best result among the grades."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Начать урок",
+            "en": "Start the lesson"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_LESSON_START"
+          }
+        }
+      ]
+    },
+
+
+    "SCENE_LESSON_START": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "lazarus", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Учитель Миднайт заходит в класс. Школьники моментально затыкают рты и садятся по местам. Лазариуса безукоризненно уважают абсолютно все.",
+            "en": "Teacher Midnight enters the classroom. The students instantly shut their mouths and sit in their places. Absolutely everyone respects Lazarius flawlessly."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "normal",
+          "text": {
+            "ru": "Здравствуйте. У меня объявление. Учитель математики повесился из-за того, что его сын стал преступником, нападавшим на девочек. Поэтому сегодня уроков не будет.",
+            "en": "Hello. I have an announcement. The math teacher hanged himself because his son became a criminal who attacked girls. Therefore, there will be no lessons today."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "normal",
+          "text": {
+            "ru": "Вместо этого я решил сводить вас в галерею на выставку.",
+            "en": "Instead, I have decided to take you to a gallery for an exhibition."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Слушать дальше",
+            "en": "Listen further"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_LESSON_QUENTIN_INTERRUPTION"
+          }
+        }
+      ]
+    },
+
+    "SCENE_LESSON_QUENTIN_INTERRUPTION": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "lazarus", "left": 35, "top": 20, "height": 70 },
+          { "id": "quentin", "left": 65, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "quentin",
+          "expression": "normal",
+          "text": {
+            "ru": "Учитель Миднайт, то есть про медсестру, которую парень бросил, это была не шутка?",
+            "en": "Teacher Midnight, so that story about the nurse being dumped by her boyfriend wasn't a joke?"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "normal",
+          "text": {
+            "ru": "Не шутка.",
+            "en": "Not a joke."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "quentin",
+          "expression": "normal",
+          "text": {
+            "ru": "Тогда мы должны взять её с собой! Если вы не хотите её «утешить», то вот я бы её с радостью утешил.",
+            "en": "Then we should take her with us! If you don't want to 'comfort' her, well, I would gladly comfort her."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Весь класс дружно смеётся над репликой Квентина.",
+            "en": "The whole class bursts into laughter at Quentin's remark."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Ничего не сказать",
+            "en": "Say nothing"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_LESSON_SILENT_BRANCH"
+          }
+        },
+        {
+          "text": {
+            "ru": "Серьёзно предложить самому пойти к медсестре",
+            "en": "Seriously offer to go to the nurse yourself"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "RAPHAEL_OFFERED_HELP_NURSE", "value": true }
+            ],
+            "next_scene": "SCENE_LESSON_HELP_NURSE_BRANCH"
+          }
+        }
+      ]
+    },
+
+    "SCENE_LESSON_SILENT_BRANCH": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "lazarus", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "lazarus",
+          "expression": "normal",
+          "text": {
+            "ru": "Довольно шума. Собирайте вещи, мы выдвигаемся.",
+            "en": "Enough noise. Pack your things, we are moving out."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Пойти на выставку",
+            "en": "Go to the exhibition"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_EXHIBITION_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_LESSON_HELP_NURSE_BRANCH": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 25, "top": 20, "height": 70 },
+          { "id": "lazarus", "left": 55, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "raphael",
+          "expression": "normal",
+          "text": {
+            "ru": "Учитель Миднайт, я могу сам пойти к медсестре и позвать её с нами? А то мало ли, что она в таком состоянии с собой сделает...",
+            "en": "Teacher Midnight, can I go to the nurse myself and invite her with us? Who knows what she might do to herself in that state..."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "lazarus",
+          "expression": "normal",
+          "text": {
+            "ru": "Молодец, Рафаэль. Хорошая инициатива. Иди к ней и приведи её.",
+            "en": "Well done, Raphael. Good initiative. Go to her and bring her along."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Посмотреть на реакцию класса",
+            "en": "Look at the class's reaction"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_LESSON_ERIN_INTERJECTION"
+          }
+        }
+      ]
+    },
+
+    "SCENE_LESSON_ERIN_INTERJECTION": {
+      "activation_conditions": [
+        { "type": "flag", "param": "ERIN_EXHIBITION_AGREED", "value": true }
+      ],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/classroom_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 25, "top": 20, "height": 70 },
+          { "id": "erin", "left": 55, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "erin",
+          "expression": "normal",
+          "text": {
+            "ru": "Я пойду с тобой, Рафаэль!",
+            "en": "I'll go with you, Raphael!"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Выйти из класса",
+            "en": "Leave the classroom"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_NURSE_MISSION_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_NURSE_MISSION_START": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль выходит на улицу, направляясь к дому медсестры Селены.",
+            "en": "Raphael goes out into the street, heading to the house of the nurse, Selena."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Идти по улице",
+            "en": "Walk down the street"
+          },
+          "kind": "neutral",
+          "conditions": [
+            { "type": "flag", "param": "ERIN_EXHIBITION_AGREED", "value": false }
+          ],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_SELENA_WAY_ALONE"
+          }
+        },
+        {
+          "text": {
+            "ru": "Идти по улице",
+            "en": "Walk down the street"
+          },
+          "kind": "neutral",
+          "conditions": [
+            { "type": "flag", "param": "ERIN_EXHIBITION_AGREED", "value": true }
+          ],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_SELENA_WAY_WITH_ERIN"
+          }
+        }
+      ]
+    },
+
+    "SCENE_SELENA_WAY_ALONE": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль идёт один. Прохожие девочки на улице продолжают то и дело бросать на него заинтересованные взгляды и шептаться у него за спиной.",
+            "en": "Raphael walks alone. The girls passing by on the street continue to cast interested glances at him and whisper behind his back."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Подойти к дому Селены",
+            "en": "Approach Selena's house"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_SELENA_DOOR_ALONE"
+          }
+        }
+      ]
+    },
+
+    "SCENE_SELENA_WAY_WITH_ERIN": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 },
+          { "id": "erin", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль идёт вместе с Эрин. Прохожие девочки смотрят на них, думают, что она его девушка, и откровенно расстраиваются из-за этого.",
+            "en": "Raphael walks together with Erin. The passing girls look at them, thinking she is his girlfriend, and get openly disappointed by this."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "erin",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль, а мы ведь хорошо вместе смотримся, правда?",
+            "en": "Raphael, we actually look really good together, don't we?"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Да, пожалуй",
+            "en": "Yes, I suppose"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "AGREED_LOOKS_GOOD_WITH_ERIN", "value": true }
+            ],
+            "next_scene": "SCENE_SELENA_DOOR_WITH_ERIN"
+          }
+        },
+        {
+          "text": {
+            "ru": "Нет",
+            "en": "No"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "REFUSED_LOOKS_GOOD_WITH_ERIN", "value": true }
+            ],
+            "next_scene": "SCENE_SELENA_DOOR_WITH_ERIN"
+          }
+        }
+      ]
+    },
+
+    "SCENE_SELENA_DOOR_ALONE": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль доходит до дома Селены, поднимается к её квартире и стучит в дверь.",
+            "en": "Raphael reaches Selena's house, goes up to her apartment, and knocks on the door."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Слышны тихие шаги за дверью. Селена смотрит в глазок, после чего медленно открывает замок и впускает его к себе домой.",
+            "en": "Quiet footsteps are heard behind the door. Selena looks through the peephole, after which she slowly unlocks the door and lets him into her house."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Войти в квартиру Селены",
+            "en": "Enter Selena's apartment"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_SELENA_INSIDE_ALONE"
+          }
+        }
+      ]
+    },
+
+    "SCENE_SELENA_DOOR_WITH_ERIN": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 },
+          { "id": "erin", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль и Эрин доходят до квартиры Селены. Рафаэль стучит в дверь.",
+            "en": "Raphael and Erin reach Selena's apartment. Raphael knocks on the door."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "За дверью наступает тишина. Селена смотрит в глазок, видит их двоих, но открывать даже не думает.",
+            "en": "Silence falls behind the door. Selena looks through the peephole, sees the two of them, but has no intention of opening."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "selena",
+          "expression": "serious",
+          "text": {
+            "ru": "Пошли куда подальше оба! Видеть никого не хочу!",
+            "en": "Get the hell away, both of you! I don't want to see anyone!"
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Вернуться в класс",
+            "en": "Return to class"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_RETURN_TO_CLASS_FAIL"
+          }
+        }
+      ]
+    },
+
+    "SCENE_RETURN_TO_CLASS_FAIL": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/road_to_school_morning.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 },
+          { "id": "erin", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Эрин довольно легкомысленно берёт Рафаэля за руку, увлекая за собой прочь от закрытой двери.",
+            "en": "Erin rather lightheartedly takes Raphael by the hand, pulling him away from the closed door."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "erin",
+          "expression": "normal",
+          "text": {
+            "ru": "Ну вот, мы сделали всё, что смогли! Пойдём отсюда, Рафаэль, нас ждёт выставка.",
+            "en": "Well, we did everything we could! Let's get out of here, Raphael, the exhibition is waiting for us."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Пойти на выставку с Эрин",
+            "en": "Go to the exhibition with Erin"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "SELENA_ALIVE_NEXT_DAY", "value": true }
+            ],
+            "next_scene": "SCENE_EXHIBITION_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_SELENA_INSIDE_ALONE": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "assets/demo/afterlife_school/images/bg/selena_bedroom.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 },
+          { "id": "selena", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль проходит внутрь. Пьяная Селена быстро закрывает за ним дверь на замок, после чего сразу же берёт его под руку и ведёт прямо к себе в спальню.",
+            "en": "Raphael steps inside. The drunk Selena quickly locks the door behind him, then immediately takes him by the arm and leads him straight to her bedroom."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        },
+        {
+          "speaker_id": "selena",
+          "expression": "sad",
+          "text": {
+            "ru": "Мне так плохо... Будь со мной сегодня. Возьми меня, делай со мной всё, что захочешь... Просто не уходи.",
+            "en": "I feel so bad... Be with me today. Take me, do whatever you want with me... Just don't leave."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "Согласиться и остаться на ночёвку",
+            "en": "Agree and stay overnight"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "RAPHAEL_STAYED_WITH_SELENA", "value": true },
+              { "type": "set_flag", "param": "SELENA_ALIVE_NEXT_DAY", "value": true }
+            ],
+            "next_scene": "SCENE_SELENA_NIGHT_STAY"
+          }
+        },
+        {
+          "text": {
+            "ru": "Отказаться и быстро уйти",
+            "en": "Refuse and leave quickly"
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [
+              { "type": "set_flag", "param": "RAPHAEL_LEFT_SELENA", "value": true },
+              { "type": "set_flag", "param": "SELENA_ALIVE_NEXT_DAY", "value": false }
+            ],
+            "next_scene": "SCENE_EXHIBITION_START"
+          }
+        }
+      ]
+    },
+
+    "SCENE_SELENA_NIGHT_STAY": {
+      "activation_conditions": [],
+      "meta": {
+        "group": "prologue",
+        "type": "active_dialog"
+      },
+      "window_settings": {
+        "display_type": "fullscreen",
+        "backgroundImage": "./assets/images/bg/selena_apartment.png",
+        "actors_registry": [
+          { "id": "raphael", "left": 15, "top": 20, "height": 70 },
+          { "id": "selena", "left": 45, "top": 20, "height": 70 }
+        ],
+        "panel_height": 40,
+        "avatar_width": 20,
+        "panel_bottom": 1
+      },
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль остаётся в квартире Селены до самого утра, разделяя с ней эту длинную ночь.",
+            "en": "Raphael remains in Selena's apartment until the very morning, sharing this long night with her."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
+      "player_choices": [
+        {
+          "text": {
+            "ru": "На следующий день...",
+            "en": "The next day..."
+          },
+          "kind": "neutral",
+          "conditions": [],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_NEXT_DAY_START"
+          }
+        }
+      ]
+    }
+
+
+  }
+}
