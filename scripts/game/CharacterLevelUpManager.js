@@ -62,7 +62,6 @@ export const CharacterLevelUpManager = {
         // 2.3. Записываем финальную планку опыта, необходимую для перехода на СЛЕДУЮЩИЙ уровень
         char.requiredExp = this.calculateRequiredExp(char.level, classConfig?.nextLevelXpFormula);
 
-        console.log(`[LevelUpManager] Инициализирован персонаж: ${char.name}. Уровень: ${char.level}, Класс: ${char.classId || 'Нет'}. Требуется до левелапа: ${char.requiredExp} exp.`);
     },
 
     /**

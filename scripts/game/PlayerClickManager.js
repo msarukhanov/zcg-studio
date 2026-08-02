@@ -10,9 +10,10 @@ export class PlayerClickManager {
      * Обработка точечного клика мыши строго в режиме игры (PLAY)
      */
     handleMapClick(mouseX, mouseY) {
-
+        console.log(mouseX, mouseY);
         const hexMath = AppState.engine.hexMath;
         let tile = hexMath.get3DHexFromPixel(mouseX, mouseY);
+        console.log(tile);
         if (!tile) return;
 
         console.log(tile.q, tile.r, tile);
@@ -22,7 +23,7 @@ export class PlayerClickManager {
         if (AppState.engine.skillManager && AppState.play.activeSkillId && tile.isSkillTargetZone) {
             const config = AppState.skills[AppState.play.activeSkillId];
             AppState.engine.skillManager.executeActiveSkill(char, tile, config);
-            return; // Клик поглощен заклинанием, прерываем логику ходьбы персонажа
+            return;
         }
         else if (AppState.engine.skillManager && AppState.play.activeSkillId && !tile.isSkillTargetZone) {
             return;
@@ -32,8 +33,6 @@ export class PlayerClickManager {
         const heightStep = AppState.config.heightStep;
 
         this.handleMapHover(mouseX, mouseY);
-
-        console.log(char, char.currentActivePath);
 
         let clickInPath = false;
         if (char && char.currentActivePath && char.currentActivePath.length > 0) {
@@ -50,7 +49,6 @@ export class PlayerClickManager {
 
         if (clickedCharId) {
             const char = AppState.entities[clickedCharId];
-            console.log(char);
 
             const isObject = !!AppState.objects[clickedCharId];
             const isChar = !!AppState.characters[clickedCharId];
@@ -71,117 +69,37 @@ export class PlayerClickManager {
                     return;
                 }
             }
-
-            // if (isObject && char.faction === AppState.player.faction) {
-            //     AppState.play.selectedObject = char;
-            //     AppState.engine.ScreenManager.renderScreen('object_screen');
-            // }
-
-            // =========================================================================
-            // 🏢 ЛОГИКА КОМПОНЕНТОВ ДЛЯ ОБЪЕКТОВ (Твой поправленный и заполненный блок)
-            // =========================================================================
-            // if (isObject) {
-            //     // А. У объекта есть ХП и статы, но мы с ним не воюем (Нейтральная ломаемая бочка, забор, или починка здания)
-            //     if (char.stats) {
-            //         console.log(`[ClickManager] Взаимодействие с разрушаемым/ремонтируемым объектом: ${char.name}`);
-            //         // Здесь будет логика ремонта за ресурсы или мирного слома, если нужно
-            //     }
-            //     // Б. У объекта есть встроенный диалог / Текстовый квест (Лагерь эльфов "elf_camp" или "ancient_ruins")
-            //     // else if (char.dialog) {
-            //     //     if (AppState.engine.dialogManager) {
-            //     //         AppState.engine.dialogManager.trigger('character_dialog_' + clickedCharId);
-            //     //     }
-            //     // }
-            //     // // В. Объект можно обыскать / открыть как склад (Сундук "chest1" или труп врага без статов)
-            //     // else if(char.interactable) {
-            //     //     console.log(`[ClickManager] Открытие контейнера: ${char.name}`);
-            //     //
-            //     //     if (char.backpack) {
-            //     //         // 1. Включаем двухпанельный режим обмена на экране персонажа
-            //     //         AppState.engine.ScreenManager._isTransferMode = true;
-            //     //
-            //     //         // 2. Подставляем ID сундука ("chest1") вместо сопартийца для правой панели рюкзака!
-            //     //         AppState.engine.ScreenManager._selectedCharId = clickedCharId;
-            //     //
-            //     //         // 3. Принудительно вызываем рендер двухпанельного интерфейса
-            //     //         AppState.engine.ScreenManager.renderScreen('character_transfer');
-            //     //     }
-            //     // }
-            //     // // Г. Клик по объекту авто-перехода (Лестница "ladder"). По клику просто телепортируем, если наступить лень
-            //     // else if (char.mapTo) {
-            //     //     const destination = char.mapTo;
-            //     //     if (destination && AppState.engine.mapManager) {
-            //     //         console.log(`[ClickManager] Быстрый переход сквозь портал/лестницу на карту: ${destination.mapId}`);
-            //     //         AppState.engine.mapManager.switchMap(destination.mapId);
-            //     //         AppState.engine.mapManager.teleportCharacter(AppState.play.activeCharacterId, destination.mapId, destination.q, destination.r);
-            //     //         AppState.engine.mapManager.refreshWorldRender(AppState.play.activeCharacterId);
-            //     //     }
-            //     // }
-            // }
-            // // =========================================================================
-            // // 👥 ЛОГИКА ДЛЯ СЮЖЕТНЫХ ПЕРСОНАЖЕЙ (Эрин и др.)
-            // // =========================================================================
-            // else if (isChar) { // СТРОГИЙ ФИКС: исправили имя переменной с isCharacter на isChar
-            //     // if (AppState.engine.dialogManager) {
-            //     //     AppState.engine.dialogManager.trigger('character_dialog_' + clickedCharId);
-            //     // }
-            // }
         }
 
-        if(clickInPath) {
+        if(clickInPath && AppState.main.MovementControls.includes('click')) {
             this.executeCharacterMovement();
+            return;
         }
         this.deselectAll();
-
-        // console.log(char.currentActivePath, clickInPath);
-        // if (AppState.play.activeCharacterId && clickInPath) {
-        //     this.executeCharacterMovement();
-        //     // Находим именно тот объект тайла, который лежит внутри построенного пути
-        //     // const pathTile = char.currentActivePath.find(p => p.q === tile.q && p.r === tile.r);
-        //     //
-        //     // if (pathTile && pathTile.isEnemyTarget) {
-        //     //     if (AppState.engine.combatManager) {
-        //     //         AppState.engine.combatManager.startBattle(AppState.play.activeCharacterId, tile);
-        //     //     }
-        //     //     this.deselectAll();
-        //     //     this.redrawMap();
-        //     // }
-        //     // else {
-        //     //     // Если это обычная клетка пути — движемся
-        //     //
-        //     // }
-        //     return;
-        // }
-        //
-        // this.deselectAll();
     }
 
     executeCharacterSelect(charId) {
         const char = AppState.entities[charId];
-        // if (AppState.game_settings && AppState.game_settings.playerType === 'character') {
-        //     const mainCharId = AppState.player?.character;
-        //
-        //     // БЛОКИРОВКА СЕЛЕКТА: Если игрок пытается выбрать кого-то, кроме своего прописанного героя
-        //     if (charId !== mainCharId) {
-        //         console.log(`🚫 [Select Block] Управление заблокировано: Вы можете выбирать только своего героя (${mainCharId}).`);
-        //         return; // Игнорируем выбор чужой фигурки
-        //     }
-        // }
+        if(!char) {
+            this.deselectAll();
+            return;
+        }
 
-        if (AppState.game_settings && AppState.game_settings.playerType === 'character') {
-            const mainCharId = AppState.player?.faction;
-
-            // БЛОКИРОВКА СЕЛЕКТА: Если игрок пытается выбрать кого-то, кроме своего прописанного героя
+        if (AppState.game_settings && AppState.game_settings.playerType === 'faction') {
             if (char.faction !== AppState.player?.faction) {
                 console.log(`🚫 [Select Block] Управление заблокировано: Вы можете выбирать только своих.`);
-                return; // Игнорируем выбор чужой фигурки
+                return;
             }
         }
 
-        this.deselectAll();
+        if (AppState.game_settings && AppState.game_settings.playerType === 'character') {
+            if (char.id !== AppState.player?.character) {
+                console.log(`🚫 [Select Block] Управление заблокировано: Вы можете выбирать только своих.`);
+                return;
+            }
+        }
 
         AppState.play.activeCharacterId = charId;
-
 
         if (AppState.engine.visionManager) {
             AppState.engine.visionManager.updateFogOfWar();
@@ -200,9 +118,7 @@ export class PlayerClickManager {
 
         AppState.engine.visionManager.updateFogOfWar();
 
-        if (AppState.engine.uiManager && AppState.engine.uiManager.updateAll) {
-            AppState.engine.uiManager.updateAll();
-        }
+        AppState.engine.uiManager.updateAll();
     }
 
     executeCharacterMovement() {

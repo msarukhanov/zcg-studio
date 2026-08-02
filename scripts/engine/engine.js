@@ -9,6 +9,11 @@ import { MovementManager } from '../game/MovementManager.js';
 import { CombatManager } from '../game/CombatManager.js';
 import { SkillManager } from '../game/SkillManager.js';
 import { PlayerClickManager } from '../game/PlayerClickManager.js';
+import { PlatformerMovementManager } from '../game/PlatformerMovementManager.js';
+import { InputManager } from '../game/InputManager.js';
+
+// Заменяем или расширяем старый менеджер
+
 
 import { AIManager } from '../game/AIManager.js';
 import { TimeManager } from '../game/TimeManager.js';
@@ -39,10 +44,22 @@ export function InitEngine() {
         AppState.engine.mapData = new MapData();
         AppState.engine.pathRenderer = new PathRenderer();
         AppState.engine.visionManager = new VisionManager();
-        AppState.engine.movementManager = new MovementManager();
+        // AppState.engine.movementManager = new MovementManager();
+
+        AppState.engine.movementManager = new PlatformerMovementManager({
+            gravity: 0.5,        // Сила притяжения
+            jumpForce: -10,      // Сила прыжка (вверх по Y)
+            moveSpeed: 4,        // Скорость бега влево/вправо
+            terminalVelocity: 12 // Максимальная скорость падения
+        });
+
+        AppState.engine.TranslateManager = new TranslateManager();
 
         AppState.engine.timeManager = new TimeManager();
     }
+
+
+    AppState.engine.inputManager = new InputManager();
 
 
     AppState.engine.TranslateManager = new TranslateManager();

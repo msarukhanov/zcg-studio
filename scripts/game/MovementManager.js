@@ -275,4 +275,152 @@ export class MovementManager {
         }
     }
 
+
+    animateMovement(char, deltaMS, ) {
+        let needRedraw = false;
+        if (char.action !== 'move' || !char.currentMovementVisualPath || !char.currentMovementVisualPath.length) return needRedraw;
+
+        const hexMath = AppState.engine.hexMath;
+        const movementManager = AppState.engine.movementManager;
+        const playerClickManager = AppState.engine.playerClickManager;
+
+        const nextTile = char.currentMovementVisualPath[0];
+
+        if (AppState.turn_settings?.turn_mode === "realtime") {
+            const currentTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+
+            // Проверяем клетку, к которой юнит летит ПРЯМО СЕЙЧАС в этом кадре
+            const stepCheck = this.canStepBetween(currentTile, nextTile, char);
+
+            if (stepCheck !== "walkable") {
+                console.warn(`🏃‍♂️ [Movement Grid Lock] Путь перекрыт! Гекс (${nextTile.q}, ${nextTile.r}) занят статусом [${stepCheck}]. Экстренная остановка ${char.name}.`);
+
+                char.currentMovementVisualPath = [];
+                char.action = 'idle';
+
+                if (char.mvmReadyTimer !== undefined) {
+                    char.mvmReadyTimer = 0;
+                }
+                needRedraw = true;
+                return needRedraw;
+            }
+        }
+
+        needRedraw = true;
+
+        const fromPixel = hexMath.cubeToPixel(char.mapPosition.q, char.mapPosition.r);
+        const fromTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+        const fromLiftY = fromTile ? (fromTile.height - 1) * (hexMath.size * 0.25) : 0;
+        const startX = fromPixel.x;
+        const startY = fromPixel.y - fromLiftY;
+
+        const toPixel = hexMath.cubeToPixel(nextTile.q, nextTile.r);
+        const toLiftY = (nextTile.height - 1) * (hexMath.size * 0.25);
+        const endX = toPixel.x;
+        const endY = toPixel.y - toLiftY;
+
+        // Поворот взгляда змейкой
+        char.direction = '';
+        char.directionV = '';
+
+        if (nextTile.q > char.mapPosition.q) {
+            char.direction = 'right';
+        }
+        else if (nextTile.q < char.mapPosition.q) {
+            char.direction = 'left';
+        }
+        else if (nextTile.r > char.mapPosition.r) {
+            // char.directionV = 'forward';
+            char.direction = 'forward';
+        }
+        else if (nextTile.r < char.mapPosition.r) {
+            // char.directionV = 'back';
+            char.direction = 'back';
+        }
+
+        // 3. Расчет шага интерполяции
+        const stepDuration = AppState.config.animationSpeed.movePerHex;
+        char.movementLerpTime += deltaMS / stepDuration;
+
+        // 4. Плавно смещаем пиксели фишки
+        if (char.movementLerpTime < 1.0) {
+            char.visualX = startX + (endX - startX) * char.movementLerpTime;
+            char.visualY = startY + (endY - startY) * char.movementLerpTime;
+        }
+        else {
+            // 5. МИКРО-ШАГ ЗАВЕРШЕН: Юнит наступил на гекс соседа
+            char.visualX = endX;
+            char.visualY = endY;
+            char.movementLerpTime = 0;
+
+            char.mapPosition.q = nextTile.q;
+            char.mapPosition.r = nextTile.r;
+
+            // Открываем Туман Войны на ходу
+            if (AppState.engine.visionManager) AppState.engine.visionManager.updateFogOfWar();
+
+            // Удаляем пройденный гекс
+            char.currentMovementVisualPath.shift();
+
+            AppState.engine.triggerManager.processEvent('tile_enter', {
+                subject: char,      // Кто наступил (например, Рафаэль)
+                tile: char.mapPosition    // На какой гекс наступил (3:2)
+            });
+
+            // =========================================================================
+            // 🚪 АВТОМАТИЧЕСКИЙ ПЕРЕХОД ПО КАРТАМ (Входы/Выходы через mapTo)
+            // =========================================================================
+            // Проверяем это ТОЛЬКО для активного персонажа игрока, чтобы боты случайно не улетали в порталы
+            if (char.id === AppState.play?.activeCharacterId) {
+                const currentQ = char.mapPosition.q;
+                const currentR = char.mapPosition.r;
+
+                let objectUnderFeet = null;
+                Object.values(AppState.entities).forEach(entity => {
+                    if (entity && entity.mapPosition && entity.mapPosition.q === currentQ && entity.mapPosition.r === currentR) {
+                        // Нас интересуют только интерактивные сущности, а не сам Рафаэль
+                        if (entity.id !== char.id) {
+                            objectUnderFeet = entity;
+                        }
+                    }
+                });
+                AppState.engine.uiManager.showInteractionMenu();
+            }
+            // =========================================================================
+
+
+            // 6. МАРШРУТ ПОЛНОСТЬЮ ЗАВЕРШЕН: Очередь пуста, юнит остановился
+            if (char.currentMovementVisualPath.length === 0) {
+                char.action = 'idle'; // Переводим в покой
+
+                const activeChar = AppState.entities[AppState.play.activeCharacterId];
+                const reachableTiles = this.getReachableTiles(activeChar);
+                AppState.play.cachedReachableTiles = reachableTiles;
+                AppState.engine.pathRenderer.drawMovementZone(reachableTiles);
+
+                if (char.id === AppState.play.activeCharacterId && playerClickManager) {
+                    const finalTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+                    if (finalTile) {
+                        playerClickManager.executeCharacterSelect(char.id);
+                    }
+                }
+            }
+
+            if (char.action === 'idle' && !AppState.isPlatformerMode) {
+                const currentDir = AppState.engine.inputManager?.getHexGridInput();
+
+                if (currentDir) {
+                    // Вызываем ваш родной метод. Он проверит canStepBetween,
+                    // переведет в 'move' и закинет тайл в массив для следующего кадра.
+                    AppState.engine.inputManager._triggerRTSMovement(currentDir);
+
+                    if (char.action === 'move') {
+                        needRedraw = true;
+                    }
+                }
+            }
+        }
+
+        return needRedraw;
+    }
 }

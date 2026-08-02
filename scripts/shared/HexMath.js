@@ -18,31 +18,51 @@ export class HexMath {
         this.get3DHexFromPixel = this.get3DHexFromPixel.bind(this);
     }
 
-    /**
-     * Переводит кубические координаты (q, r) в экранные пиксели (x, y)
-     * Используется для сетки Flat-topped (плоский верх, острые угла в бока)
-     */
     cubeToPixel(q, r) {
+        // 🔄 ЕСЛИ ВКЛЮЧЕН ПЛАТФОРМЕР: выпрямляем Flat-topped гексы в ровные горизонтальные ряды
+        // if (AppState.isPlatformerMode) {
+        //
+        //     const x = this.size * (3/2 * q);
+        //     const y = this.size * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r - (q%2)*Math.sqrt(3));
+        //     return { x, y };
+        //
+        //     return { x, y };
+        // }
+
+        // Твой оригинальный рабочий код для обычного RTS режима (НЕПРИКОСНОВЕННЫЙ)
         const x = this.size * (3/2 * q);
         const y = this.size * (Math.sqrt(3)/2 * q + Math.sqrt(3) * r);
         return { x, y };
     }
 
-    /**
-     * ПЕРЕВОД ПИКСЕЛЕЙ В КООРДИНАТЫ ГЕКСА (То, чего не хватало)
-     * Переводит локальные пиксели карты (x, y) обратно в кубические координаты (q, r)
-     */
-    /**
-     * Переводит локальные пиксели карты (x, y) в кубические координаты (q, r)
-     */
     pixelToCube(x, y) {
-        // Точная инверсия Flat-topped матрицы
+        // 🔄 ЕСЛИ ВКЛЮЧЕН ПЛАТФОРМЕР: обратный перевод из ровных горизонтальных рядов
+        // if (AppState.isPlatformerMode) {
+        //     const hexWidth = this.size * 1.5;
+        //     const hexHeight = Math.sqrt(3) * this.size;
+        //
+        //     // Находим строку r напрямую из выпрямленного Y
+        //     const rEst = Math.round(y / hexHeight);
+        //
+        //     // Убираем горизонтальное смещение нечетного ряда назад перед поиском q
+        //     if (Math.abs(rEst) % 2 === 1) {
+        //         x -= hexWidth / 2;
+        //     }
+        //
+        //     // Находим колонку q из скорректированного X
+        //     const qEst = Math.round(x / hexWidth);
+        //
+        //     // Передаем в твой канонический алгоритм округления hexRound
+        //     return this.hexRound(qEst, rEst, -qEst - rEst);
+        // }
+
+        // Твой оригинальный рабочий код для обычного RTS режима (НЕПРИКОСНОВЕННЫЙ)
         const q = (2/3 * x) / this.size;
         const r = (-1/3 * x + Math.sqrt(3)/3 * y) / this.size;
-
-        // Передаем все три оси в правильный алгоритм гексагонального округления
         return this.hexRound(q, r, -q - r);
     }
+
+
 
     /**
      * ПРАВИЛЬНОЕ ГЕКСАГОНАЛЬНОЕ ОКРУГЛЕНИЕ (СТАНДАРТ RED BLOB GAMES)

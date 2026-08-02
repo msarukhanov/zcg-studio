@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hex Battle</title>
+    <title>ZCG Studio Play</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/dialog.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/8.13.2/pixi.min.js" integrity="sha512-rOMqai9NIPaFWpmvHUjdOa2dSuaaYo6i7E19jS1ZW9rjnrl4qAOOtsOeTk0QgIflFCe2ZYi/7or3CRF6VfBk9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -15,7 +15,8 @@
             top: 0; left: 0;
             position: fixed;
             z-index: 1000000;
-            background: url('../assets/images/main_menu_bg_2.png') center / cover no-repeat;
+            background: '#0d1117';
+            /*background: url('../assets/images/main_menu_bg_2.png') center / cover no-repeat;*/
             transition: opacity 0.4s ease;
             display: flex;
             flex-direction: column;
@@ -36,11 +37,19 @@
             box-sizing: border-box;
         }
 
+        .logo-svg {
+            width: 300px;
+            height: 300px;
+            position: fixed;
+            top: calc(50% - 150px);
+            left: calc(50% - 150px);
+        }
+
         /* Текст загрузки: строгий, читаемый, по центру */
         .loading-text-container {
             width: 100%;
             text-align: center;
-            color: #f3f4f6;
+            color: #d4af37;
             font-family: sans-serif;
             font-size: 13px;
             font-weight: 500;
@@ -81,6 +90,13 @@
 
 <div id="loading-wrapper">
     <div class="loading-block">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" class="logo-svg">
+            <rect width="500" height="500" fill="#121212" rx="40"/>
+            <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-family="'JetBrains Mono', 'Fira Code', 'Montserrat', sans-serif" font-weight="900">
+                <tspan x="50%" dy="0" font-size="125" fill="#ff5a5f" textLength="360" lengthAdjust="spacingAndGlyphs">ZCG</tspan>
+                <tspan x="50%" dy="115" font-size="115" fill="#4ecca3" textLength="360" lengthAdjust="spacingAndGlyphs">STUDIO</tspan>
+            </text>
+        </svg>
         <!-- Текст над полоской -->
         <div class="loading-text-container">
             Loading assets <span id="loading-num">0%</span>

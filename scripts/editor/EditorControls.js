@@ -97,9 +97,13 @@ export class EditorControls {
             });
         });
 
-        // document.getElementById('btn-new').addEventListener('click', () => {
-        //     AppState.engine.MapManager.newMap();
-        // });
+        document.getElementById('btn-new').addEventListener('click', () => {
+            AppState.engine.GameSettingsEditor.openEditorModal('new');
+        });
+
+        document.getElementById('btn-settings').addEventListener('click', () => {
+            AppState.engine.GameSettingsEditor.openEditorModal('edit');
+        });
 
         document.getElementById('btn-save').addEventListener('click', () => {
             AppState.engine.MapManager.saveMap();

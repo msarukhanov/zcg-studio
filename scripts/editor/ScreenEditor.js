@@ -493,7 +493,7 @@ export class ScreenEditor {
 
         if (activeScreen.widgets) {
             activeScreen.widgets.forEach(widget => {
-                if (widget.type === 'button') {
+                if (widget.type) {
                     const btn = document.createElement('button');
 
                     let buttonText = widget.id;
@@ -505,8 +505,10 @@ export class ScreenEditor {
                     const lay = widget.layout || {};
                     Object.assign(btn.style, {
                         position: 'absolute',
-                        top: lay.top || '0%',
-                        left: lay.left || '0%',
+                        top: lay.top || 'unset',
+                        left: lay.left || 'unset',
+                        right: lay.right || 'unset',
+                        bottom: lay.bottom || 'unset',
                         width: lay.width || 'auto',
                         height: lay.height || 'auto',
                         color: lay.textColor || '#fff',

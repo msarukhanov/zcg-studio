@@ -1,4 +1,4 @@
-import { AppState } from '../shared/GameState.js';
+import { AppState, getTileFromState } from '../shared/GameState.js';
 
 import { renderFactionScreen } from '../screens/FactionScreen.js';
 
@@ -11,7 +11,7 @@ export class UIManager {
      * 🖥️ Функция инициализации UI-менеджера
      */
     init() {
-        console.log("🖥️ [UIManager] Инициализация базовых слоев интерфейса...");
+        console.log("🖥️ [UIManager] Base interface init...");
 
         // Создаем корневой HTML-контейнер для всего HUD игры, если его еще нет
         this.rootContainer = document.getElementById('game-hud-root');
@@ -33,38 +33,90 @@ export class UIManager {
         this.updateAll();
     }
 
+    applyStylesFromConfig(element, functionName) {
+        // Безопасно проверяем путь к массиву виджетов в конфиге
+        const screensConfig = AppState.ui?.landscape || [];
+
+        const hudLayout = screensConfig.find(s => s.id === 'game_hud');
+
+        if (!hudLayout) return;
+
+        const widgets = hudLayout.widgets;
+        if (!element || !widgets) return;
+
+        // Ищем элемент в массиве по твоему названию функции
+        const widget = widgets.find(w => w.id === functionName);
+        if (!widget || !widget.layout) return;
+
+        const lay = widget.layout;
+
+        // Накатываем строго 8 свойств поверх, сохраняя исходную верстку
+        if (lay.left !== undefined) element.style.left = lay.left;
+        if (lay.right !== undefined) {
+            element.style.left = 'unset';
+            element.style.right = lay.right;
+        }
+        if (lay.top !== undefined) element.style.top = lay.top;
+        if (lay.bottom !== undefined) {
+            element.style.top = 'unset';
+            element.style.bottom = lay.bottom;
+        }
+        if (lay.width !== undefined) element.style.width = lay.width;
+        if (lay.height !== undefined) element.style.height = lay.height;
+        if (lay.border !== undefined) element.style.border = lay.border;
+
+        if (lay.backgroundColor !== undefined) element.style.backgroundColor = lay.backgroundColor;
+        if (lay.background !== undefined) element.style.background = lay.background;
+        if (lay.borderRadius !== undefined) element.style.borderRadius = lay.borderRadius;
+    }
+
     /**
      * Главный диспетчер обновления — полностью перерисовывает все куски UI
      */
     updateAll() {
         if (!this.rootContainer) return;
 
+        const screensConfig = AppState.ui?.landscape || [];
+        const hudLayout = screensConfig.find(s => s.id === 'game_hud');
+
+        if (!hudLayout) return;
+
+        const widgets = hudLayout.widgets;
+        if (!widgets) return;
+
         // Полностью очищаем старый HTML-слой перед перерисовкой кадра
         this.rootContainer.innerHTML = '';
 
         this.renderSettingsTrigger();
 
-        const activeId = AppState.play?.activeCharacterId;
-        if (!activeId) return;
-
-        const char = AppState.entities[activeId];
-        if (!char) return;
+        // const activeId = AppState.play?.activeCharacterId;
+        // if (!activeId) return;
+        //
+        // const char = AppState.entities[activeId];
+        // if (!char) return;
 
         // Поочередно вызываем изолированные функции отрисовки разных кусков интерфейса
 
-        // this.renderCharacterWindowCircle(char);
-        this.renderCharacterWindowLinear(char);
+        const CharacterPanel = widgets.find(w => w.id === 'CharacterPanel');
+        if(CharacterPanel) {
+            if(CharacterPanel.shape==='circle') {
+                this.renderCharacterWindowCircle();
+            }
+            else {
+                this.renderCharacterWindowLinear();
+            }
+        }
 
         // Автоопределение типа устройства (ширина экрана <= 768px считается мобилкой)
         const isMobile = window.innerWidth <= 1024;
 
         if (isMobile) {
-            this.renderMobileSkillWheel(char);
+            this.renderMobileSkillWheel();
         } else {
-            this.renderDesktopSkillPanel(char);
+            this.renderDesktopSkillPanel();
         }
 
-        this.renderEndTurnButton(char, isMobile);
+        this.renderEndTurnButton(isMobile);
 
 
 
@@ -76,12 +128,17 @@ export class UIManager {
         this.renderFactionCharactersList();
 
         this.showInteractionMenu();
+
+        this.renderPlatformerMobileControls();
     }
 
-    /**
-     * 👤 2.1. ОКНО ВЫБРАННОГО ПЕРСОНАЖА (Изолированная функция)
-     */
-    renderCharacterWindowCircle(char) {
+    renderCharacterWindowCircle() {
+        const activeId = AppState.play?.activeCharacterId;
+        if (!activeId) return;
+
+        const char = AppState.entities[activeId];
+        if (!char) return;
+
         const charWindow = document.createElement('div');
         const settings = AppState.game_settings;
         const uiPos = settings?.ui?.character || 'left-top';
@@ -90,10 +147,8 @@ export class UIManager {
 
         Object.assign(charWindow.style, {
             position: 'absolute',
-            width: '140px',
-            height: '140px',
-            backgroundColor: 'rgba(20, 24, 30, 0.85)',
-            border: '2px solid #34495e',
+            width: '120px',
+            height: '120px',
             borderRadius: '50%',
             padding: '0',
             color: '#fff',
@@ -103,45 +158,73 @@ export class UIManager {
             justifyContent: 'center',
             userSelect: 'none',
             left: '15px',
-            top: uiPos === 'left-top' ? '25px' : 'auto', // Чуть опустили топ, чтобы имя не резалось краем экрана
-            bottom: uiPos === 'left-bottom' ? '45px' : 'auto' // Чуть подняли боттом ради нижних подписей
+            bottom: '15px'
         });
+
+        this.applyStylesFromConfig(charWindow, 'CharacterPanel');
 
         const hpPercent = Math.max(0, Math.min(100, (char.stats.hp / char.stats.maxHp) * 100));
         const energyPercent = Math.max(0, Math.min(100, (char.stats.energy / (char.stats.maxEnergy || 100)) * 100));
 
-        const hpOffset = 140 - (140 * hpPercent) / 100;
-        const energyOffset = 140 - (140 * energyPercent) / 100;
+        // Расчет процентов для опыта и очков хода
+        const hasExp = char.exp !== undefined && char.requiredExp;
+        const expPercent = hasExp ? Math.max(0, Math.min(100, (char.exp / char.requiredExp) * 100)) : 0;
+
+        const hasAp = char.movement?.max;
+        const apPercent = hasAp ? Math.max(0, Math.min(100, (char.movement.current / char.movement.max) * 100)) : 0;
+
+        const imgUrl = window.gameAssets[char.avatar || char.icon];
+
+        // Базовая длина дуги для радиуса 36 38 в вашем viewBox составляет 140
+        const maxDash = 120;
+        const hpOffset = maxDash - (maxDash * hpPercent) / 100;
+        const energyOffset = maxDash - (maxDash * energyPercent) / 100;
+        const expOffset = maxDash - (maxDash * expPercent) / 100;
+        const apOffset = maxDash - (maxDash * apPercent) / 100;
 
         charWindow.innerHTML = `
       <div style="position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
         
         <!-- Имя и уровень перенесены НАВЕРХ -->
-        <div style="position: absolute; top: -24px; background: rgba(10, 15, 20, 0.95); border: 1px solid #34495e; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; white-space: nowrap; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 3;">
+        <div style="position: absolute; top: -2px; background: rgba(10, 15, 20, 0.95); border: 1px solid #34495e; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; white-space: nowrap; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 3;">
           ${char.name} <span style="color: #ffd166; font-size: 9px;">[Lvl.${char.level || 1}]</span>
         </div>
 
-        <!-- Левая SVG дуга: Здоровье -->
         <svg viewBox="0 0 100 100" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-          <path d="M 25 80 A 36 38 0 0 1 25 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6" stroke-linecap="round"/>
-          <path d="M 25 80 A 36 38 0 0 1 25 20" fill="none" stroke="#e74c3c" stroke-width="6" stroke-linecap="round" stroke-dasharray="140" stroke-dashoffset="${hpOffset}" style="transition: stroke-dashoffset 0.2s ease;"/>
-        </svg>
+          <!-- ЛЕВАЯ СТОРОНА (Здоровье и Опыт) -->
+          <!-- Дуга Здоровья: идет СНИЗУ ВВЕРХ от 25,80 к 25,20 -->
+         <path d="M 19 80 A 36 38 0 0 1 19 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4" stroke-linecap="round"/>
+<path d="M 19 80 A 36 38 0 0 1 19 20" fill="none" stroke="#2ecc71" stroke-width="4" stroke-linecap="round" stroke-dasharray="${maxDash}" stroke-dashoffset="${apOffset}" style="transition: stroke-dashoffset 0.2s ease;"/>
 
-        <!-- Правая SVG дуга: Энергия -->
-        <svg viewBox="0 0 100 100" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
-          <path d="M 75 20 A 36 38 0 0 1 75 80" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="6" stroke-linecap="round"/>
-          <path d="M 75 20 A 36 38 0 0 1 75 80" fill="none" stroke="#3498db" stroke-width="6" stroke-linecap="round" stroke-dasharray="140" stroke-dashoffset="${energyOffset}" style="transition: stroke-dashoffset 0.2s ease;"/>
+          
+          <!-- Дополнительная дуга Опыта: идет СНИЗУ ВВЕРХ параллельно здоровью, но чуть тоньше (рисуется если есть exp) -->
+          ${hasExp ? `
+          <path d="M 25 80 A 36 38 0 0 1 25 20" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M 25 80 A 36 38 0 0 1 25 20" fill="none" stroke="#f39c12" stroke-width="4" stroke-linecap="round" stroke-dasharray="${maxDash}" stroke-dashoffset="${expOffset}" style="transition: stroke-dashoffset 0.2s ease;"/>
+          ` : ''}
+
+          <!-- ПРАВАЯ СТОРОНА (Энергия и Очки хода) -->
+          <!-- Дуга Энергии: идет СНИЗУ ВВЕРХ от 75,80 к 75,20 -->
+          <path d="M 75 80 A 36 38 0 0 0 75 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M 75 80 A 36 38 0 0 0 75 20" fill="none" stroke="#e74c3c" stroke-width="4" stroke-linecap="round" stroke-dasharray="${maxDash}" stroke-dashoffset="${hpOffset}" style="transition: stroke-dashoffset 0.2s ease;"/>
+
+          <!-- Дополнительная дуга Очков Хода: идет СНИЗУ ВВЕРХ параллельно энергии (рисуется если есть ap) -->
+          ${hasAp ? `
+          <path d="M 81 80 A 36 38 0 0 0 81 20" fill="none" stroke="rgba(255,255,255,0.02)" stroke-width="4" stroke-linecap="round"/>
+          <path d="M 81 80 A 36 38 0 0 0 81 20" fill="none" stroke="#3498db" stroke-width="4" stroke-linecap="round" stroke-dasharray="${maxDash}" stroke-dashoffset="${energyOffset}" style="transition: stroke-dashoffset 0.2s ease;"/>
+          ` : ''}
+
         </svg>
 
         <!-- Центральный круглый аватар -->
         <div style="width: 82px; height: 82px; border-radius: 50%; border: 1px solid #455a64; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
-          <img src="${char.avatar || char.icon}" alt="${char.name}"
+          <img src="${imgUrl}" alt="${char.name}"
                style="width: 100%; height: 100%; object-fit: cover;"
                onerror="this.src='assets/avatars/default_avatar.png'; this.onerror=null;">
         </div>
 
         <!-- Точные числа HP и Энергии перенесены ВНИЗ -->
-        <div style="position: absolute; bottom: -14px; background: rgba(10, 15, 20, 0.85); border: 1px solid #2c3e50; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-family: monospace; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 3;">
+        <div style="position: absolute; bottom: -2px; background: rgba(10, 15, 20, 0.85); border: 1px solid #2c3e50; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-family: monospace; font-weight: bold; white-space: nowrap; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 3;">
           <span style="color: #ff6b6b;">${char.stats.hp}</span>/<span style="color: #54a0ff;">${char.stats.energy}</span>
         </div>
 
@@ -151,10 +234,20 @@ export class UIManager {
         this.rootContainer.appendChild(charWindow);
     }
 
+
+
+
+
     /**
      * 📱 2.1.Б. ОКНО ВЫБРАННОГО ПЕРСОНАЖА (Вариант 2: Линейный мобильный HUD)
      */
-    renderCharacterWindowLinear(char) {
+    renderCharacterWindowLinear() {
+        const activeId = AppState.play?.activeCharacterId;
+        if (!activeId) return;
+
+        const char = AppState.entities[activeId];
+        if (!char) return;
+
         const charWindow = document.createElement('div');
         const settings = AppState.game_settings;
         const uiPos = settings?.ui?.character || 'left-top';
@@ -175,10 +268,12 @@ export class UIManager {
             alignItems: 'center',
             gap: '10px',
             userSelect: 'none',
-            left: '15px',
-            top: uiPos === 'left-top' ? '15px' : 'auto',
+            left: '10px',
+            top: uiPos === 'left-top' ? '10px' : 'auto',
             bottom: uiPos === 'left-bottom' ? '15px' : 'auto'
         });
+
+        this.applyStylesFromConfig(charWindow, 'CharacterPanel');
 
         const hpPercent = Math.max(0, Math.min(100, (char.stats.hp / char.stats.maxHp) * 100));
         const energyPercent = Math.max(0, Math.min(100, (char.stats.energy / (char.stats.maxEnergy || 100)) * 100));
@@ -258,121 +353,17 @@ export class UIManager {
         }
     }
 
+    renderDesktopSkillPanel() {
 
-    /**
-     * 🖥️ 2.2. ДЕСКТОПНАЯ ПАНЕЛЬ НАВЫКОВ (Горизонтальная в центре снизу)
-     */
-    renderDesktopSkillPanel(char) {
-        const panel = document.createElement('div');
-        panel.style.pointerEvents = 'auto';
+        const activeId = AppState.play?.activeCharacterId;
+        if (!activeId) return;
 
-        Object.assign(panel.style, {
-            position: 'absolute',
-            left: '50%',
-            bottom: '24px',
-            transform: 'translateX(-50%)',
-            display: 'flex',
-            gap: '10px',
-            backgroundColor: 'rgba(12, 17, 24, 0.85)',
-            padding: '10px 14px',
-            borderRadius: '8px',
-            border: '2px solid #232d38',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.6)'
-        });
+        const char = AppState.entities[activeId];
+        if (!char) return;
 
-        const skillsList = this.getNormalizedSkillsList(char);
+        const container = document.createElement('div');
 
-        skillsList.forEach((skillInfo, index) => {
-            const skillId = skillInfo.skill_id;
-            const isAutoAttack = skillInfo.isAutoAttack;
-
-            // Динамическое определение конфига навыка
-            const config = isAutoAttack
-                ? { icon: '⚔️', title_loc: { ru: 'Атака' }, type: 'active', visual_color: 'red' }
-                : AppState.skills[skillId];
-
-            if (!config) return;
-
-            const isPassive = config.type === "passive";
-            const isActiveSelection = AppState.play?.activeSkillId === skillId;
-
-            if (!char.skillCooldowns) char.skillCooldowns = {};
-            const currentCD = char.skillCooldowns[skillId] || 0;
-            const isOnCooldown = currentCD > 0;
-
-            const btn = document.createElement('button');
-
-            // Динамическая инлайн-стилизация состояний (будет приходить из админки)
-            let borderColors = { active: '#ffd166', ultimate: '#e67e22', passive: '#555', default: '#3a4759' };
-            let bgGradients = { active: '#2c3e50', ultimate: '#261c14', passive: '#222', default: '#0d121a' };
-
-            let currentBorder = borderColors.default;
-            let currentBg = bgGradients.default;
-
-            if (isActiveSelection) { currentBorder = borderColors.active; currentBg = bgGradients.active; }
-            else if (config.type === 'ultimate') { currentBorder = borderColors.ultimate; currentBg = bgGradients.ultimate; }
-            else if (isPassive) { currentBorder = borderColors.passive; currentBg = bgGradients.passive; }
-
-            Object.assign(btn.style, {
-                width: '56px',
-                height: '56px',
-                background: currentBg,
-                border: `1px ${isPassive ? 'dashed' : 'solid'} ${currentBorder}`,
-                borderRadius: '6px',
-                color: isActiveSelection ? '#ffd166' : '#fff',
-                cursor: (isPassive || isOnCooldown) ? 'default' : 'pointer',
-                opacity: (isPassive || isOnCooldown) ? '0.5' : '1.0',
-                boxSizing: 'border-box',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.1s ease',
-                position: 'relative'
-            });
-
-            if (isPassive || isOnCooldown) {
-                btn.disabled = true;
-            }
-
-            const titleRu = config.title_loc ? config.title_loc.ru : skillId;
-            const labelText = isPassive ? `Пасс.` : (isAutoAttack ? 'База' : `${skillInfo.level} ${_t('units.lvl')}`);
-
-            // Инлайн-кулдаун слой
-            const cdOverlay = isOnCooldown
-                ? `<div style="position: absolute; inset: 0; background: rgba(0, 0, 0, 0.75); color: #ff4757; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 6px;">${Math.ceil(currentCD / 1000)}s</div>`
-                : '';
-
-            btn.innerHTML = `
-        <span style="font-size: 24px; display: block; margin-bottom: 2px;">${config.icon || '🔮'}</span>
-        <span style="font-size: 8px; font-weight: bold; display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px; box-sizing: border-box;">${titleRu}</span>
-        <span style="font-size: 7px; color: #8a92a6; display: block;">${labelText}</span>
-        ${cdOverlay}
-      `;
-
-            btn.onclick = () => {
-                if (isPassive || isOnCooldown) return;
-                if (AppState.engine.skillManager) {
-                    AppState.engine.skillManager.selectSkillForCast(skillId);
-                }
-            };
-
-            panel.appendChild(btn);
-        });
-
-        this.rootContainer.appendChild(panel);
-    }
-
-
-
-    /**
-     * 🖥️ 2.2. ДЕСКТОПНАЯ ПАНЕЛЬ НАВЫКОВ (Горизонтальная в центре снизу)
-     */
-    renderDesktopSkillPanel(char) {
-        const panel = document.createElement('div');
-        panel.style.pointerEvents = 'auto';
-
-        Object.assign(panel.style, {
+        Object.assign(container.style, {
             position: 'absolute',
             left: '50%',
             bottom: '20px',
@@ -382,36 +373,41 @@ export class UIManager {
             backgroundColor: 'rgba(10, 15, 20, 0.75)',
             padding: '8px',
             borderRadius: '10px',
-            border: '1px solid #333'
+            border: '1px solid #333',
+            pointerEvents: 'auto'
         });
+
+        this.applyStylesFromConfig(container, 'DesktopSkillPanel');
 
         const skillsList = this.getNormalizedSkillsList(char);
         skillsList.forEach((skillInfo, index) => {
             const btn = this.createSkillButton(char, skillInfo, index, false);
-            panel.appendChild(btn);
+            container.appendChild(btn);
         });
 
-        this.rootContainer.appendChild(panel);
+        this.rootContainer.appendChild(container);
     }
 
-    /**
-     * 📱 2.3. МОБИЛЬНОЕ КРУГЛОЕ МЕНЮ НАВЫКОВ (Полукруг справа снизу)
-     */
-    /**
-     * 📱 2.3. МОБИЛЬНОЕ КРУГЛОЕ МЕНЮ НАВЫКОВ (Полукруг справа снизу)
-     */
-    renderMobileSkillWheel(char) {
-        const wheelContainer = document.createElement('div');
-        wheelContainer.style.pointerEvents = 'auto';
+    renderMobileSkillWheel() {
+        const activeId = AppState.play?.activeCharacterId;
+        if (!activeId) return;
 
-        Object.assign(wheelContainer.style, {
+        const char = AppState.entities[activeId];
+        if (!char) return;
+
+        const container = document.createElement('div');
+
+        Object.assign(container.style, {
             position: 'absolute',
             right: '24px',
             bottom: '24px',
             width: '190px',
             height: '190px',
-            display: 'block'
+            display: 'block',
+            pointerEvents: 'auto'
         });
+
+        this.applyStylesFromConfig(container, 'MobileSkillWheel');
 
         // 1. ФИЛЬТРАЦИЯ: Исключаем пассивные навыки из мобильной панели, чтобы не занимали место
         const rawSkillsList = this.getNormalizedSkillsList(char);
@@ -525,12 +521,11 @@ export class UIManager {
                 }
             };
 
-            wheelContainer.appendChild(btn);
+            container.appendChild(btn);
         });
 
-        this.rootContainer.appendChild(wheelContainer);
+        this.rootContainer.appendChild(container);
     }
-
 
 
     /**
@@ -619,7 +614,13 @@ export class UIManager {
     /**
      * ⏳ ГЛОБАЛЬНАЯ КНОПКА КОНЕЦ ХОДА (Изолированная функция)
      */
-    renderEndTurnButton(char, isMobile) {
+    renderEndTurnButton(isMobile) {
+        const activeId = AppState.play?.activeCharacterId;
+        if (!activeId) return;
+
+        const char = AppState.entities[activeId];
+        if (!char) return;
+
         if (AppState.engine.timeManager && AppState.engine.timeManager.currentMode === "combat") {
             const endTurnButton = document.createElement('button');
             endTurnButton.style.pointerEvents = 'auto';
@@ -641,6 +642,8 @@ export class UIManager {
                 bottom: isMobile ? '10px' : '20px',
                 right: isMobile ? 'auto' : 'calc(50% - 180px)'
             });
+
+            this.applyStylesFromConfig(endTurnButton, 'EndTurnButton');
 
             endTurnButton.onclick = () => {
                 if (AppState.engine.turnManager) {
@@ -673,7 +676,7 @@ export class UIManager {
 
         Object.assign(triggerBtn.style, {
             position: 'absolute',
-            right: '115px',
+            right: '10px',
             top: '10px',
             width: '44px',
             height: '44px',
@@ -689,6 +692,8 @@ export class UIManager {
             padding: '8px',
             zIndex: '1000' // Всегда поверх карты и шкал персонажа
         });
+
+        this.applyStylesFromConfig(triggerBtn, 'SettingsTrigger');
 
         triggerBtn.innerHTML = `
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
@@ -714,6 +719,8 @@ export class UIManager {
      * 📜 2.6. ТРЕКЕР КВЕСТОВ (Правая панель, под шестерёнкой)
      */
     renderQuestTracker() {
+
+
         // 1. Ищем первый активный квест для быстрого отображения на HUD
         const playerQuestIds = AppState.player?.quests || [];
         let activeQuest = null;
@@ -733,30 +740,31 @@ export class UIManager {
         const trackerBtn = document.createElement('button');
         trackerBtn.id = 'hud-quest-tracker';
 
-        // Перехватываем мышь, чтобы клик не улетал на гексы карты
-        trackerBtn.style.pointerEvents = 'auto';
-
         // Инлайновая стилизация компактной горизонтальной плашки-кнопки
         Object.assign(trackerBtn.style, {
             position: 'absolute',
-            left: '20px',
-            top: '110px',
-            width: '180px', // Вытянутая форма для текста квеста
+            left: '10px',
+            top: '100px',
+            width: '180px',
             height: '44px',
             backgroundColor: 'rgba(20, 24, 30, 0.85)',
             border: '1px solid #3a4759',
-            borderRadius: '6px', // Аккуратные скругленные углы
+            borderRadius: '6px',
+
+            zIndex: '1000',
             cursor: 'pointer',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
             transition: 'all 0.1s ease',
             display: 'flex',
             alignItems: 'center',
             padding: '0 10px',
             gap: '8px',
             outline: 'none',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.4)',
             boxSizing: 'border-box',
-            zIndex: '1000'
+            pointerEvents: 'auto'
         });
+
+        this.applyStylesFromConfig(trackerBtn, 'QuestTracker');
 
         // Наполнение: Слева маленькая встроенная SVG-иконка свитка, справа название квеста
         trackerBtn.innerHTML = `
@@ -790,19 +798,15 @@ export class UIManager {
     /**
      * 🗺️ 2.7. КОМПАКТНАЯ МИНИ-КАРТА (Правый верхний угол, под шестеренкой)
      */
-    /**
-     * 🗺️ 2.7. КОМПАКТНАЯ МИНИ-КАРТА (Отрисовка из коллекции Map)
-     */
     renderMinimap() {
         // if (AppState.engine?.ScreenManager?.currentScreenId) return;
 
-        const minimapContainer = document.createElement('div');
-        minimapContainer.id = 'hud-minimap-container';
-        minimapContainer.style.pointerEvents = 'auto';
+        const container = document.createElement('div');
+        container.id = 'hud-minimap-container';
 
         const mapSize = 120; // Размеры круглого окна радара
 
-        Object.assign(minimapContainer.style, {
+        Object.assign(container.style, {
             position: 'absolute',
             right: '10px',
             top: '10px',
@@ -816,8 +820,11 @@ export class UIManager {
             zIndex: '900',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            pointerEvents: 'auto'
         });
+
+        this.applyStylesFromConfig(container, 'Minimap');
 
         const canvas = document.createElement('canvas');
         canvas.width = mapSize;
@@ -868,19 +875,42 @@ export class UIManager {
                 const rawType = tile.type || tile.terrain || tile.texture || tile.id || '';
                 const type = String(rawType).toLowerCase();
 
-                // =========================================================================
-                // АВТООПРЕДЕЛЕНИЕ ЦВЕТА ПО РЕАЛЬНЫМ НАЗВАНИЯМ ФАЙЛОВ
-                // =========================================================================
-                const tileKey = tile.type || tile.terrain;
-                const terrainData = AppState.ConfigTerrain[tileKey];
-                const numericColor = terrainData ? terrainData.fallbackColor : 0x1a1f2c;
-                const tileColor = "#" + numericColor.toString(16).padStart(6, '0');
+                if(!AppState.player.exploredTiles.has(`${tile.q},${tile.r}`)){
+                    const tileColor = "rgba(10, 14, 22, 0.85)";
+                    ctx.beginPath();
+                    ctx.arc(hexX, hexY, hexRadius * 0.95, 0, 2 * Math.PI);
+                    ctx.fillStyle = tileColor;
+                    ctx.fill();
+                }
+                else if(!AppState.play.visibleTiles.has(`${tile.q},${tile.r}`)) {
+                    const tileKey = tile.type || tile.terrain;
+                    const terrainData = AppState.ConfigTerrain[tileKey];
+                    const numericColor = terrainData ? terrainData.fallbackColor : 0x1a1f2c;
+                    const tileColor = "#" + numericColor.toString(16).padStart(6, '0');
 
-                // Рисуем закругленный гекс. Увеличиваем радиус точки (hexRadius * 0.95), чтобы они сомкнулись
-                ctx.beginPath();
-                ctx.arc(hexX, hexY, hexRadius * 0.95, 0, 2 * Math.PI);
-                ctx.fillStyle = tileColor;
-                ctx.fill();
+                    // Рисуем базовый цвет тайла
+                    ctx.beginPath();
+                    ctx.arc(hexX, hexY, hexRadius * 0.95, 0, 2 * Math.PI);
+                    ctx.fillStyle = tileColor;
+                    ctx.fill();
+
+                    // НАКЛАДЫВАЕМ МАСКУ ЗАТЕМНЕНИЯ: поверх оригинального цвета рисуем полупрозрачный черный круг
+                    ctx.beginPath();
+                    ctx.arc(hexX, hexY, hexRadius * 0.95, 0, 2 * Math.PI);
+                    ctx.fillStyle = "rgba(0, 0, 0, 0.45)"; // 0.45 — степень затемнения (чем больше, тем темнее тайл)
+                    ctx.fill();
+                }
+                else {
+                    const tileKey = tile.type || tile.terrain;
+                    const terrainData = AppState.ConfigTerrain[tileKey];
+                    const numericColor = terrainData ? terrainData.fallbackColor : 0x1a1f2c;
+                    const tileColor = "#" + numericColor.toString(16).padStart(6, '0');
+                    // Рисуем закругленный гекс. Увеличиваем радиус точки (hexRadius * 0.95), чтобы они сомкнулись
+                    ctx.beginPath();
+                    ctx.arc(hexX, hexY, hexRadius * 0.95, 0, 2 * Math.PI);
+                    ctx.fillStyle = tileColor;
+                    ctx.fill();
+                }
             }
         }
 
@@ -888,6 +918,7 @@ export class UIManager {
         // 2. ОТРИСОВКА МАРКЕРОВ ПЕРСОНАЖЕЙ НА РАДАРЕ
         Object.values(AppState.entities).forEach(char => {
             if (!char.mapPosition || char.stats?.hp <= 0) return;
+            if(!AppState.play.visibleTiles.has(`${char.mapPosition.q},${char.mapPosition.r}`)) return;
 
             const relativeQ = char.mapPosition.q - centerQ;
             const relativeR = char.mapPosition.r - centerR;
@@ -901,7 +932,7 @@ export class UIManager {
             // Зеленый — активный игрок, красный — орк Громм4
             let markerColor = '#ffd166';
             if (char.id === AppState.play?.activeCharacterId) markerColor = '#00ffcc';
-        else if (char.faction === 'orcs' || char.id === 'gromm4') markerColor = '#ff3333';
+            else if (char.faction === 'orcs' || char.id === 'gromm4') markerColor = '#ff3333';
 
             ctx.beginPath();
             ctx.arc(charX, charY, 4, 0, 2 * Math.PI);
@@ -913,12 +944,14 @@ export class UIManager {
             ctx.stroke();
         });
 
-        minimapContainer.appendChild(canvas);
-        this.rootContainer.appendChild(minimapContainer);
+        container.appendChild(canvas);
+        this.rootContainer.appendChild(container);
     }
 
 
     renderFactionResources() {
+        if (!AppState.main.Resources) return;
+
         const playerFactionId = AppState.player?.faction || 'darkwood';
         const faction = AppState.factions?.[playerFactionId];
         const activeLeaderId = faction.leaderCharId || 'rafael';
@@ -929,13 +962,13 @@ export class UIManager {
         if (!faction) return;
 
         // 2. Ищем на странице старый виджет, если его нет — создаем с нуля
-        let widget = document.getElementById('global-faction-resources-bar');
-        if (!widget) {
-            widget = document.createElement('div');
-            widget.id = 'global-faction-resources-bar';
+        let container = document.getElementById('global-faction-resources-bar');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'global-faction-resources-bar';
 
             // Задаем тонкий, аккуратный мобильный стиль по центру сверху
-            Object.assign(widget.style, {
+            Object.assign(container.style, {
                 position: 'absolute',
                 top: '10px',
                 left: '50%',
@@ -956,12 +989,13 @@ export class UIManager {
                 fontWeight: 'bold',
                 userSelect: 'none',
             });
-            document.body.appendChild(widget);
+            this.applyStylesFromConfig(container, 'FactionResources');
+            document.body.appendChild(container);
         }
 
         // Привязываем цвет рамки кstrokeColor фракции из твоего конфига!
         if (faction.strokeColor) {
-            widget.style.borderColor = `#${faction.strokeColor.toString(16).padStart(6, '0')}`;
+            container.style.borderColor = `#${faction.strokeColor.toString(16).padStart(6, '0')}`;
         }
 
         // 3. Вытаскиваем текущие ресурсы и секундный доход фракции
@@ -983,7 +1017,7 @@ export class UIManager {
         const factionNameHtml = `<div style="color:${factionColorHex}; border-right:1px solid #232d38; padding-right:12px; margin-right:5px; font-family:sans-serif;">${faction.name}</div>`;
 
         // Собираем всю строку ресурсов
-        widget.innerHTML = `
+        container.innerHTML = `
             ${factionNameHtml}
             ${formatRes('💰', res.gold, prod.gold)}
             ${formatRes('🪵', res.wood, prod.wood)}
@@ -991,7 +1025,7 @@ export class UIManager {
             ${formatRes('🌾', res.food, prod.food)}
         `;
 
-        widget.onclick = () => {
+        container.onclick = () => {
             if (AppState.engine?.ScreenManager) {
                 renderFactionScreen();
             }
@@ -999,6 +1033,8 @@ export class UIManager {
     }
 
     renderFactionCharactersList() {
+        if (AppState.game_settings.playerType === 'character') return;
+
         let container = document.getElementById('global-faction-characters-sidebar');
 
         const playerFactionId = AppState.player?.faction;
@@ -1018,7 +1054,7 @@ export class UIManager {
             Object.assign(container.style, {
                 position: 'absolute',
                 top: '170px',
-                left: '20px',
+                left: '10px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '10px',
@@ -1026,6 +1062,7 @@ export class UIManager {
                 userSelect: 'none',
                 pointerEvents: 'auto'
             });
+            this.applyStylesFromConfig(container, 'FactionCharactersList');
             document.body.appendChild(container);
         }
         container.innerHTML = ''; // Чистим старые аватары
@@ -1085,28 +1122,8 @@ export class UIManager {
 
             // 🚀 КЛИК-ПЕРЕХВАТ: Мгновенное переключение активного персонажа и фокус камеры
             charBtn.onclick = () => {
-
                 AppState.engine.playerClickManager.executeCharacterSelect(char.id);
-
-                // if (char.id === AppState.play.activeCharacterId) return; // Уже выбран
-                //
-                // console.log(`🔄 [CharacterSelector] Переключение управления на героя: ${char.name}`);
-                //
-                // // 1. Меняем ID активного лидера в стейте игры
-                // AppState.play.activeCharacterId = char.id;
-                //
-                // // 2. Принудительно центрируем камеру PixiJS на новых координатах гекса
-                // if (char.mapPosition && AppState.engine?.mapManager?.centerCameraOnTile) {
-                //     AppState.engine.mapManager.centerCameraOnTile(char.mapPosition.q, char.mapPosition.r);
-                // }
-                //
-                // // 3. Обновляем все UI-слои, чтобы верхняя панель и этот сайдбар перерисовались синхронно
-                // if (AppState.engine?.uiManager?.updateAll) {
-                //     AppState.engine.uiManager.updateAll();
-                // } else {
-                //     // Если общего метода нет, дергаем этот же виджет точечно для смены рамки
-                //     PlayerCharactersWidget.update();
-                // }
+                AppState.engine.centerCameraOnCharacter(char.id);
             };
 
             container.appendChild(charBtn);
@@ -1129,9 +1146,11 @@ export class UIManager {
 
 
     showInteractionMenu() {
+
         const activeCharId = AppState.play?.activeCharacterId;
         const playerFactionId = AppState.player?.faction;
         const heroUnit = activeCharId ? AppState.entities?.[activeCharId] : null;
+        if(!heroUnit) return;
 
         const tile = AppState.map.tiles.get(`${heroUnit.mapPosition.q},${heroUnit.mapPosition.r}`);
         const entity = Object.values(AppState.entities || {}).find(e => e.id!==activeCharId && e.mapPosition.q === tile.q && e.mapPosition.r === tile.r);
@@ -1147,6 +1166,7 @@ export class UIManager {
                 backgroundColor: 'rgba(17, 22, 34, 0.92)', border: '2px solid #34495e',
                 borderRadius: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)'
             });
+            this.applyStylesFromConfig(actionContainer, 'showInteractionMenu');
             document.body.appendChild(actionContainer);
         }
         actionContainer.style.display = "flex";
@@ -1163,9 +1183,7 @@ export class UIManager {
 
             for (let i = 0; i < neighbors.length; i++) {
                 const n = neighbors[i];
-                console.log(n.q,n.r);
                 const objOnTile = Object.values(AppState.entities || {}).find(e => e.type === 'ship' && e.mapPosition.q === n.q && e.mapPosition.r === n.r);
-                console.log(objOnTile);
                 if (objOnTile && objOnTile.faction === playerFactionId) {
                     nearShipInstance = objOnTile;
                     break; // Нашли ближайшую свободную посудину фракции!
@@ -1318,8 +1336,7 @@ export class UIManager {
             // =========================================================================
             // 🚢 СТРОГИЙ ДАТА-ДРИВЕН ФИКС: Спавн корабля на соседней воде ИЗ МЕНЮ ПОРТА
             // =========================================================================
-            if (entity.type === 'port' && entity.faction === playerFactionId) {
-                console.log('=== here is port');
+            if (entity.type === 'port' && entity.faction === playerFactionId) {;
 
                 for (let i = 0; i < neighbors.length; i++) {
                     const n = neighbors[i];
@@ -1455,5 +1472,231 @@ export class UIManager {
         btn.innerHTML = `<span>${icon}</span>${text ? `<span>${text}</span>` : ''}`;
         return btn;
     }
+
+
+    renderPlatformerMobileControls() {
+        if (!AppState.main.MovementControls.includes('joystick')) return;
+
+        let container = document.getElementById('mobile-dual-joystick-container');
+
+        // 1. Ищем контейнер. Если его нет — создаем один раз
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'mobile-dual-joystick-container';
+            Object.assign(container.style, {
+                position: 'absolute',
+                top: '0',
+                left: '0',
+                width: '100%',
+                height: '100%',
+                zIndex: '999', // Поверх PixiJS холста
+                userSelect: 'none',
+                webkitUserSelect: 'none',
+                pointerEvents: 'none' // Пропускаем клики сквозь фон
+            });
+            document.body.appendChild(container);
+        }
+
+        // Запоминаем, какой режим сейчас отрисован, чтобы не пересоздавать DOM каждую секунду
+        const currentRenderedMode = container.getAttribute('data-mode');
+        const targetMode = AppState.isPlatformerMode ? 'platformer' : 'rts';
+
+        if (currentRenderedMode === targetMode) {
+            return; // Хватит плодить элементы! Если режим не менялся, выходим
+        }
+
+        // Меняем режим и чистим старые джойстики
+        container.setAttribute('data-mode', targetMode);
+        container.innerHTML = '';
+
+        const inputManager = AppState.engine.inputManager;
+        const maxRadius = 40; // Максимальный ход стика в пикселях
+
+        // Вспомогательный хелпер для сборки каркаса джойстика
+        const createJoystickDOM = (id, side) => {
+            const zone = document.createElement('div');
+            zone.id = id;
+            Object.assign(zone.style, {
+                position: 'absolute',
+                bottom: '20px',
+                [side]: '70px',
+                width: '130px',
+                height: '130px',
+                // Нейтральный полупрозрачный серый фон
+                backgroundColor: 'rgba(40, 40, 40, 0.4)',
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.2)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pointerEvents: 'auto',
+                touchAction: 'none',
+                boxSizing: 'border-box'
+            });
+            this.applyStylesFromConfig(zone, 'Joystick');
+            // Подвижный внутренний серый кругляш (стик)
+            const stick = document.createElement('div');
+            Object.assign(stick.style, {
+                width: '56px',
+                height: '56px',
+                // Классический серый градиент для эффекта пластиковой/матовой кнопки
+                background: 'linear-gradient(135deg, #7a7a7a 0%, #4a4a4a 100%)',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                boxShadow: '0 4px 10px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.2)',
+                borderRadius: '50%',
+                boxSizing: 'border-box',
+                willChange: 'transform',
+                transition: 'transform 0.04s linear, background 0.15s, border-color 0.15s'
+            });
+            zone.appendChild(stick);
+
+            return { zone, stick };
+        };
+
+        // =========================================================================
+        // 🧭 РЕЖИМ 1: ЛЕВЫЙ ДЖОЙСТИК (RTS СТРАТЕГИЯ — 6 НАПРАВЛЕНИЙ ГЕКСОВ)
+        // =========================================================================
+        if (!AppState.isPlatformerMode) {
+            const leftJoy = createJoystickDOM('ui-joystick-rts', 'left', 'RTS');
+            container.appendChild(leftJoy.zone);
+
+            let rect = null;
+
+            const handleRTSMove = (clientX, clientY) => {
+                if (!rect) rect = leftJoy.zone.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const dx = clientX - centerX;
+                const dy = clientY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 12) { // Мертвая зона
+                    leftJoy.stick.style.transform = 'translate(0px, 0px)';
+                    inputManager?.setHexDirection(null);
+                    return;
+                }
+
+                const angle = Math.atan2(dy, dx);
+                const clampedX = Math.cos(angle) * Math.min(distance, maxRadius);
+                const clampedY = Math.sin(angle) * Math.min(distance, maxRadius);
+                leftJoy.stick.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+
+                let degrees = angle * (180 / Math.PI);
+                if (degrees < 0) degrees += 360;
+
+                // Нарезаем круг строго на 6 секторов по 60 градусов для Flat-topped гексов
+                let hexDir = null;
+                if (degrees >= 240 && degrees < 300)      hexDir = 'N';  // Вверх
+                else if (degrees >= 300 && degrees < 360) hexDir = 'NE'; // Право / Верх
+                else if (degrees >= 0 && degrees < 60)    hexDir = 'SE'; // Право / Низ
+                else if (degrees >= 60 && degrees < 120)  hexDir = 'S';  // Вниз
+                else if (degrees >= 120 && degrees < 180) hexDir = 'SW'; // Лево / Низ
+                else if (degrees >= 180 && degrees < 240) hexDir = 'NW'; // Лево / Верх
+
+                inputManager?.setHexDirection(hexDir);
+            };
+
+            const resetRTS = () => {
+                leftJoy.stick.style.transform = 'translate(0px, 0px)';
+                rect = null;
+                inputManager?.setHexDirection(null);
+            };
+
+            leftJoy.zone.onpointerdown = (e) => {
+                leftJoy.zone.setPointerCapture(e.pointerId);
+                rect = leftJoy.zone.getBoundingClientRect();
+                handleRTSMove(e.clientX, e.clientY);
+            };
+            leftJoy.zone.onpointermove = (e) => {
+                if (leftJoy.zone.hasPointerCapture(e.pointerId)) handleRTSMove(e.clientX, e.clientY);
+            };
+            leftJoy.zone.onpointerup = (e) => {
+                leftJoy.zone.releasePointerCapture(e.pointerId);
+                resetRTS();
+            };
+            leftJoy.zone.onpointercancel = () => resetRTS();
+        }
+
+        // =========================================================================
+        // 🏃‍♂️ РЕЖИМ 2: ПРАВЫЙ ДЖОЙСТИК (ПЛАТФОРМЕР — ДВИЖЕНИЕ + ВЕРТИКАЛЬНЫЕ ОСИ)
+        // =========================================================================
+        if (AppState.isPlatformerMode) {
+            const rightJoy = createJoystickDOM('ui-joystick-platformer', 'right', 'PAD');
+            container.appendChild(rightJoy.zone);
+
+            let rect = null;
+
+            const handlePlatformerMove = (clientX, clientY) => {
+                if (!rect) rect = rightJoy.zone.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+
+                const dx = clientX - centerX;
+                const dy = clientY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 12) { // Мертвая зона
+                    rightJoy.stick.style.transform = 'translate(0px, 0px)';
+                    inputManager?.setLeft(false); inputManager?.setRight(false);
+                    inputManager?.setJump(false); inputManager?.setDown(false);
+                    return;
+                }
+
+                const angle = Math.atan2(dy, dx);
+                const clampedX = Math.cos(angle) * Math.min(distance, maxRadius);
+                const clampedY = Math.sin(angle) * Math.min(distance, maxRadius);
+                rightJoy.stick.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+
+                // Считываем горизонталь (Влево / Вправо)
+                if (clampedX > 15) {
+                    inputManager?.setRight(true);
+                    inputManager?.setLeft(false);
+                } else if (clampedX < -15) {
+                    inputManager?.setLeft(true);
+                    inputManager?.setRight(false);
+                } else {
+                    inputManager?.setLeft(false);
+                    inputManager?.setRight(false);
+                }
+
+                // Считываем вертикаль (Вверх = Прыжок, Вниз = Присед/Спуск)
+                if (clampedY < -15) {
+                    inputManager?.setJump(true);
+                    inputManager?.setDown(false);
+                } else if (clampedY > 15) {
+                    inputManager?.setDown(true);
+                    inputManager?.setJump(false);
+                } else {
+                    inputManager?.setJump(false);
+                    inputManager?.setDown(false);
+                }
+            };
+
+            const resetPlatformer = () => {
+                rightJoy.stick.style.transform = 'translate(0px, 0px)';
+                rect = null;
+                inputManager?.setLeft(false); inputManager?.setRight(false);
+                inputManager?.setJump(false); inputManager?.setDown(false);
+            };
+
+            rightJoy.zone.onpointerdown = (e) => {
+                rightJoy.zone.setPointerCapture(e.pointerId);
+                rect = rightJoy.zone.getBoundingClientRect();
+                handlePlatformerMove(e.clientX, e.clientY);
+            };
+            rightJoy.zone.onpointermove = (e) => {
+                if (rightJoy.zone.hasPointerCapture(e.pointerId)) handlePlatformerMove(e.clientX, e.clientY);
+            };
+            rightJoy.zone.onpointerup = (e) => {
+                rightJoy.zone.releasePointerCapture(e.pointerId);
+                resetPlatformer();
+            };
+            rightJoy.zone.onpointercancel = () => resetPlatformer();
+        }
+    }
+
+
 }
 

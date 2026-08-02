@@ -10,6 +10,7 @@ import { ScreenEditor } from './ScreenEditor.js';
 import { DialogEditor } from './DialogEditor.js';
 import { TranslateEditor } from './TranslateEditor.js';
 import { AssetManager } from './AssetManager.js';
+import { GameSettingsEditor } from './GameSettingsEditor.js';
 
 import { PathRenderer } from '../game/PathRenderer.js';
 import { FactionManager } from '../game/FactionManager.js';
@@ -26,6 +27,7 @@ window.getActiveMap = getActiveMap;
 let GameId = null;
 
 async function importGame(gameId='temp') {
+    let GameFile;
     if(gameId!=='temp') {
         try {
             const currentUrl = new URL(window.location.href);
@@ -34,32 +36,45 @@ async function importGame(gameId='temp') {
             const response = await fetch(folderPath.replace("/play","").replace("/editor","") + 'demo/games/' + gameId + '.json');
             if (!response.ok) throw new Error('Error');
 
-            const SaveFile = await response.json();
-
-            Object.keys(SaveFile).forEach(key=>{
-                AppState[key] = SaveFile[key];
-            });
-
-            Object.keys(SaveFile.maps).forEach(mapId=>{
-                AppState.maps[mapId] = SaveFile.maps[mapId];
-                AppState.maps[mapId].tiles = new Map(SaveFile.maps[mapId].tiles);
-            });
-
-            if(!SaveFile.player?.mapId) {
-                AppState.map = {
-                    mapId: 'world_map'
-                }
-            }
-
-            AppState.map.tiles = null;
-
-            GameId = gameId;
-            init();
+            GameFile = await response.json();
 
         } catch (error) {
             console.error('JSON error:', error);
         }
     }
+    else {
+        const temp = localStorage.getItem('zcgstudio_temp');
+        if(!temp) return;
+        try {
+            GameFile = JSON.parse(temp);
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    if(!GameFile);
+
+    Object.keys(GameFile).forEach(key=>{
+        AppState[key] = GameFile[key];
+    });
+
+    if(GameFile.maps) {
+        Object.keys(GameFile.maps).forEach(mapId=>{
+            AppState.maps[mapId] = GameFile.maps[mapId];
+            AppState.maps[mapId].tiles = new Map(GameFile.maps[mapId].tiles);
+        });
+
+        if(!GameFile.player?.mapId) {
+            AppState.map = {
+                mapId: 'world_map'
+            }
+        }
+
+        AppState.map.tiles = null;
+    }
+
+    GameId = gameId;
+    init();
 }
 
 async function init() {
@@ -88,6 +103,7 @@ async function init() {
     AppState.engine.AssetManager = new AssetManager();
 
     AppState.engine.ScreenEditor = new ScreenEditor();
+    AppState.engine.GameSettingsEditor = new GameSettingsEditor();
     AppState.engine.DialogEditor = DialogEditor;
     AppState.engine.TranslateEditor = TranslateEditor;
 
@@ -117,7 +133,28 @@ async function init() {
     const loader = new AssetLoaderManager();
     await loader.loadAllGameAssets(AppState.ConfigObject);
 
-    const hexMath = new HexMath(50);
+    const size = 50;
+    const charHeight = AppState.sizes.char.heightPercent/100 * size;
+    const objHeight = AppState.sizes.obj.heightPercent/100 * size;
+
+    AppState.sizes = {
+        hex: size,
+        hexesRad: AppState.sizes.hexesRad,
+        char: {
+            aspect_ratio: AppState.sizes.char.aspect_ratio,
+            heightPercent: AppState.sizes.char.heightPercent,
+            width: charHeight * AppState.sizes.char.aspect_ratio,
+            height: charHeight,
+        },
+        obj: {
+            aspect_ratio: AppState.sizes.obj.aspect_ratio,
+            heightPercent: AppState.sizes.obj.heightPercent,
+            width: objHeight * AppState.sizes.obj.aspect_ratio,
+            height: objHeight,
+        },
+    };
+
+    const hexMath = new HexMath(size);
 
     const worldMapContainer = new PIXI.Container();
     worldMapContainer.x = hexMath.size;
