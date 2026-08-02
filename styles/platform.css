@@ -209,7 +209,7 @@ body {
 /* Сетка для каталога игр и маркетплейса */
 .grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 24px;
 }
 
@@ -232,7 +232,7 @@ body {
 
 .card-cover {
     width: 100%;
-    height: 160px;
+    height: 200px;
     object-fit: cover;
     object-position: top;
     background-color: var(--bg-sidebar);
