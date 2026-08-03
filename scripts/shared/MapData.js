@@ -16,7 +16,7 @@ export class WorldObject {
 
 export class HexTile {
     constructor(q, r, col, row) {
-        this.q = q; this.r = r; this.col = col; this.row = row;
+        this.q = q; this.r = r;
 
         this.type = 'grass';
         this.height = 1;

@@ -25,108 +25,103 @@ export class InputManager {
     }
 
     // Сеттеры для платформера
-    setLeft(val) { this.inputState.left = val; }
-    setRight(val) { this.inputState.right = val; }
-    setJump(val) { this.inputState.jump = val; }
-    setDown(val) { this.inputState.down = val; }
+    setLeft(val) {
+        this.inputState.left = val;
+        // if (val) this._triggerRTSMovement('NW'); // Имитируем команду "влево"
+    }
+    setRight(val) {
+        this.inputState.right = val;
+        // if (val) this._triggerRTSMovement('NE'); // Имитируем команду "вправо"
+    }
+    setJump(val) {
+        this.inputState.jump = val;
+        // if (val) this._triggerRTSMovement('N');  // Имитируем команду "вверх/прыжок"
+    }
+    setDown(val) {
+        this.inputState.down = val;
+        // if (val) this._triggerRTSMovement('S');  // Имитируем команду "вниз"
+    }
 
     // Сеттер для гексагональной сетки
     setHexDirection(dir) {
         if (this.inputState.hexDirection !== dir) {
             this.inputState.hexDirection = dir;
-            if (dir && !AppState.isPlatformerMode) {
+            if (dir) {
                 // Триггерим движение в RTS режиме при смене направления на джойстике
                 this._triggerRTSMovement(dir);
             }
         }
     }
 
-    /**
-     * Превращает направление джойстика в физический шаг на гексагональной карте
-     */
-    _triggerRTSMovement22(dir) {
-        const activeCharId = AppState.play?.activeCharacterId || 'rafael';
-        const char = AppState.characters[activeCharId];
-        if (!char || char.action === 'move') return;
-
-        // Векторы смещения для гексов ребром вверх (Flat-topped, cube/axial coords)
-        const directions = {
-            'N':  { q: 0,  r: -1 },
-            'NE': { q: 1,  r: -1 },
-            'SE': { q: 1,  r: 0  },
-            'S':  { q: 0,  r: 1  },
-            'SW': { q: -1, r: 1  },
-            'NW': { q: -1, r: 0  }
-        };
-
-        const offset = directions[dir];
-        if (!offset) return;
-
-        const targetQ = char.mapPosition.q + offset.q;
-        const targetR = char.mapPosition.r + offset.r;
-
-        // Получаем тайлы из вашего GameState
-        const currentTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
-        const nextTile = getTileFromState(targetQ, targetR);
-
-        if (currentTile && nextTile) {
-            const stepCheck = AppState.engine.movementManager.canStepBetween(currentTile, nextTile, char);
-            if (stepCheck === "walkable" || stepCheck === "ally") {
-                // Заталкиваем тайл в старый массив пути, чтобы ваш Pixi-лерп запустил анимацию хода
-                char.currentMovementVisualPath = [nextTile];
-                char.action = 'move';
-            }
-        }
-    }
-
     _triggerRTSMovement(dir) {
+        console.log(dir);
         const activeCharId = AppState.play?.activeCharacterId || 'rafael';
         const char = AppState.characters[activeCharId];
-        if (!char || char.action === 'move') return;
+        // if (!char || char.action === 'move') return;
+        if (!char) return;
 
         let offset = { q: 0, r: 0 };
+        const gridMode = AppState.map?.gridMode; // Наша переменная 'square' | 'pointyHex' | 'flatHex'
 
         // =========================================================================
-        // 🕹️ РЕЖИМ ПЛАТФОРМЕРА: Шаги по выпрямленной горизонтальной кирпичной кладке
+        // 🧱 РЕЖИМ ПЛАТФОРМЕРА НА КВАДРАТНОЙ СЕТКЕ
         // =========================================================================
-        if (AppState.isPlatformerMode) {
-            const currentR = char.mapPosition.r;
-            const isRowOdd = Math.abs(currentR) % 2 === 1;
-
-            // Матрица шагов для выпрямленных Flat-topped гексов (Row-offset)
-            const platformerDirections = {
-                // Влево / Вправо по ровной линии ряда r
-                'NW': { q: -1, r: 0 },
-                'NE': { q: 1,  r: 0 },
-                'SW': { q: -1, r: 0 },
-                'SE': { q: 1,  r: 0 },
-
-                // Вверх / Прыжок (Векторы зависят от четности строки r под ногами!)
-                'N': isRowOdd
-                    ? { q: 0, r: -1 }  // Для нечетных строк
-                    : { q: -1, r: -1 }, // Для четных строк
-
-                // Вниз / Падение
-                'S': isRowOdd
-                    ? { q: 0, r: 1 }   // Для нечетных строк
-                    : { q: -1, r: 1 }  // Для четных строк
+        if (AppState.map.isPlatformerMode && gridMode === 'square') {
+            // В квадратах всё прямолинейно: q - это X (горизонталь), r - это Y (вертикаль)
+            const platformerSquareDirections = {
+                'NW': { q: -1, r: 0 }, // Движение влево
+                'SW': { q: -1, r: 0 }, // Движение влево
+                'NE': { q: 1,  r: 0 }, // Движение вправо
+                'SE': { q: 1,  r: 0 }, // Движение вправо
+                'N':  { q: 0,  r: -1 },// Прыжок / Вверх (уменьшаем r)
+                'S':  { q: 0,  r: 1 }  // Падение / Вниз (увеличиваем r)
             };
-
-            offset = platformerDirections[dir] || { q: 0, r: 0 };
+            offset = platformerSquareDirections[dir] || { q: 0, r: 0 };
         }
         // =========================================================================
-        // 🧭 СТАНДАРТНЫЙ РЕЖИМ RTS СТРАТЕГИИ (Твой оригинальный код, без изменений)
+        // 🧱 РЕЖИМ ПЛАТФОРМЕРА НА ГЕКСАХ (Старый костыльный вариант, если решите оставить)
+        // =========================================================================
+        else if (AppState.map.isPlatformerMode) {
+            const currentR = char.mapPosition.r;
+            // Здесь должна быть дефиниция переменной isRowOdd, которой не было в вашем коде!
+            const isRowOdd = currentR % 2 !== 0;
+
+            const platformerHexDirections = {
+                'NW': { q: -1, r: 0 }, 'NE': { q: 1, r: 0 },
+                'SW': { q: -1, r: 0 }, 'SE': { q: 1, r: 0 },
+                'N': isRowOdd ? { q: 0, r: -1 } : { q: -1, r: -1 },
+                'S': isRowOdd ? { q: 0, r: 1 }  : { q: -1, r: 1 }
+            };
+            offset = platformerHexDirections[dir] || { q: 0, r: 0 };
+        }
+        // =========================================================================
+        // 🧭 СТАНДАРТНЫЙ РЕЖИМ RTS СТРАТЕГИИ
         // =========================================================================
         else {
-            const rtsDirections = {
-                'N':  { q: 0,  r: -1 },
-                'NE': { q: 1,  r: -1 },
-                'SE': { q: 1,  r: 0  },
-                'S':  { q: 0,  r: 1  },
-                'SW': { q: -1, r: 1  },
-                'NW': { q: -1, r: 0  }
-            };
-            offset = rtsDirections[dir] || { q: 0, r: 0 };
+            // Настраиваем направления в зависимости от типа гексов (Pointy или Flat)
+            if (gridMode === 'pointyHex') {
+                // Канонические направления для гексов углом вверх
+                const pointyDirections = {
+                    'N':  { q: 0,  r: -1 }, // Строго вверх
+                    'NE': { q: 1,  r: -1 }, // Право-вверх
+                    'SE': { q: 1,  r: 0 },  // Право-вниз
+                    'S':  { q: 0,  r: 1 },  // Строго вниз
+                    'SW': { q: -1, r: 1 },  // Лево-вниз
+                    'NW': { q: -1, r: 0 }   // Лево-вверх
+                };
+                offset = pointyDirections[dir] || { q: 0, r: 0 };
+            } else {
+                // Твой оригинальный код для гексов ребром вверх
+                const rtsDirections = {
+                    'N':  { q: 0,  r: -1 },
+                    'NE': { q: 1,  r: -1 },
+                    'SE': { q: 1,  r: 0 },
+                    'S':  { q: 0,  r: 1 },
+                    'SW': { q: -1, r: 1 },
+                    'NW': { q: -1, r: 0 }
+                };
+                offset = rtsDirections[dir] || { q: 0, r: 0 };
+            }
         }
 
         if (offset.q === 0 && offset.r === 0) return;
@@ -134,7 +129,6 @@ export class InputManager {
         const targetQ = char.mapPosition.q + offset.q;
         const targetR = char.mapPosition.r + offset.r;
 
-        // Твой оригинальный и неприкосновенный код лерпа и проверки пути
         const currentTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
         const nextTile = getTileFromState(targetQ, targetR);
 
@@ -150,7 +144,7 @@ export class InputManager {
 
     _bindKeyboard() {
         window.addEventListener('keydown', (e) => {
-            if (AppState.isPlatformerMode) {
+            if (AppState.map.isPlatformerMode) {
                 if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.setLeft(true);
                 if (e.code === 'KeyD' || e.code === 'ArrowRight') this.setRight(true);
                 if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') this.setJump(true);
@@ -159,7 +153,7 @@ export class InputManager {
         });
 
         window.addEventListener('keyup', (e) => {
-            if (AppState.isPlatformerMode) {
+            if (AppState.map.isPlatformerMode) {
                 if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.setLeft(false);
                 if (e.code === 'KeyD' || e.code === 'ArrowRight') this.setRight(false);
                 if (e.code === 'KeyW' || e.code === 'ArrowUp' || e.code === 'Space') this.setJump(false);

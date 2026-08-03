@@ -36,10 +36,7 @@ export class HistoryManager {
             imageIndex: tile.imageIndex,
             region: tile.region,
             province: tile.province,
-            faction: tile.faction,
-            population: tile.population,
-            settlement: tile.settlement ? JSON.parse(JSON.stringify(tile.settlement)) : null,
-            units: JSON.parse(JSON.stringify(tile.units || []))
+            faction: tile.faction
         }));
 
         this.undoStack.push(snapshot);
@@ -69,10 +66,7 @@ export class HistoryManager {
                 imageIndex: liveTile ? liveTile.imageIndex : 0,
                 region: liveTile ? liveTile.region : null,
                 province: liveTile ? liveTile.province : null,
-                faction: liveTile ? liveTile.faction : null,
-                population: liveTile ? liveTile.population : 0,
-                settlement: liveTile && liveTile.settlement ? JSON.parse(JSON.stringify(liveTile.settlement)) : null,
-                units: liveTile ? JSON.parse(JSON.stringify(liveTile.units || [])) : []
+                faction: liveTile ? liveTile.faction : null
             };
         });
         this.redoStack.push(currentState);
@@ -109,9 +103,6 @@ export class HistoryManager {
                 region: liveTile ? liveTile.region : null,
                 province: liveTile ? liveTile.province : null,
                 faction: liveTile ? liveTile.faction : null,
-                population: liveTile ? liveTile.population : 0,
-                settlement: liveTile && liveTile.settlement ? JSON.parse(JSON.stringify(liveTile.settlement)) : null,
-                units: liveTile ? JSON.parse(JSON.stringify(liveTile.units || [])) : []
             };
         });
         this.undoStack.push(currentState);
@@ -140,9 +131,6 @@ export class HistoryManager {
         liveTile.region = savedTile.region;
         liveTile.province = savedTile.province;
         liveTile.faction = savedTile.faction;
-        liveTile.population = savedTile.population;
-        liveTile.settlement = savedTile.settlement ? JSON.parse(JSON.stringify(savedTile.settlement)) : null;
-        liveTile.units = JSON.parse(JSON.stringify(savedTile.units || []));
     }
 
     finalizeStep() {

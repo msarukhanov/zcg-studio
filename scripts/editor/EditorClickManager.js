@@ -183,15 +183,44 @@ export class EditorClickManager {
         const mode = AppState.editor.currentMode;
 
         if (mode === 'Terrain') {
-            tile.type = 'grass'; tile.height = 1; tile.imageIndex = 0;
+
+            AppState.maps[AppState.map.mapId].tiles.delete(`${tile.q},${tile.r}`);
+            AppState.map.tiles.delete(`${tile.q},${tile.r}`);
+
+            Object.keys(AppState.characters).forEach(id => {
+                const c = AppState.objects[id];
+                if (c && c.mapId === AppState.map.mapId && c.mapPosition.q === tile.q && c.mapPosition.r === tile.r) {
+                    delete c.mapPosition.q;
+                    delete c.mapPosition.r;
+                    delete AppState.entities[id];
+                }
+            });
+            Object.keys(AppState.characters).forEach(id => {
+                const c = AppState.characters[id];
+                if (c && c.mapId === AppState.map.mapId && c.mapPosition.q === tile.q && c.mapPosition.r === tile.r) {
+                    delete c.mapPosition.q;
+                    delete c.mapPosition.r;
+                    delete AppState.entities[id];
+                }
+            });
+            // tile.type = 'grass'; tile.height = 1; tile.imageIndex = 0;
         } else if (mode === 'Objects') {
-            tile.worldObject = null;
+            Object.keys(AppState.characters).forEach(id => {
+                const c = AppState.objects[id];
+                if (c.mapId === AppState.map.mapId && c.mapPosition.q === tile.q && c.mapPosition.r === tile.r) {
+                    delete c.mapPosition.q;
+                    delete c.mapPosition.r;
+                    delete AppState.entities[id];
+                }
+            });
         } else if (mode === 'Characters') {
             // Стираем персонажей с этих координат в AppState
             Object.keys(AppState.characters).forEach(id => {
                 const c = AppState.characters[id];
                 if (c.mapId === AppState.map.mapId && c.mapPosition.q === tile.q && c.mapPosition.r === tile.r) {
-                    delete AppState.characters[id];
+                    delete c.mapPosition.q;
+                    delete c.mapPosition.r;
+                    delete AppState.entities[id];
                 }
             });
         }
@@ -206,149 +235,3 @@ export class EditorClickManager {
         if (this.inspectors && this.inspectors['Terrain']) this.inspectors['Terrain'].renderEmpty();
     }
 }
-
-
-
-// import { TerrainInspector, ObjectsInspector, CharactersInspector } from './InspectorModules.js';
-//
-// export class EditorClickManager {
-//     constructor(hexMath, mapData, controls, worldMapContainer, redrawCallback) {
-//         this.hexMath = hexMath;
-//         this.mapData = mapData;
-//         this.controls = controls;
-//         this.worldMapContainer = worldMapContainer;
-//         this.redrawMap = redrawCallback;
-//
-//         this.selectedTile = null;
-//         this.heightStep = 14;
-//         this.historyManager = null;
-//         this.turnManager = null;
-//         this.pathRenderer = null;
-//
-//         this.activePlayCharacter = null;
-//         this.currentActivePath = null;
-//
-//         this.inspectors = {
-//             'Terrain': new TerrainInspector(this),
-//             'Objects': new ObjectsInspector(this),
-//             'Characters': new CharactersInspector(this)
-//         };
-//
-//         window.clickManagerRef = this;
-//         this.deselectAll();
-//     }
-//
-//     handleMapClick(mouseX, mouseY, currentZoom = 1.0) {
-//         const mode = this.controls.currentMode;
-//         const tool = this.controls.currentTool;
-//         const globalMode = this.controls.globalMode;
-//
-//         let tile = this.hexMath.get3DHexFromPixel(mouseX, mouseY, this.worldMapContainer, this.mapData, this.heightStep, currentZoom);
-//
-//         if (!tile) {
-//             if (tool === 'Brush') {
-//                 const localX = (mouseX - this.worldMapContainer.x) / currentZoom;
-//                 const localY = (mouseY - this.worldMapContainer.y) / currentZoom;
-//                 const cube = this.hexMath.pixelToCube(localX, localY);
-//                 const HexTileClass = this.mapData.tiles.values().next().value.constructor;
-//
-//                 tile = new HexTileClass(cube.q, cube.r, cube.q, cube.r);
-//                 tile.type = 'grass'; tile.height = 1; tile.imageIndex = 0;
-//
-//                 if (this.historyManager) this.historyManager.saveStep([tile], true);
-//                 this.mapData.tiles.set(`${cube.q},${cube.r}`, tile);
-//             } else {
-//                 this.deselectAll();
-//                 return;
-//             }
-//         } else {
-//             if (tool === 'Brush' || tool === 'Eraser') {
-//                 if (this.historyManager) this.historyManager.saveStep([tile], false);
-//             }
-//         }
-//
-//         switch (tool) {
-//             case 'Select': this.executeSelectTool(tile); break;
-//             case 'Brush': this.executeBrushTool(tile, mode); break;
-//             case 'Eraser': this.executeEraserTool(tile, mode); break;
-//         }
-//     }
-//
-//     handleMapHover(mouseX, mouseY, currentZoom) {
-//         if (this.pathRenderer && this.pathRenderer.pathGraphics) this.pathRenderer.pathGraphics.clear();
-//         return;
-//     }
-//
-//     executeSelectTool(tile) {
-//         this.selectedTile = tile;
-//         const activeInspector = this.inspectors[this.controls.currentMode];
-//         if (activeInspector) activeInspector.render(tile);
-//
-//         const marker = window.selectionMarkerRef;
-//         if (marker) {
-//             const pixelPos = this.hexMath.cubeToPixel(tile.q, tile.r);
-//             marker.x = pixelPos.x;
-//             marker.y = pixelPos.y - (tile.height - 1) * this.heightStep;
-//             marker.visible = true;
-//         }
-//     }
-//
-//     executeBrushTool(tile, mode) {
-//         const selectedAsset = this.controls.selectedPaletteItem;
-//
-//         if (mode === 'Terrain') {
-//             tile.type = selectedAsset;
-//             tile.height = this.controls.brushHeightTarget;
-//             tile.imageIndex = 0;
-//         } else if (mode === 'Objects') {
-//             // ИСПРАВЛЕНИЕ: Используем универсальный спавн интерактивных объектов
-//             // Динамически импортируем WorldObject и ObjectConfig для сборки
-//             const config = window.ObjectConfigRef ? window.ObjectConfigRef[selectedAsset] : null;
-//             if (config) {
-//                 const HexTileClass = this.mapData.tiles.values().next().value.constructor;
-//                 // Подтягиваем класс WorldObject, который мы экспортировали из MapData
-//                 const uniqueId = `obj_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-//                 const defaultInnerMap = config.hasInnerMap ? config.defaultInnerMapId : null;
-//
-//                 // Перезаписываем объект на гексе на основе выбранного в палитре ассета
-//                 const nextTile = this.mapData.tiles.values().next().value;
-//                 const WorldObjectClass = nextTile.constructor.name === 'HexTile' ? window.mapDataRef.tiles.values().next().value.constructor : null;
-//
-//                 // Создаем чистый полиморфный объект
-//                 tile.worldObject = {
-//                     id: uniqueId,
-//                     type: selectedAsset,
-//                     name: config.name,
-//                     innerMapId: defaultInnerMap,
-//                     garrisonUnits: []
-//                 };
-//             }
-//         } else if (mode === 'Characters') {
-//             tile.units.push({ type: selectedAsset, hp: 100, mp: 2, faction: 'player' });
-//         }
-//
-//         this.redrawMap();
-//         if (this.selectedTile === tile) this.executeSelectTool(tile);
-//     }
-//
-//     executeEraserTool(tile, mode) {
-//         if (mode === 'Terrain') {
-//             tile.type = 'grass'; tile.height = 1; tile.imageIndex = 0;
-//         } else if (mode === 'Objects') {
-//             // ИСПРАВЛЕНИЕ: Ластик полностью стирает интерактивный объект с гекса
-//             tile.worldObject = null;
-//         } else if (mode === 'Characters') {
-//             tile.units = [];
-//         }
-//
-//         this.redrawMap();
-//         if (this.selectedTile === tile) this.executeSelectTool(tile);
-//     }
-//
-//     deselectAll() {
-//         this.selectedTile = null;
-//         if (window.selectionMarkerRef) window.selectionMarkerRef.visible = false;
-//         if (this.pathRenderer) this.pathRenderer.clear();
-//         if (this.inspectors && this.inspectors['Terrain']) this.inspectors['Terrain'].renderEmpty();
-//     }
-// }

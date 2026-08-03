@@ -1,5 +1,6 @@
 import { HexMath } from '../shared/HexMath.js';
 import { MapData } from '../shared/MapData.js';
+import { renderTile } from '../shared/render.js';
 import { AppState, getActiveMap, getTileFromState, DiplomaticPacts } from '../shared/GameState.js';
 
 import { HistoryManager } from './HistoryManager.js';
@@ -203,73 +204,11 @@ async function init() {
         // });
 
         AppState.map.tiles.forEach((tile) => {
-            const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
-            const config = AppState.ConfigTerrain[tile.type];
-            if (!config) return;
 
-            const assetVariant = config.images[tile.imageIndex] || config.images;
-            const imagePath = assetVariant.base || assetVariant;
-            let tileTexture = PIXI.Assets.cache.has(imagePath) ? PIXI.Assets.get(imagePath) : PIXI.Texture.WHITE;
+            const renderedTile = renderTile(tile);
+            if(!renderedTile) return;
 
-            const groundY = pixelPos.y;
-            const targetHeight = tile.height;
-            const roofY = groundY - (targetHeight - 1) * AppState.config.heightStep;
-
-            let wallTint = 0x555555;
-            if (targetHeight > 1) {
-                const neighbors = hexMath.getNeighbors(tile.q, tile.r);
-                let maxSouthDrop = 0;
-                neighbors.forEach(n => {
-                    const neighborTile = AppState.engine.MapManager.getTile(n.q, n.r);
-                    if (neighborTile && hexMath.cubeToPixel(neighborTile.q, neighborTile.r).y > groundY) {
-                        const drop = tile.height - neighborTile.height;
-                        if (drop > maxSouthDrop) maxSouthDrop = drop;
-                    }
-                });
-                wallTint = maxSouthDrop <= 0.5 ? 0x999999 : 0x444444;
-            }
-
-            // Отрисовка стены
-            if (targetHeight > 1) {
-                const sliceStep = Math.max(1, Math.floor(hexMath.size * 0.05));
-                for (let pixelY = groundY; pixelY >= roofY; pixelY -= sliceStep) {
-                    const wallSlice = new PIXI.Sprite(tileTexture);
-                    wallSlice.anchor.set(0.5, 0.5);
-                    wallSlice.x = pixelPos.x; wallSlice.y = pixelY;
-
-                    if (tileTexture !== PIXI.Texture.WHITE) {
-                        wallSlice.scale.set(hexMath.width / tileTexture.width, hexMath.height / tileTexture.height);
-                    } else {
-                        wallSlice.width = hexMath.width; wallSlice.height = hexMath.height;
-                    }
-
-                    wallSlice.tint = wallTint;
-
-                    wallSlice.zIndex = groundY + 0.01;
-                    worldMapContainer.addChild(wallSlice);
-                }
-            }
-
-            // Отрисовка крышки
-            const roofSprite = new PIXI.Sprite(tileTexture);
-            roofSprite.anchor.set(0.5, 0.5);
-            roofSprite.x = pixelPos.x; roofSprite.y = roofY;
-
-            if (tileTexture !== PIXI.Texture.WHITE) {
-                roofSprite.scale.set(hexMath.width / tileTexture.width, hexMath.height / tileTexture.height);
-            } else {
-                roofSprite.width = hexMath.width; roofSprite.height = hexMath.height;
-                roofSprite.tint = assetVariant.fallbackColor || config.fallbackColor;
-            }
-
-            roofSprite.zIndex = groundY + 0.1;
-
-            roofSprite.tint = 0xffffff;
-
-            worldMapContainer.addChild(roofSprite);
-
-            const tileFactionId = AppState.engine.factionManager.getTileFaction(tile);
-            const tileFaction = tileFactionId ? AppState.factions?.[tileFactionId] : null;
+            const {pixelPos, roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
 
             const unitsOnThisTile = [];
             Object.keys(AppState.entities).forEach(id => {

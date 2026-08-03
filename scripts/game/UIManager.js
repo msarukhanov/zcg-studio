@@ -127,7 +127,7 @@ export class UIManager {
         this.renderFactionResources();
         this.renderFactionCharactersList();
 
-        this.showInteractionMenu();
+        this.renderInteractionMenu();
 
         this.renderPlatformerMobileControls();
     }
@@ -1145,7 +1145,7 @@ export class UIManager {
 
 
 
-    showInteractionMenu() {
+    renderInteractionMenu() {
 
         const activeCharId = AppState.play?.activeCharacterId;
         const playerFactionId = AppState.player?.faction;
@@ -1161,12 +1161,21 @@ export class UIManager {
             actionContainer = document.createElement('div');
             actionContainer.id = 'mobile-action-bar';
             Object.assign(actionContainer.style, {
-                position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
-                display: 'flex', gap: '12px', zIndex: '900', padding: '10px 20px',
-                backgroundColor: 'rgba(17, 22, 34, 0.92)', border: '2px solid #34495e',
-                borderRadius: '30px', boxShadow: '0 10px 30px rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)'
+                position: 'absolute',
+                bottom: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                display: 'flex',
+                gap: '12px',
+                zIndex: '900',
+                padding: '10px 20px',
+                backgroundColor: 'rgba(17, 22, 34, 0.92)',
+                border: '2px solid #34495e',
+                borderRadius: '30px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
+                backdropFilter: 'blur(4px)'
             });
-            this.applyStylesFromConfig(actionContainer, 'showInteractionMenu');
+            this.applyStylesFromConfig(actionContainer, 'InteractionMenu');
             document.body.appendChild(actionContainer);
         }
         actionContainer.style.display = "flex";
@@ -1318,7 +1327,7 @@ export class UIManager {
                             }
 
 
-                            this.showInteractionMenu(entity, tile);
+                            this.renderInteractionMenu(entity, tile);
                             // this.clearCurrentScreen();
 
                             if (window.renderMap) window.renderMap();
@@ -1499,7 +1508,7 @@ export class UIManager {
 
         // Запоминаем, какой режим сейчас отрисован, чтобы не пересоздавать DOM каждую секунду
         const currentRenderedMode = container.getAttribute('data-mode');
-        const targetMode = AppState.isPlatformerMode ? 'platformer' : 'rts';
+        const targetMode = AppState.map.isPlatformerMode ? 'platformer' : 'rts';
 
         if (currentRenderedMode === targetMode) {
             return; // Хватит плодить элементы! Если режим не менялся, выходим
@@ -1557,7 +1566,7 @@ export class UIManager {
         // =========================================================================
         // 🧭 РЕЖИМ 1: ЛЕВЫЙ ДЖОЙСТИК (RTS СТРАТЕГИЯ — 6 НАПРАВЛЕНИЙ ГЕКСОВ)
         // =========================================================================
-        if (!AppState.isPlatformerMode) {
+        if (!AppState.map.isPlatformerMode) {
             const leftJoy = createJoystickDOM('ui-joystick-rts', 'left', 'RTS');
             container.appendChild(leftJoy.zone);
 
@@ -1622,7 +1631,11 @@ export class UIManager {
         // =========================================================================
         // 🏃‍♂️ РЕЖИМ 2: ПРАВЫЙ ДЖОЙСТИК (ПЛАТФОРМЕР — ДВИЖЕНИЕ + ВЕРТИКАЛЬНЫЕ ОСИ)
         // =========================================================================
-        if (AppState.isPlatformerMode) {
+        // =========================================================================
+        // 🏃‍♂️ РЕЖИМ 2: ПРАВЫЙ ДЖОЙСТИК (ПЛАТФОРМЕР — ДВИЖЕНИЕ + ВЕРТИКАЛЬНЫЕ ОСИ)
+        // =========================================================================
+        if (AppState.map.isPlatformerMode) {
+            // Создаем правый джойстик строго по оригинальной структуре
             const rightJoy = createJoystickDOM('ui-joystick-platformer', 'right', 'PAD');
             container.appendChild(rightJoy.zone);
 
@@ -1632,15 +1645,16 @@ export class UIManager {
                 if (!rect) rect = rightJoy.zone.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
-
                 const dx = clientX - centerX;
                 const dy = clientY - centerY;
                 const distance = Math.sqrt(dx * dx + dy * dy);
 
                 if (distance < 12) { // Мертвая зона
                     rightJoy.stick.style.transform = 'translate(0px, 0px)';
-                    inputManager?.setLeft(false); inputManager?.setRight(false);
-                    inputManager?.setJump(false); inputManager?.setDown(false);
+                    inputManager?.setLeft(false);
+                    inputManager?.setRight(false);
+                    inputManager?.setJump(false);
+                    inputManager?.setDown(false);
                     return;
                 }
 
@@ -1649,7 +1663,7 @@ export class UIManager {
                 const clampedY = Math.sin(angle) * Math.min(distance, maxRadius);
                 rightJoy.stick.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
 
-                // Считываем горизонталь (Влево / Вправо)
+                // 🕹️ Считываем горизонталь (Влево / Вправо)
                 if (clampedX > 15) {
                     inputManager?.setRight(true);
                     inputManager?.setLeft(false);
@@ -1661,7 +1675,7 @@ export class UIManager {
                     inputManager?.setRight(false);
                 }
 
-                // Считываем вертикаль (Вверх = Прыжок, Вниз = Присед/Спуск)
+                // 🕹️ Считываем вертикаль (Вверх = Прыжок, Вниз = Присед/Спуск)
                 if (clampedY < -15) {
                     inputManager?.setJump(true);
                     inputManager?.setDown(false);
@@ -1677,8 +1691,10 @@ export class UIManager {
             const resetPlatformer = () => {
                 rightJoy.stick.style.transform = 'translate(0px, 0px)';
                 rect = null;
-                inputManager?.setLeft(false); inputManager?.setRight(false);
-                inputManager?.setJump(false); inputManager?.setDown(false);
+                inputManager?.setLeft(false);
+                inputManager?.setRight(false);
+                inputManager?.setJump(false);
+                inputManager?.setDown(false);
             };
 
             rightJoy.zone.onpointerdown = (e) => {
@@ -1695,6 +1711,7 @@ export class UIManager {
             };
             rightJoy.zone.onpointercancel = () => resetPlatformer();
         }
+
     }
 
 

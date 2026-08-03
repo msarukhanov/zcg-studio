@@ -10,8 +10,8 @@ export function renderTile(tile) {
     const config = AppState.ConfigTerrain[tile.type];
     if (!config) return;
 
-    let isVisible = AppState.play.visibleTiles.has(`${tile.q},${tile.r}`);
-    let isVisited = AppState.player.exploredTiles.has(`${tile.q},${tile.r}`);
+    let isVisible = AppState.editor.globalMode === 'Editor' ? true : AppState.play.visibleTiles.has(`${tile.q},${tile.r}`);
+    let isVisited = AppState.editor.globalMode === 'Editor' ? true : AppState.player.exploredTiles.has(`${tile.q},${tile.r}`);
 
     if (!isVisible && !isVisited) return;
 
@@ -20,7 +20,7 @@ export function renderTile(tile) {
 
     const assetVariant = config.images[tile.imageIndex] || config.images;
     const imagePath = assetVariant.base || assetVariant;
-    let tileTexture = PIXI.Assets.cache.has(imagePath) ? PIXI.Assets.get(imagePath) : PIXI.Texture.WHITE;
+    let tileTexture = PIXI.Assets.cache.has(imagePath) ? PIXI.Assets.get(imagePath) : null;
 
     const groundY = pixelPos.y;
     const targetHeight = tile.height;
@@ -51,7 +51,7 @@ export function renderTile(tile) {
             wallSlice.anchor.set(0.5, 0.5);
             wallSlice.x = pixelPos.x; wallSlice.y = pixelY;
 
-            if (tileTexture !== PIXI.Texture.WHITE) {
+            if (tileTexture) {
                 wallSlice.scale.set(hexMath.width / tileTexture.width, hexMath.height / tileTexture.height);
             } else {
                 wallSlice.width = hexMath.width; wallSlice.height = hexMath.height;
@@ -67,24 +67,39 @@ export function renderTile(tile) {
         }
     }
 
+    let roofSprite;
     // Отрисовка крышки
-    const roofSprite = new PIXI.Sprite(tileTexture);
-    roofSprite.anchor.set(0.5, 0.5);
-    roofSprite.x = pixelPos.x; roofSprite.y = roofY;
 
-    if (tileTexture !== PIXI.Texture.WHITE) {
+    if (tileTexture) {
+        roofSprite = new PIXI.Sprite(tileTexture);
         roofSprite.scale.set(hexMath.width / tileTexture.width, hexMath.height / tileTexture.height);
-    } else {
-        roofSprite.width = hexMath.width; roofSprite.height = hexMath.height;
-        roofSprite.tint = assetVariant.fallbackColor || config.fallbackColor;
+
+        roofSprite.anchor.set(0.5, 0.5);
+        roofSprite.x = pixelPos.x; roofSprite.y = roofY;
+
+        roofSprite.zIndex = groundY + 0.1;
+
+        if (isVisible) roofSprite.tint = 0xffffff;
+        else if (isVisited) roofSprite.tint = 0x555555;
+
+        worldMapContainer.addChild(roofSprite);
     }
+    else {
+        roofSprite = new PIXI.Sprite(PIXI.Texture.WHITE);
+        roofSprite.width = hexMath.width;
+        roofSprite.height = hexMath.height;
 
-    roofSprite.zIndex = groundY + 0.1;
+        const roofSprite2 = new PIXI.Sprite(PIXI.Texture.WHITE);
+        roofSprite2.anchor.set(0.5, 0.5);
+        roofSprite2.x = pixelPos.x; roofSprite2.y = roofY;
+        roofSprite2.width = hexMath.width;
+        roofSprite2.height = hexMath.height;
+        roofSprite2.tint = 0x87CEEB;
+        // roofSprite2.tint = config.fallbackColor;
+        roofSprite2.zIndex = groundY + 0.1;
 
-    if (isVisible) roofSprite.tint = 0xffffff;
-    else if (isVisited) roofSprite.tint = 0x555555;
-
-    worldMapContainer.addChild(roofSprite);
+        worldMapContainer.addChild(roofSprite2);
+    }
 
     const tileGraphics = new PIXI.Graphics();
     const h = Math.sqrt(3) * hexMath.size;

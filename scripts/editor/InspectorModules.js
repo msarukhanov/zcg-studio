@@ -323,7 +323,7 @@ export class ObjectsInspector {
 export class CharactersInspector extends BaseInspector {
     render(tile) {
         // Берем первого юнита в клетке (Рафаэля)
-        const unit = tile.units[0];
+        const unit = tile.units ? tile.units[0] : null;
 
         if (!unit) {
             this.container.innerHTML = `<div class="empty-notice">No character on this tile.</div>`;

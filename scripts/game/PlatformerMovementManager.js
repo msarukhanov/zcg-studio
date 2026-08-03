@@ -11,127 +11,118 @@ export class PlatformerMovementManager extends MovementManager {
         this.terminalVelocity = config.terminalVelocity || 12;
     }
 
-    /**
-     * Основной игровой цикл для режима платформера (вызывать в update/tick игры)
-     * @param {Object} charObj - Объект персонажа
-     * @param {Object} input - Ввод игрока { left: bool, right: bool, jump: bool }
-     * @param {number} deltaTime - Время кадра
-     */
-    updatePlatformer(charObj, input, deltaTime) {
-        if (!charObj.physics) {
-            // Инициализируем физическое состояние, если его нет
-            charObj.physics = { x: 0, y: 0, vx: 0, vy: 0, isGrounded: false };
-            // Синхронизируем стартовую позицию платформера из гекса
-            const startTile = getTileFromState(charObj.mapPosition.q, charObj.mapPosition.r);
-            if (startTile) {
-                charObj.physics.x = startTile.pixelX || 0; // Предполагается наличие экранных координат
-                charObj.physics.y = startTile.pixelY || 0;
+    updateCharacter(charObj) {
+        // Если персонаж уже летит по дуге, падает или просто шагает — не мешаем анимации
+
+        if (charObj.action === 'move' || (charObj.currentMovementVisualPath && charObj.currentMovementVisualPath.length > 0)) return;
+
+        const input = AppState.engine.inputManager.getPlatformerInput();
+        const currentQ = charObj.mapPosition.q;
+        const currentR = charObj.mapPosition.r;
+
+        const currentTile = getTileFromState(currentQ, currentR);
+        if (!currentTile) return;
+
+        const isGrounded = currentTile.type !== 'air';
+
+        if (!isGrounded) {
+            const nextTileDown = getTileFromState(currentQ, currentR + 1);
+            if (nextTileDown) {
+                charObj.currentMovementVisualPath = [nextTileDown];
+                charObj.action = 'move';
+                return;
             }
         }
 
-        const p = charObj.physics;
+        if (input.jump && isGrounded) {
+            let dir = 1;
+            if (input.left) dir = -1;
+            else if (input.right) dir = 1;
 
-        // 1. ГОРИЗОНТАЛЬНОЕ ПЕРЕМЕЩЕНИЕ (Влево / Вправо)
-        if (input.left) {
-            p.vx = -this.moveSpeed;
-        } else if (input.right) {
-            p.vx = this.moveSpeed;
-        } else {
-            p.vx = 0; // Быстрая остановка (можно заменить на трение)
-        }
+            const jumpPath = [];
+            let checkQ = currentQ;
+            let checkR = currentR;
+            let hitObstacle = false;
 
-        // 2. ГРАВИТАЦИЯ
-        p.vy += this.gravity;
-        if (p.vy > this.terminalVelocity) p.vy = this.terminalVelocity;
+            const arcOffsets = [
+                { q: 0,   r: -1 }, // Шаг 1: строго вверх
+                { q: dir, r: -1 }, // Шаг 2: по диагонали
+                { q: dir, r: -1 }  // Шаг 3: по диагонали
+            ];
 
-        // 3. ПРЫЖОК
-        if (input.jump && p.isGrounded) {
-            p.vy = this.jumpForce;
-            p.isGrounded = false;
-        }
+            for (const offset of arcOffsets) {
+                checkQ += offset.q;
+                checkR += offset.r;
 
-        // ПРИМЕНЕНИЕ ДВИЖЕНИЯ С ПРОВЕРКОЙ КОЛЛИЗИЙ (Раздельное по осям X и Y)
+                const testTile = getTileFromState(checkQ, checkR);
 
-        // Смещение по X (Стены)
-        p.x += p.vx;
-        this.resolveCollisions(charObj, 'x');
-
-        // Смещение по Y (Пол и Потолок)
-        p.y += p.vy;
-        p.isGrounded = false; // Сбрасываем перед проверкой
-        this.resolveCollisions(charObj, 'y');
-
-        // 4. СИНХРОНИЗАЦИЯ ОБРАТНО В ГЕКСЫ
-        // Переводим текущие (x,y) координаты платформера в гекс (q,r)
-        const currentHexCoords = AppState.engine.hexMath.pixelToHex(p.x, p.y);
-        const nextTile = getTileFromState(currentHexCoords.q, currentHexCoords.r);
-
-        if (nextTile && (nextTile.q !== charObj.mapPosition.q || nextTile.r !== charObj.mapPosition.r)) {
-            const currentTile = getTileFromState(charObj.mapPosition.q, charObj.mapPosition.r);
-
-            // Используем вашу старую проверку проходимости ландшафта и высот!
-            const stepResult = this.canStepBetween(currentTile, nextTile, charObj);
-
-            if (stepResult === "walkable" || stepResult === "ally") {
-                // Если клетка проходима — обновляем позицию на стратегической карте
-                charObj.mapPosition.q = nextTile.q;
-                charObj.mapPosition.r = nextTile.r;
-
-                // Опционально: списываем MP в пошаговом режиме платформера
-                if (AppState.turn_settings?.turn_mode !== "realtime") {
-                    const cost = this.getMovementCost(currentTile, nextTile);
-                    charObj.movement.current -= cost;
+                // Если на пути дуги встала твердая плитка земли или стена (тип НЕ 'air') — траектория прерывается
+                if (!testTile || testTile.type !== 'air') {
+                    hitObstacle = true;
+                    break;
                 }
-            } else {
-                // Если наткнулись на стену/врага на уровне гексов — откатываем физическую позицию назад
-                p.x -= p.vx;
-                p.vx = 0;
+
+                // Клетка — чистый воздух, добавляем её в наш маршрут полета
+                jumpPath.push(testTile);
+            }
+
+            // Если нам удалось рассчитать хотя бы один честный шаг вверх — запускаем полет!
+            if (jumpPath.length > 0) {
+                charObj.currentMovementVisualPath = jumpPath; // Скармливаем всю дугу аниматору!
+                charObj.action = 'move';
+                charObj.actionType = 'jump';
+                return;
+            }
+        }
+
+        if (input.dash && dir !== 0) {
+            const dashPath = [];
+            let checkQ = currentQ;
+            let checkR = currentR;
+
+            // Строим прямую траекторию на 3 шага вперед
+            for (let i = 0; i < 3; i++) {
+                checkQ += dir; // Смещаемся строго по горизонтали
+
+                const testTile = getTileFromState(checkQ, checkR);
+
+                // Если на пути дэша стена — врезаемся и останавливаем рывок
+                if (!testTile || testTile.type !== 'air') {
+                    break;
+                }
+
+                dashPath.push(testTile);
+            }
+
+            if (dashPath.length > 0) {
+                charObj.currentMovementVisualPath = dashPath; // Скармливаем рывок аниматору
+                charObj.action = 'move';
+                charObj.actionType = 'dash';
+
+                // Мгновенно обновляем сеточные координаты в финальную точку дэша
+                const lastDashTile = dashPath[dashPath.length - 1];
+                charObj.mapPosition.q = lastDashTile.q;
+                charObj.mapPosition.r = lastDashTile.r;
+                return;
+            }
+        }
+
+        let walkOffsetQ = 0;
+        if (input.left) walkOffsetQ = -1;
+        else if (input.right) walkOffsetQ = 1;
+
+        if (walkOffsetQ !== 0) {
+            const nextTile = getTileFromState(currentQ + walkOffsetQ, currentR);
+            if (nextTile) {
+                const stepCheck = this.canStepBetween(currentTile, nextTile, charObj);
+                if (stepCheck === "walkable" || stepCheck === "ally" || nextTile.type==='air') {
+                    charObj.currentMovementVisualPath = [nextTile];
+                    charObj.action = 'move';
+                }
             }
         }
     }
 
-    /**
-     * Разрешение коллизий с сеткой гексов на основе хитбоксов
-     */
-    resolveCollisions(charObj, axis) {
-        const p = charObj.physics;
-        const bounds = this.getCharacterBounds(p.x, p.y, charObj.width || 32, charObj.height || 48);
-
-        // Проверяем ключевые точки хитбокса (углы)
-        const pointsToCheck = axis === 'x'
-            ? [ { x: bounds.left, y: bounds.top }, { x: bounds.left, y: bounds.bottom }, { x: bounds.right, y: bounds.top }, { x: bounds.right, y: bounds.bottom } ]
-            : [ { x: bounds.left, y: bounds.top }, { x: bounds.right, y: bounds.top }, { x: bounds.left, y: bounds.bottom }, { x: bounds.right, y: bounds.bottom } ];
-
-        for (const pt of pointsToCheck) {
-            const hexCoords = AppState.engine.hexMath.pixelToHex(pt.x, pt.y);
-            const tile = getTileFromState(hexCoords.q, hexCoords.r);
-
-            if (!tile) continue;
-
-            // Используем старую логику: проверяем заблокирован ли гекс объектом/ландшафтом
-            const isBlocked = this.isTileImpasseForPlatformer(tile, charObj);
-
-            if (isBlocked) {
-                if (axis === 'x') {
-                    if (p.vx > 0) p.x -= (bounds.right - (tile.pixelX - tile.width / 2)); // Упор в стену справа
-                    if (p.vx < 0) p.x += ((tile.pixelX + tile.width / 2) - bounds.left); // Упор в стену слева
-                    p.vx = 0;
-                    break;
-                }
-                if (axis === 'y') {
-                    if (p.vy > 0) { // Приземление на платформу / пол
-                        p.y -= (bounds.bottom - (tile.pixelY - tile.height / 2));
-                        p.isGrounded = true;
-                        p.vy = 0;
-                    } else if (p.vy < 0) { // Удар головой об потолок
-                        p.y += ((tile.pixelY + tile.height / 2) - bounds.top);
-                        p.vy = 0;
-                    }
-                    break;
-                }
-            }
-        }
-    }
 
     /**
      * Хелпер для определения абсолютной непроходимости клетки в режиме платформера
@@ -160,4 +151,41 @@ export class PlatformerMovementManager extends MovementManager {
             bottom: y
         };
     }
+
+    getBotPlatformerNeighbors(q, r) {
+        const validNeighbors = [];
+        const currentTile = getTileFromState(q, r);
+        const groundUnder = getTileFromState(q, r + 1);
+
+        const isGrounded = groundUnder && this.isTileImpasseForPlatformer(groundUnder);
+
+        // 1. Если под ботом пусто — он может ТОЛЬКО падать вниз
+        if (!isGrounded) {
+            const tileBelow = getTileFromState(q, r + 1);
+            if (tileBelow && !this.isTileImpasseForPlatformer(tileBelow)) {
+                return [{ q, r: r + 1 }]; // Падаем
+            }
+        }
+
+        // 2. Если бот стоит на земле, он может идти влево/вправо
+        const sides = [{ q: q + 1, r }, { q: q - 1, r }];
+        for (const side of sides) {
+            const targetTile = getTileFromState(side.q, side.r);
+            if (targetTile && !this.isTileImpasseForPlatformer(targetTile)) {
+                validNeighbors.push(side);
+            }
+        }
+
+        // 3. Возможность прыжка (если клетка сверху и по диагонали свободны)
+        if (isGrounded) {
+            const upTile = getTileFromState(q, r - 1);
+            if (upTile && !this.isTileImpasseForPlatformer(upTile)) {
+                // Добавляем ячейки платформ слева/справа сверху
+                // А* построит цепочку прыжка ячейка за ячейкой
+            }
+        }
+
+        return validNeighbors;
+    }
+
 }

@@ -241,8 +241,6 @@ async function init2(isNewGame = false) {
         AppState.play.activeFactionId = AppState.player.faction;
         AppState.play.visibleTiles = new Set();
 
-        AppState.engine.MapManager.switchMap('world_map');
-
         if (AppState.player?.character && AppState.game_settings) {
             playerClickManager.executeCharacterSelect(AppState.player.character);
 
@@ -250,13 +248,14 @@ async function init2(isNewGame = false) {
                 AppState.engine.centerCameraOnCharacter(AppState.player.character);
             }
         }
-
-
-        AppState.engine.visionManager.updateFogOfWar();
     }
 
     if(AppState.maps) {
+        // AppState.engine.MapManager.switchMap('world_map');
         AppState.engine.MapManager.switchMap('world_map');
+        // AppState.map.gridMode = 'pointyHex';
+        // AppState.map.gridMode = 'square';
+        // AppState.map.isPlatormerMode = true;
 
         if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
             playerClickManager.executeCharacterSelect(AppState.player?.character);
@@ -654,21 +653,23 @@ async function init2(isNewGame = false) {
             const activeChar = AppState.entities[AppState.play.activeCharacterId];
             const charTile = getTileFromState(activeChar.mapPosition.q, activeChar.mapPosition.r);
 
-            // ИСПРАВЛЕНИЕ: Если Рафаэль прямо сейчас ИДЕТ (char.action === 'moving'),
-            // мы временно ПОЛНОСТЬЮ тушим старую зону хода на экране, чтобы она не сбивала с толку
-            if (activeChar && activeChar.action !== 'move') {
-                if (AppState.play.cachedReachableTiles && AppState.play.cachedReachableTiles.length > 0) {
-                    AppState.engine.pathRenderer.drawMovementZone(AppState.play.cachedReachableTiles);
+            if(AppState.main.MovementCells) {
+                if (activeChar && activeChar.action !== 'move') {
+                    if (AppState.play.cachedReachableTiles && AppState.play.cachedReachableTiles.length > 0) {
+                        AppState.engine.pathRenderer.drawMovementZone(AppState.play.cachedReachableTiles);
+                    }
+                } else {
+                    if (AppState.engine.pathRenderer) AppState.engine.pathRenderer.clearZone(); // Скрываем подложки на время анимации
                 }
-            } else {
-                if (AppState.engine.pathRenderer) AppState.engine.pathRenderer.clearZone(); // Скрываем подложки на время анимации
             }
-
-            // Рисуем стрелочки путей в покое
-            if (activeChar.currentActivePath && activeChar.currentActivePath.length > 0 && activeChar.action !== 'move') {
-                AppState.engine.pathRenderer.drawPath(activeChar.currentActivePath, activeChar);
+            if(AppState.main.MovementLine) {
+                if (activeChar.currentActivePath && activeChar.currentActivePath.length > 0 && activeChar.action !== 'move') {
+                    AppState.engine.pathRenderer.drawPath(activeChar.currentActivePath, activeChar);
+                }
             }
         }
+
+
 
         worldMapContainer.sortChildren();
         uiLayerContainer.sortChildren();
@@ -820,6 +821,12 @@ async function init2(isNewGame = false) {
             const hexMath = AppState.engine.hexMath;
             let needRedraw = false;
 
+            if(AppState.map.isPlatformerMode) {
+                // AppState.engine.movementManager.updatePlatformer(deltaMS);
+                AppState.engine.movementManager.updateCharacter(AppState.characters[AppState.play.activeCharacterId]);
+                needRedraw = true;
+            }
+
             // Сканируем всех персонажей в глобальном стейте AppState
             Object.keys(AppState.entities).forEach(charId => {
                 const char = AppState.entities[charId];
@@ -855,14 +862,12 @@ async function init2(isNewGame = false) {
                 // Если у персонажа есть очередь клеток для плавного марш-броска
                 if(AppState.engine.movementManager.animateMovement(char, deltaMS)) needRedraw = true;
 
-
                 if (AppState.play.activeCharacterId && AppState.engine.updateCameraSystem && (AppState.game_settings.playerCamera === 'fixed')) {
                     AppState.engine.updateCameraSystem(ticker);
                 }
             });
 
             if (needRedraw) {
-
                 renderMap();
             } else if (AppState.play.activeCharacterId) {
                 AppState.engine.visionManager.updateFogOfWar();
@@ -1000,90 +1005,3 @@ window.applyGlobalAutoRotation = function() {
 window.addEventListener('resize', window.applyGlobalAutoRotation)
 
 init().catch(console.error);
-
-
-
-function resolvePlatformerCollisions(char, axis, hexMath) {
-    const p = char.physics;
-    const currentHexSize = AppState.sizes.hex;
-
-    const bounds = {
-        left: char.visualX - p.width / 2,
-        right: char.visualX + p.width / 2,
-        top: char.visualY - p.height,
-        bottom: char.visualY
-    };
-
-    // Создаем микро-отступы (5% от размера хитбокса), чтобы персонаж не цеплялся углами за швы между гексами
-    const insetX = p.width * 0.05;
-    const insetY = p.height * 0.05;
-
-    const points = axis === 'x'
-        ? [ { x: bounds.left, y: bounds.top + insetY }, { x: bounds.left, y: bounds.bottom - insetY },
-            { x: bounds.right, y: bounds.top + insetY }, { x: bounds.right, y: bounds.bottom - insetY } ]
-        : [ { x: bounds.left + insetX, y: bounds.top }, { x: bounds.right - insetX, y: bounds.top },
-            { x: bounds.left + insetX, y: bounds.bottom }, { x: bounds.right - insetX, y: bounds.bottom } ];
-
-    for (const pt of points) {
-        const hexCoords = hexMath.pixelToCube(pt.x, pt.y);
-        const tile = getTileFromState(hexCoords.q, hexCoords.r);
-
-        if (!tile) continue;
-
-        let isBlocked = false;
-
-        // 1. Проверка врагов и физических объектов-стен на гексе
-        for (const entity of Object.values(AppState.entities)) {
-            if (entity && entity.mapPosition && entity.mapPosition.q === tile.q && entity.mapPosition.r === tile.r) {
-                if (entity.id !== char.id) {
-                    const isEnemy = entity.faction && entity.faction !== char.faction && !entity.isDead;
-                    if (entity.blocksMovement === true || isEnemy) {
-                        isBlocked = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // 2. Проверка базовой проходимости ландшафта гекса
-        const terrainConfig = AppState.ConfigTerrain[tile.type];
-        const movementTerrains = char.movementTerrains || [];
-        if (!terrainConfig || !movementTerrains.includes(tile.type)) {
-            isBlocked = true;
-        }
-
-        // ВЫТАЛКИВАНИЕ ИЗ ПРЕПЯТСТВИЙ
-        if (isBlocked) {
-            const tilePixel = hexMath.cubeToPixel(tile.q, tile.r);
-
-            if (axis === 'x') {
-                // Выталкивание по горизонтали (ориентируемся на радиус Flat-topped гекса)
-                if (p.vx > 0) {
-                    char.visualX = tilePixel.x - currentHexSize - p.width / 2;
-                }
-                if (p.vx < 0) {
-                    char.visualX = tilePixel.x + currentHexSize + p.width / 2;
-                }
-                p.vx = 0;
-                break;
-            }
-
-            if (axis === 'y') {
-                // Физическая высота Flat-topped гекса равна: sqrt(3) * size
-                const hexHalfHeight = (Math.sqrt(3) * currentHexSize) / 2;
-
-                if (p.vy > 0) {
-                    // Приземление на верхнюю плоскость гекса-платформы
-                    char.visualY = tilePixel.y - hexHalfHeight;
-                    p.isGrounded = true;
-                    p.vy = 0;
-                } else if (p.vy < 0) {
-                    // Удар головой о потолок гекса снизу
-                    char.visualY = tilePixel.y + hexHalfHeight + p.height;
-                    p.vy = 0;
-                }
-                break;
-            }
-        }
-    }
-}

@@ -15,7 +15,9 @@ export const MapManager = {
         if (currentMapId && AppState.map.tiles) {
             AppState.maps[currentMapId] = {
                 mapId: currentMapId,
-                tiles: new Map(AppState.map.tiles)
+                tiles: new Map(AppState.map.tiles),
+                gridMode: AppState.map.gridMode,
+                isPlatformerMode: AppState.map.isPlatformerMode,
             };
         }
 
@@ -30,7 +32,9 @@ export const MapManager = {
         // Переключаем активный корневой указатель AppState
         AppState.map = {
             mapId: targetMapId,
-            tiles: AppState.maps[targetMapId].tiles
+            tiles: AppState.maps[targetMapId].tiles,
+            gridMode: AppState.maps[targetMapId].gridMode,
+            isPlatformerMode: AppState.maps[targetMapId].isPlatformerMode,
         };
 
         // =========================================================================
@@ -73,7 +77,9 @@ export const MapManager = {
 
                 AppState.maps[currentMapId] = {
                     mapId: currentMapId,
-                    tiles: new Map()
+                    tiles: new Map(),
+                    isPlatformerMode: false,
+                    gridMode: 'flatHex'
                 };
 
                 // const tile = {

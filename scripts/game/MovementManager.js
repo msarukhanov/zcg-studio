@@ -15,6 +15,7 @@ export class MovementManager {
 
     canStepBetween(fromTile, toTile, characterObj) {
         if (!characterObj || !characterObj.faction) return false;
+        if (toTile.type==='air') return true;
 
         // 1. ПЕРЕПАД ВЫСОТЫ И ЛАНДШАФТ
         if (toTile.height - fromTile.height > 0.5) return false;
@@ -276,7 +277,7 @@ export class MovementManager {
     }
 
 
-    animateMovement(char, deltaMS, ) {
+    animateMovement(char, deltaMS) {
         let needRedraw = false;
         if (char.action !== 'move' || !char.currentMovementVisualPath || !char.currentMovementVisualPath.length) return needRedraw;
 
@@ -292,11 +293,12 @@ export class MovementManager {
             // Проверяем клетку, к которой юнит летит ПРЯМО СЕЙЧАС в этом кадре
             const stepCheck = this.canStepBetween(currentTile, nextTile, char);
 
-            if (stepCheck !== "walkable") {
+            if (stepCheck !== "walkable" && nextTile.type!=='air') {
                 console.warn(`🏃‍♂️ [Movement Grid Lock] Путь перекрыт! Гекс (${nextTile.q}, ${nextTile.r}) занят статусом [${stepCheck}]. Экстренная остановка ${char.name}.`);
 
                 char.currentMovementVisualPath = [];
                 char.action = 'idle';
+                char.actionType = '';
 
                 if (char.mvmReadyTimer !== undefined) {
                     char.mvmReadyTimer = 0;
@@ -323,23 +325,40 @@ export class MovementManager {
         char.direction = '';
         char.directionV = '';
 
-        if (nextTile.q > char.mapPosition.q) {
-            char.direction = 'right';
-        }
-        else if (nextTile.q < char.mapPosition.q) {
-            char.direction = 'left';
-        }
-        else if (nextTile.r > char.mapPosition.r) {
-            // char.directionV = 'forward';
-            char.direction = 'forward';
-        }
-        else if (nextTile.r < char.mapPosition.r) {
-            // char.directionV = 'back';
-            char.direction = 'back';
+        if (AppState.map.gridMode === 'square') {
+            // Определяем горизонталь
+            if (nextTile.q > char.mapPosition.q) char.direction = 'right';
+            else if (nextTile.q < char.mapPosition.q) char.direction = 'left';
+
+            // Определяем вертикаль
+            if (nextTile.r > char.mapPosition.r) char.directionV = 'forward';
+            else if (nextTile.r < char.mapPosition.r) char.directionV = 'back';
+
+            // Если у вас спрайты только 4-сторонние (нет отдельных диагональных анимаций),
+            // то здесь можно сделать фолбек, например:
+            if (char.directionV && !char.direction) {
+                char.direction = char.directionV; // приоритет чистой вертикали
+            }
+        } else {
+            // Твой оригинальный рабочий код для обычного RTS режима гексов
+            if (nextTile.q > char.mapPosition.q) { char.direction = 'right'; }
+            else if (nextTile.q < char.mapPosition.q) { char.direction = 'left'; }
+            else if (nextTile.r > char.mapPosition.r) { char.direction = 'forward'; }
+            else if (nextTile.r < char.mapPosition.r) { char.direction = 'back'; }
         }
 
         // 3. Расчет шага интерполяции
-        const stepDuration = AppState.config.animationSpeed.movePerHex;
+        let stepDuration;
+        if(char.actionType === 'jump') {
+            stepDuration = AppState.config.animationSpeed.jumpPerHex || 500;
+        }
+        if(char.actionType === 'dash') {
+            stepDuration = AppState.config.animationSpeed.dashPerHex || 200;
+        }
+        else {
+            stepDuration = AppState.config.animationSpeed.movePerHex || 1000;
+        }
+
         char.movementLerpTime += deltaMS / stepDuration;
 
         // 4. Плавно смещаем пиксели фишки
@@ -384,7 +403,7 @@ export class MovementManager {
                         }
                     }
                 });
-                AppState.engine.uiManager.showInteractionMenu();
+                AppState.engine.uiManager.renderInteractionMenu();
             }
             // =========================================================================
 
@@ -392,6 +411,7 @@ export class MovementManager {
             // 6. МАРШРУТ ПОЛНОСТЬЮ ЗАВЕРШЕН: Очередь пуста, юнит остановился
             if (char.currentMovementVisualPath.length === 0) {
                 char.action = 'idle'; // Переводим в покой
+                char.actionType = ''; // Переводим в покой
 
                 const activeChar = AppState.entities[AppState.play.activeCharacterId];
                 const reachableTiles = this.getReachableTiles(activeChar);
@@ -406,7 +426,7 @@ export class MovementManager {
                 }
             }
 
-            if (char.action === 'idle' && !AppState.isPlatformerMode) {
+            if (char.action === 'idle' && !AppState.map.isPlatformerMode) {
                 const currentDir = AppState.engine.inputManager?.getHexGridInput();
 
                 if (currentDir) {
