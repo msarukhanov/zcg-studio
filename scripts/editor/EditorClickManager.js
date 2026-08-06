@@ -6,8 +6,7 @@ import { TerrainInspector, ObjectsInspector, CharactersInspector } from './Inspe
 
 
 export class EditorClickManager {
-    constructor(redrawCallback) {
-        this.redrawMap = redrawCallback;
+    constructor() {
 
         this.selectedTile = null;
         this.historyManager = null;
@@ -175,7 +174,7 @@ export class EditorClickManager {
             // };
         }
 
-        this.redrawMap();
+        AppState.engine.renderMap();
         if (this.selectedTile === tile) this.executeSelectTool(tile);
     }
 
@@ -225,7 +224,7 @@ export class EditorClickManager {
             });
         }
 
-        this.redrawMap();
+        AppState.engine.renderMap();
         if (this.selectedTile === tile) this.executeSelectTool(tile);
     }
 

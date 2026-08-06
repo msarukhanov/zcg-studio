@@ -2,8 +2,8 @@ import { AppState, getTileFromState, getPactBetween, DiplomaticPacts } from '../
 import { Character } from './Player.js';
 
 export class PlayerClickManager {
-    constructor(redrawCallback) {
-        this.redrawMap = redrawCallback;
+    constructor() {
+
     }
 
     /**
@@ -65,7 +65,7 @@ export class PlayerClickManager {
             // ⚔️ ЕСЛИ ВОЙНА И У СУЩНОСТИ ЕСТЬ ХП — НАЧИНАЕМ БОЙ (Работает для живых врагов и ломаемых стен/зданий)
             if (pact === DiplomaticPacts.WAR && char.stats) {
                 if (AppState.engine.combatManager) {
-                    AppState.engine.combatManager.startBattle(AppState.play.activeCharacterId, tile);
+                    AppState.engine.combatManager.startAttack(AppState.play.activeCharacterId, tile);
                     return;
                 }
             }
@@ -109,14 +109,9 @@ export class PlayerClickManager {
             const reachableTiles = AppState.engine.movementManager.getReachableTiles(char);
             AppState.play.cachedReachableTiles = reachableTiles;
             char.cachedReachableTiles = reachableTiles;
-            AppState.engine.pathRenderer.drawMovementZone(reachableTiles);
         }
 
-        if (this.redrawMap) {
-            this.redrawMap();
-        }
-
-        AppState.engine.visionManager.updateFogOfWar();
+        AppState.engine.renderMap();
 
         AppState.engine.uiManager.updateAll();
     }

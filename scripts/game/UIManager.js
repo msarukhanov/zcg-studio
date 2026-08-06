@@ -217,7 +217,7 @@ export class UIManager {
         </svg>
 
         <!-- Центральный круглый аватар -->
-        <div style="width: 82px; height: 82px; border-radius: 50%; border: 1px solid #455a64; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
+        <div style="width: 82px; height: 82px; border-radius: 50%; border: 1px solid #455a64; overflow: hidden; display: flex; align-items: center; justify-content: center; z-index: 2; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);" id="hud-avatar-circle">
           <img src="${imgUrl}" alt="${char.name}"
                style="width: 100%; height: 100%; object-fit: cover;"
                onerror="this.src='assets/avatars/default_avatar.png'; this.onerror=null;">
@@ -232,6 +232,26 @@ export class UIManager {
     `;
 
         this.rootContainer.appendChild(charWindow);
+
+        const avatarElement = document.getElementById('hud-avatar-circle') || avatarCircle;
+
+        if (avatarElement) {
+            // Включаемpointer-events, чтобы клик не улетал под холст на карту PixiJS
+            avatarElement.style.pointerEvents = 'auto';
+            avatarElement.style.cursor = 'pointer';
+
+            // Вешаем триггер открытия экрана персонажа
+            avatarElement.onclick = (e) => {
+                e.stopPropagation(); // Стопорим клик, чтобы не сдвинуть персонажа на гекс под кнопкой
+
+                if (AppState.engine?.ScreenManager) {
+                    // Запускаем переключение экрана на character_screen
+                    AppState.engine.ScreenManager.renderScreen('character_screen');
+                } else {
+                    console.warn("[UIManager] ScreenManager еще не инициализирован в AppState.engine");
+                }
+            };
+        }
     }
 
 
@@ -516,6 +536,9 @@ export class UIManager {
 
             btn.onclick = () => {
                 if (isOnCooldown) return;
+                if (isAutoAttack) {
+                    AppState.engine.combatManager.startAttack(char.id);
+                }
                 if (AppState.engine.skillManager) {
                     AppState.engine.skillManager.selectSkillForCast(skillId);
                 }
@@ -532,6 +555,7 @@ export class UIManager {
      * ⏳ 2.4. СБОРКА И СТИЛИЗАЦИЯ КНОПКИ НАВЫКА С УЧЕТОМ КУЛДАУНОВ
      */
     createSkillButton(char, skillInfo, index, isMobile) {
+        console.log(skillInfo);
         const skillId = skillInfo.skill_id;
         const isAutoAttack = skillInfo.isAutoAttack;
 
@@ -601,6 +625,10 @@ export class UIManager {
         button.onclick = () => {
             if (isPassive) return;
             if (isOnCooldown) return;
+
+            if (isAutoAttack) {
+                AppState.engine.combatManager.startAttack(char.id);
+            }
 
             // Вызываем логику активации скилла в SkillManager
             if (AppState.engine.skillManager) {
@@ -1219,7 +1247,7 @@ export class UIManager {
                     // this.clearCurrentScreen();
 
                     // Полностью обновляем вьюпорт Pixi иHUD
-                    if (window.renderMap) window.renderMap();
+                    AppState.engine.renderMap();
                     if (AppState.engine.uiManager?.updateAll) AppState.engine.uiManager.updateAll();
 
                 };
@@ -1273,7 +1301,7 @@ export class UIManager {
                             AppState.play.activeCharacterId = charId;
                         }
 
-                        if (window.renderMap) window.renderMap();
+                        AppState.engine.renderMap();
                         if (AppState.engine.uiManager?.updateAll) AppState.engine.uiManager.updateAll();
                     };
                     actionContainer.appendChild(disembarkBtn);
@@ -1330,7 +1358,7 @@ export class UIManager {
                             this.renderInteractionMenu(entity, tile);
                             // this.clearCurrentScreen();
 
-                            if (window.renderMap) window.renderMap();
+                            AppState.engine.renderMap();
                             if (AppState.engine.uiManager?.updateAll) AppState.engine.uiManager.updateAll();
                         };
                         actionContainer.appendChild(captureBtn);
@@ -1379,7 +1407,7 @@ export class UIManager {
                                 newShipInstance.units[activeCharId] = 1;
 
                                 // Обновляем карту PixiJS и панели ресурсов HUD под новый стейт
-                                if (window.renderMap) window.renderMap();
+                                AppState.engine.renderMap();
                                 if (AppState.engine.uiManager?.updateAll) AppState.engine.uiManager.updateAll();
                             }
                         } else {

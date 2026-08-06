@@ -3,7 +3,7 @@ import { AppState, getActiveMap } from '../shared/GameState.js';
 
 export class SkillManager {
     constructor() {
-        this.redrawMap = null;
+
         this.activeSkillId = null; // Хранит ID скилла, который игрок нажал и готовит к касту
         this.panelContainer = null; // Ссылка на DOM-элемент панели внизу
 
@@ -36,7 +36,7 @@ export class SkillManager {
             this.drawCastZone();
         }
 
-        if (this.redrawMap) this.redrawMap();
+        AppState.engine.renderMap();
 
         if (AppState.engine.uiManager && AppState.engine.uiManager.updateAll) {
             AppState.engine.uiManager.updateAll();
@@ -75,7 +75,7 @@ export class SkillManager {
                 tile.isSkillTargetZone = true;
                 tile.skillVisualColor = config.visual_color;
             }
-            if (this.redrawMap) this.redrawMap();
+            AppState.engine.renderMap();
             return;
         }
 
@@ -91,8 +91,7 @@ export class SkillManager {
             });
         }
 
-        // Вызываем вашу стандартную перерисовку карты
-        if (this.redrawMap) this.redrawMap();
+        AppState.engine.renderMap();
     }
 
     /**
@@ -174,7 +173,7 @@ export class SkillManager {
         if (AppState.engine.worldMapContainer.sortChildren) {
             AppState.engine.worldMapContainer.sortChildren();
         }
-        if (this.redrawMap) this.redrawMap();
+        AppState.engine.renderMap();
     }
 
     executeActiveSkill(attacker, targetTile, config) {
@@ -312,7 +311,7 @@ export class SkillManager {
             this.activeSkillId = null;
             this.clearCastZone();
 
-            if (this.redrawMap) this.redrawMap();
+            AppState.engine.renderMap();
 
             if (AppState.engine.uiManager && AppState.engine.uiManager.updateAll) {
                 AppState.engine.uiManager.updateAll();
@@ -513,6 +512,85 @@ export class SkillManager {
         };
 
         AppState.engine.app.ticker.add(animateEffect);
+    }
+
+
+    animateCast(char, deltaMS) {
+        let needRedraw = false;
+
+        // Если персонаж не находится в состоянии каста (заклинания) — выходим
+        if (char.action !== 'cast' || !char.targetAttackTile) return needRedraw;
+
+        const hexMath = AppState.engine.hexMath;
+        const nextTile = char.targetAttackTile;
+
+        needRedraw = true;
+
+        // 1. ТОЧКА СТАРТА (Координаты мага/кастера)
+        const fromPixel = hexMath.cubeToPixel(char.mapPosition.q, char.mapPosition.r);
+        const fromTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+        const fromLiftY = (AppState.map.isPlatformerMode || !fromTile) ? 0 : (fromTile.height - 1) * (hexMath.size * 0.25);
+        const startX = fromPixel.x;
+        const startY = fromPixel.y - fromLiftY;
+
+        // 2. ТОЧКА ЦЕЛИ (Координаты цели для разворота взгляда)
+        const toPixel = hexMath.cubeToPixel(nextTile.q, nextTile.r);
+        const toTile = AppState.map.isPlatformerMode ? null : getTileFromState(nextTile.q, nextTile.r);
+        const toLiftY = (AppState.map.isPlatformerMode || !toTile) ? 0 : (toTile.height - 1) * (hexMath.size * 0.25);
+        const endX = toPixel.x;
+
+        // Поворот взгляда в сторону цели
+        char.direction = endX > startX ? 'right' : 'left';
+
+        // 3. РАСЧЕТ ДЛИТЕЛЬНОСТИ ШАГА КАСТА
+        // Берем кастомный тайминг каста из AppState, либо стандартный фолбек
+        let stepDuration = AppState.animation?.castTime || 400;
+
+        // Наращиваем время интерполяции (movementLerpTime используется как общий таймер)
+        char.movementLerpTime += deltaMS / stepDuration;
+
+        // 4. ТАЙМИНГ НА ОДНОМ МЕСТЕ (ФАЗЫ ЗАКЛИНАНИЯ)
+        if (char.movementLerpTime < 0.5) {
+            // ФАЗА 1: Подготовка (чтение заклинания, маг стоит на месте)
+            char.visualX = startX;
+            char.visualY = startY;
+        }
+        else if (char.movementLerpTime >= 0.5 && char.movementLerpTime < 1.0) {
+            // 🔥 МОМЕНТ ВЫЛЕТА МАГИИ: Ровно посередине анимации (на пике каста)
+            if (!char.attackHitApplied) {
+                // Вызываем ваш коллбэк (onHitCallback), который запустит магический эффект или урон
+                if (char.onHitCallback) char.onHitCallback();
+                char.attackHitApplied = true;
+            }
+
+            // ФАЗА 2: Завершение каста (выпуск магии, маг продолжает стоять на месте)
+            char.visualX = startX;
+            char.visualY = startY;
+        }
+        else {
+            // 5. АНИМАЦИЯ ПОЛНОСТЬЮ ЗАВЕРШЕНА (Очистка и возврат в idle)
+            char.visualX = startX;
+            char.visualY = startY;
+            char.movementLerpTime = 0;
+            char.action = 'idle'; // Возвращаем в покой
+
+            // Очищаем боевые и магические флаги
+            char.targetAttackTile = null;
+            char.attackHitApplied = false;
+
+            if (char.onAttackComplete) {
+                char.onAttackComplete(char);
+            }
+
+            char.onHitCallback = null;
+            char.onAttackComplete = null;
+
+            // 🎯 ФИКС БЕСКОНЕЧНОЙ АНИМАЦИИ: Принудительно заставляем PixiJS обновить кадр,
+            // чтобы MapRenderer увидел 'idle' и вовремя остановил эффекты каста
+            needRedraw = true;
+        }
+
+        return needRedraw;
     }
 
 

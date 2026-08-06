@@ -65,9 +65,9 @@ const defaultCharacterProperties = {
     visualY: 0,
     direction: 'right',
 
-    currentFrameIndex: 0,          // Номер текущего кадра из массива ассетов
-    frameTimer: 0,                 // Внутренний таймер для смены кадров (в мс)
-    frameDuration: 100,            // Сколько миллисекунд крутится один кадр (0.1 секунды)
+    currentFrameIndex: 0,
+    frameTimer: 0,
+    frameDuration: 100,
 
     // Дефолтная заглушка анимаций на случай, если у спавнящегося кистью юнита нет кастомного конфига
     animations: {

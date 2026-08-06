@@ -47,8 +47,7 @@ export const ActionExecutors = {
             }
         }
 
-        // Перерисовываем карту PixiJS через игровой движок
-        if (AppState.engine?.redrawMap) AppState.engine.redrawMap();
+        AppState.engine.renderMap();
     },
 
     // 3. Урон/смерть персонажа (персонаж, урон)
@@ -78,7 +77,7 @@ export const ActionExecutors = {
             if (AppState.engine?.flashDamage) AppState.engine.flashDamage(char.id);
         }
 
-        if (AppState.engine?.redrawMap) AppState.engine.redrawMap();
+        AppState.engine.renderMap();
     },
 
     // 4. Перемещение персонажа с клетки на клетка (МГНОВЕННЫЙ ТЕЛЕПОРТ)
@@ -93,7 +92,7 @@ export const ActionExecutors = {
         char.mapPosition = { q: targetQ, r: targetR };
         console.log(`[Trigger Action] ${char.name} мгновенно телепортирован на гекс [${targetQ}, ${targetR}].`);
 
-        if (AppState.engine?.redrawMap) AppState.engine.redrawMap();
+        AppState.engine.renderMap();;
     },
 
     // 5. Движение (родное, по функциям) персонажа с клетки на клетку (ПЛАВНЫЙ ХОД)

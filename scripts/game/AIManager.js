@@ -198,20 +198,7 @@ export class AIManager {
         // ⚡ 2. СЦЕНАРИЙ А: Враг в радиусе удара (Атака по АтакСпиду)
         // =========================================================================
         if ((minDistance <= maxAtkRange) && (!isTacticalMode || (isTacticalMode && isTacticalMap))) {
-            // В реалтайме проверяем кулдаун оружия
-            if (isRealtime && botChar.atkReadyTimer > 0) {
-                if (onComplete) onComplete();
-                return; // Ждем перезарядки
-            }
-
-            console.log(`⚔️ [AIManager] Атака на месте: ${botChar.name} -> ${closestEnemy.name}`);
-
-            // Взводим кулдаун атаки строго из статов персонажа (например, 1000мс)
-            if (isRealtime) {
-                botChar.atkReadyTimer = botChar.stats.atkSpeed || 1000;
-            }
-
-            combatManager.startBattle(botId, closestEnemy.mapPosition, onComplete);
+            combatManager.startAttack(botId, closestEnemy.mapPosition, onComplete);
             return;
         }
 
@@ -276,16 +263,7 @@ export class AIManager {
                     const newDistance = hexMath.getDistance(char.mapPosition, closestEnemy.mapPosition);
 
                     if (newDistance <= maxAtkRange) {
-                        if (isRealtime && char.atkReadyTimer > 0) {
-                            if (onComplete) onComplete();
-                            return;
-                        }
-
-                        if (isRealtime) {
-                            char.atkReadyTimer = char.stats.atkSpeed || 1000;
-                        }
-
-                        combatManager.startBattle(botId, closestEnemy.mapPosition, onComplete);
+                        combatManager.startAttack(botId, closestEnemy.mapPosition, onComplete);
                     } else {
                         if (onComplete) onComplete();
                     }
@@ -512,17 +490,7 @@ export class AIManager {
 
         // СЦЕНАРИЙ А: Враг в радиусе поражения — БЬЕМ НА МЕСТЕ
         if ((minDistance <= maxAtkRange) && (!isTacticalMode || (isTacticalMode && isTacticalMap))) {
-            if (isRealtime && botChar.atkReadyTimer > 0) {
-                if (onComplete) onComplete();
-                return; // Оружие на перезарядке
-            }
-
-            console.log(`⚔️ [AIManager] Атака на месте: ${botChar.name} -> ${closestEnemy.name}`);
-
-            if (isRealtime) {
-                botChar.atkReadyTimer = botChar.stats.atkSpeed || 1000;
-            }
-            combatManager.startBattle(botId, closestEnemy.mapPosition, onComplete);
+            combatManager.startAttack(botId, closestEnemy.mapPosition, onComplete);
             return;
         }
 
@@ -580,12 +548,7 @@ export class AIManager {
                     const newDistance = hexMath.getDistance(char.mapPosition, closestEnemy.mapPosition);
 
                     if (newDistance <= maxAtkRange) {
-                        if (isRealtime && char.atkReadyTimer > 0) {
-                            if (onComplete) onComplete();
-                            return;
-                        }
-                        if (isRealtime) char.atkReadyTimer = char.stats.atkSpeed || 1000;
-                        combatManager.startBattle(botId, closestEnemy.mapPosition, onComplete);
+                        combatManager.startAttack(botId, closestEnemy.mapPosition, onComplete);
                     } else {
                         if (onComplete) onComplete();
                     }

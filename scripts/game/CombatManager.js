@@ -2,7 +2,7 @@ import { AppState, getPactBetween, DiplomaticPacts, getTileFromState } from '../
 
 export class CombatManager {
     constructor() {
-        this.redrawMap = null;
+
     }
 
     /**
@@ -48,7 +48,7 @@ export class CombatManager {
                 attacker.action = 'idle';
 
                 AppState.engine.app.ticker.remove(animate);
-                if (this.redrawMap) this.redrawMap();
+                AppState.engine.renderMap();
             }
         };
 
@@ -83,7 +83,7 @@ export class CombatManager {
 
         if (rollHit > hitChance) {
             console.log(`💨 [Attack] ${attacker.name} промахнулся по ${victim.name}! (Шанс: ${hitChance.toFixed(1)}%, Ролл: ${rollHit.toFixed(1)}%)`);
-            if (this.redrawMap) this.redrawMap();
+            AppState.engine.renderMap();
             return; // Прерываем атаку, урон не наносится
         }
 
@@ -188,12 +188,7 @@ export class CombatManager {
             });
         }
 
-        if (this.redrawMap) this.redrawMap();
-
-        // if (AppState.engine.pathRenderer) {
-        //     AppState.engine.pathRenderer.drawMovementZone(freshReachableTiles);
-        // }
-
+        AppState.engine.renderMap();
 
         const activeId = AppState.play.activeCharacterId;
         if(activeId === attacker.id || activeId === victim.id) {
@@ -203,13 +198,46 @@ export class CombatManager {
         }
     }
 
+    startAttack(attackerId, targetTile, onComplete) {
+        const isRealtime = AppState.turn_settings?.turn_mode === "realtime";
 
-    startBattle(attackerId, targetTile, onComplete) {
         const attacker = AppState.entities[attackerId];
+        const attackType = attacker.stats.atkRangeType || 'melee';
+        const attackRange = attacker.stats.atkRange || 1;
+
+        if (isRealtime && attacker.atkReadyTimer > 0) {
+            if (onComplete) onComplete();
+            return;
+        }
+        if (isRealtime) attacker.atkReadyTimer = attacker.stats.atkSpeed || 1000;
+
+        console.log(attackType, attackRange);
 
         if (!attacker) {
             if (onComplete) onComplete();
             return;
+        }
+
+        if(!targetTile && AppState.map.isPlatformerMode) {
+            // 1. Находим направление атаки.
+            // Если у персонажа в стейте записано 'left'/'right', берем его. По умолчанию бьем вправо (1).
+            let dirQ = 1;
+            if (attacker.direction === 'left') dirQ = -1;
+            else if (attacker.direction === 'right') dirQ = 1;
+
+            // 2. Считаем целевую клетку на расстоянии атаки (attackRange)
+            // В платформере на квадратах смещение идет строго по горизонтали (ось Q)
+            const targetQ = attacker.mapPosition.q + (dirQ * attackRange);
+            const targetR = attacker.mapPosition.r; // Высота (R) остается прежней
+
+            // 3. Перезаписываем targetTile, вытаскивая клетку из карты
+            targetTile = getTileFromState(targetQ, targetR);
+
+            // 🛡️ Защита: Если персонаж бьет по воздуху на краю карты и тайла физически нет,
+            // создаем временный объект-пустышку, чтобы остальной код атаки не упал с ошибкой
+            if (!targetTile) {
+                targetTile = { q: targetQ, r: targetR, type: 'air' };
+            }
         }
 
         let victim = null;
@@ -224,43 +252,192 @@ export class CombatManager {
             }
         }
 
-        if (!victim) {
-            if (onComplete) onComplete();
-            return;
-        }
-
-        if(!attacker.stats || !victim.stats) return;
+        // if (!victim) {
+        //     if (onComplete) onComplete();
+        //     return;
+        // }
+        //
+        // if(!attacker.stats || !victim.stats) return;
 
         const settings = AppState.turn_settings;
 
         if (settings && settings.turn_mode !== "realtime") {
             if (AppState.engine.timeManager && AppState.engine.timeManager.currentMode === "free_roam") {
                 if (AppState.engine.turnManager) {
-                    AppState.engine.turnManager.startBattle(targetTile);
+                    AppState.engine.turnManager.startAttack(targetTile);
+                    return;
                 }
             }
         }
 
-        const attackType = attacker.stats.atkRangeType || 'melee';
+
 
         if (attackType === 'range') {
+            attacker.action = 'attack';
+            attacker.targetAttackTile = getTileFromState(attacker.mapPosition.q, attacker.mapPosition.r);
+            attacker.movementLerpTime = 0;
+            attacker.attackHitApplied = false;
+            attacker.onHitCallback = onComplete;
+
             // ДАЛЬНИЙ БОЙ: Снаряд долетает, наносится урон, и СТРОГО ТУТ вызывается onComplete
-            this.executeRangeProjectileAnimation(attacker, targetTile, () => {
-                this.attack(attacker, victim, victimId);
+            this.executeRangeProjectileAnimation(attacker, targetTile, (projectileId, targetId=null) => {
+                console.log(projectileId, targetId);
+                if(targetId) {
+                    const victim = AppState.entities[targetId];
+                    if(victim) {
+                        this.attack(attacker, victim, targetId);
+                    }
+                }
+                else {
+                    const projectile = AppState.entities[projectileId];
+                    for (const id of Object.keys(AppState.entities)) {
+                        const c = AppState.entities[id];
+                        if (c.stats && c.mapPosition.q === projectile.mapPosition.q && c.mapPosition.r === projectile.mapPosition.q) {
+                            console.log(c);
+                            this.attack(attacker, c, c.id)
+                            break;
+                        }
+                    }
+                }
+                //
+                // if(victim && victim.stats) ;
 
                 // ТОЧЕЧНЫЙ ФИКС: Сигнализируем менеджеру ходов, что атака полностью завершена
                 if (onComplete) onComplete();
             });
         } else {
-            // БЛИЖНИЙ БОЙ: Наскок завершается, наносится урон, и СТРОГО ТУТ вызывается onComplete
-            this.executeMeleeBumpAnimation(attacker, targetTile, () => {
-                this.attack(attacker, victim, victimId);
+            attacker.action = 'attack';
+            attacker.targetAttackTile = targetTile;
+            attacker.movementLerpTime = 0;
+            attacker.attackHitApplied = false;
+            attacker.onHitCallback = onComplete;
 
-                // ТОЧЕЧНЫЙ ФИКС: Сигнализируем менеджеру ходов, что атака полностью завершена
-                if (onComplete) onComplete();
-            });
+            // БЛИЖНИЙ БОЙ: Наскок завершается, наносится урон, и СТРОГО ТУТ вызывается onComplete
+            // this.executeMeleeBumpAnimation(attacker, targetTile, () => {
+            //     if(victim && victim.stats) this.attack(attacker, victim, victimId);
+            //
+            //     // ТОЧЕЧНЫЙ ФИКС: Сигнализируем менеджеру ходов, что атака полностью завершена
+            //     if (onComplete) onComplete();
+            // });
         }
+
+        AppState.engin.renderMap();
     }
+
+    animateAttack(char, deltaMS) {
+        let needRedraw = false;
+
+        if (char.action !== 'attack' || !char.targetAttackTile) return needRedraw;
+
+        const hexMath = AppState.engine.hexMath;
+        const nextTile = char.targetAttackTile;
+        // 🎯 Определяем тип атаки ('melee' или 'range') из статов персонажа
+        const attackType = char.stats?.atkRangeType || 'melee';
+
+        needRedraw = true;
+
+        // 1. ТОЧКА СТАРТА (Координаты самого атакующего, как на странице 3)
+        const fromPixel = hexMath.cubeToPixel(char.mapPosition.q, char.mapPosition.r);
+        const fromTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
+        const fromLiftY = (AppState.map.isPlatformerMode || !fromTile) ? 0 : (fromTile.height - 1) * (hexMath.size * 0.25);
+        const startX = fromPixel.x;
+        const startY = fromPixel.y - fromLiftY;
+
+        // 2. ТОЧКА ЦЕЛИ (Координаты цели, как на странице 3)
+        const toPixel = hexMath.cubeToPixel(nextTile.q, nextTile.r);
+        const toTile = AppState.map.isPlatformerMode ? null : getTileFromState(nextTile.q, nextTile.r);
+        const toLiftY = (AppState.map.isPlatformerMode || !toTile) ? 0 : (toTile.height - 1) * (hexMath.size * 0.25);
+        const endX = toPixel.x;
+        const endY = toPixel.y - toLiftY;
+
+        console.log(char.movementLerpTime);
+
+        // Поворот взгляда в сторону цели (по аналогии со страницей 3)
+        if(toTile && fromTile.q !== toTile.q)  char.direction = endX > startX ? 'right' : 'left';
+
+        // 3. РАСЧЕТ ДЛИТЕЛЬНОСТИ ШАГА АТАКИ (По аналогии со страницей 4)
+        // Для дальнего боя берем range-тайминг, если его нет — стандартный
+        let stepDuration = AppState.animation?.attackTime || 300;
+
+        if(!char.movementLerpTime) char.movementLerpTime = 0;
+        // Наращиваем время интерполяции (movementLerpTime используется как общий таймер)
+        char.movementLerpTime += deltaMS / stepDuration;
+
+        // 4. ПЛАВНОЕ СМЕЩЕНИЕ ПИКСЕЛЕЙ ВЫПАДА И ВОЗВРАТА (Аналогия со страницей 5)
+        if (char.movementLerpTime < 0.5) {
+            // ФАЗА 1: Выпад вперед (от 0.0 до 0.5 времени). Смещаемся максимум на половину дистанции
+            if (attackType === 'melee') {
+                const progress = char.movementLerpTime * 2; // Приводим к диапазону 0..1
+                char.visualX = startX + (endX - startX) * 0.5 * progress;
+                char.visualY = startY + (endY - startY) * 0.5 * progress;
+            } else {
+                // 🎯 ДЛЯ ВЫСТРЕЛА: Персонаж стоит строго на месте
+                char.visualX = startX;
+                char.visualY = startY;
+            }
+        }
+        else if (char.movementLerpTime >= 0.5 && char.movementLerpTime < 1.0) {
+            // МОМЕНТ НАНЕСЕНИЯ УРОНА / ВЫСТРЕЛА: Ровно на пике выпада (progress = 1)
+            if (!char.attackHitApplied) {
+                if (char.onHitCallback) char.onHitCallback();
+
+                // Если это ближний бой — ищем жертву и применяем урон
+                if (attackType === 'melee') {
+                    let victim;
+                    let victimId; // Зафиксируем ID для вызова функции атаки
+
+                    for (const id of Object.keys(AppState.entities)) {
+                        const c = AppState.entities[id];
+                        if (c.mapId === AppState.map.mapId && c.mapPosition.q === char.targetAttackTile.q && c.mapPosition.r === char.targetAttackTile.r) {
+                            victim = c;
+                            victimId = id;
+                            break;
+                        }
+                    }
+                    if (victim && victim.stats) this.attack(char, victim, victimId);
+                }
+
+                char.attackHitApplied = true;
+            }
+
+            // ФАЗА 2: Возврат назад (от 0.5 до 1.0 времени). Плавный откат на стартовую позицию
+            if (attackType === 'melee') {
+                const progress = (char.movementLerpTime - 0.5) * 2; // Приводим к диапазону 0..1
+                const peakX = startX + (endX - startX) * 0.5;
+                const peakY = startY + (endY - startY) * 0.5;
+
+                char.visualX = peakX + (startX - peakX) * progress;
+                char.visualY = peakY + (startY - peakY) * progress;
+            } else {
+                // 🎯 ДЛЯ ВЫСТРЕЛА: Персонаж продолжает стоять ровно на месте
+                char.visualX = startX;
+                char.visualY = startY;
+            }
+        }
+        else {
+            // 5. АНИМАЦИЯ ПОЛНОСТЬЮ ЗАВЕРШЕНА (Аналогия со страницей 5 и 6)
+            char.visualX = startX;
+            char.visualY = startY;
+            char.movementLerpTime = 0;
+            char.action = 'idle'; // Возвращаем в покой
+
+            // Очищаем боевые флаги и триггеры
+            char.targetAttackTile = null;
+            char.attackHitApplied = false;
+
+            if (char.onAttackComplete) {
+                char.onAttackComplete(char);
+            }
+
+            char.onHitCallback = null;
+            char.onAttackComplete = null;
+
+            AppState.engine.renderMap();
+        }
+
+        return needRedraw;
+    }
+
 
     /**
      * Поиск ближайшего живого врага
@@ -302,7 +479,7 @@ export class CombatManager {
         const maxAtkRange = attacker.stats.atkRange || 1;
 
         if (currentDistance <= maxAtkRange) {
-            this.startBattle(activeId, closestEnemy.mapPosition);
+            this.startAttack(activeId, closestEnemy.mapPosition);
             return;
         }
 
@@ -333,7 +510,7 @@ export class CombatManager {
                 if (char) {
                     const newDistance = hexMath.getDistance(char.mapPosition, closestEnemy.mapPosition);
                     if (newDistance <= maxAtkRange) {
-                        this.startBattle(activeId, closestEnemy.mapPosition);
+                        this.startAttack(activeId, closestEnemy.mapPosition);
                     }
                 }
             }
@@ -343,18 +520,98 @@ export class CombatManager {
     /**
      * Визуальная анимация летящего снаряда для дальнего боя (чтение из AppState.projectiles)
      */
+
     executeRangeProjectileAnimation(attacker, targetTile, onHitCallback) {
         const hexMath = AppState.engine.hexMath;
 
-        // Точка вылета
+        // 1. Строим линейный маршрут по клеткам
+        let projectileGridPath = hexMath.getHexLine(attacker.mapPosition, targetTile);
+
+        if (!projectileGridPath || projectileGridPath.length <= 1) {
+            if (onHitCallback) onHitCallback();
+            return;
+        }
+
+        projectileGridPath = projectileGridPath.map(t=>getTileFromState(t.q, t.r));
+        // projectileGridPath.shift();
+
+        // 2. Вычисляем пиксели и направление полета
         const startPixel = hexMath.cubeToPixel(attacker.mapPosition.q, attacker.mapPosition.r);
-        const startLiftY = (getTileFromState(attacker.mapPosition.q, attacker.mapPosition.r)?.height - 1 || 0) * (hexMath.size * 0.25);
+        const targetPixel = hexMath.cubeToPixel(targetTile.q, targetTile.r);
+        const direction = targetPixel.x > startPixel.x ? 'right' : 'left';
+        attacker.direction = direction;
+
+        let pConfig = {};
+
+        // Считываем исходный конфиг снаряда
+        if (attacker.projectile_id && AppState.ConfigProjectiles && AppState.ConfigProjectiles[attacker.projectile_id]) {
+            pConfig = AppState.ConfigProjectiles[attacker.projectile_id];
+        }
+
+        const projectileId = `projectile_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
+
+        AppState.entities[projectileId] = {
+            // Копируем (мержим) все свойства из pConfig прямо сюда
+            ...pConfig,
+
+            // Базовые свойства сущности для движка перемещений
+            id: projectileId,
+            type: 'projectile',
+            owner_id: attacker.id,
+            projectile_id: attacker.projectile_id,
+            action: 'move',
+            direction: direction,
+            mapPosition: { q: attacker.mapPosition.q, r: attacker.mapPosition.r },
+
+            currentMovementVisualPath: projectileGridPath,
+
+            visualX: startPixel.x,
+            visualY: startPixel.y,
+            movementLerpTime: 0,
+            currentFrameIndex: 0,
+            frameTimer: 0,
+            frameDuration: 100,
+
+            // Перезаписываем структуру анимаций на move -> direction -> кадры
+            animations: {
+                idle: pConfig.animations,
+                move: pConfig.animations
+            },
+
+            ar: 1,
+
+            onMovementComplete: (entityId) => {
+                if (onHitCallback) onHitCallback(projectileId, entityId);
+                delete AppState.entities[projectileId];
+                AppState.engine.renderMap();
+            }
+        };
+        AppState.engine.renderMap();
+    }
+
+    executeRangeProjectileAnimation222(attacker, targetTile, onHitCallback) {
+        if(!AppState.projectiles) AppState.projectiles == {};
+
+        const hexMath = AppState.engine.hexMath;
+        const isPlatformer = AppState.map?.isPlatformerMode;
+
+        const startPixel = hexMath.cubeToPixel(attacker.mapPosition.q, attacker.mapPosition.r);
+        const targetPixel = hexMath.cubeToPixel(targetTile.q, targetTile.r);
+
+        let startLiftY = 0;
+        let targetLiftY = 0;
+
+        if (!isPlatformer) {
+            const attackerTile = getTileFromState(attacker.mapPosition.q, attacker.mapPosition.r);
+            startLiftY = ((attackerTile?.height || 1) - 1) * (hexMath.size * 0.25);
+
+            const realTargetTile = getTileFromState(targetTile.q, targetTile.r);
+            targetLiftY = ((realTargetTile?.height || 1) - 1) * (hexMath.size * 0.25);
+        }
+
         const startX = startPixel.x;
         const startY = startPixel.y - startLiftY;
 
-        // Точка попадания
-        const targetPixel = hexMath.cubeToPixel(targetTile.q, targetTile.r);
-        const targetLiftY = (getTileFromState(targetTile.q, targetTile.r)?.height - 1 || 0) * (hexMath.size * 0.25);
         const targetX = targetPixel.x;
         const targetY = targetPixel.y - targetLiftY;
 
@@ -369,8 +626,8 @@ export class CombatManager {
         let frameTimer = 0;
 
         // СТРОГОЕ ЧТЕНИЕ ИЗ ВАШЕГО APPSTATE (ИСПРАВЛЕНО: projectile_id везде через подчёркивание)
-        if (attacker.projectile_id && AppState.projectiles && AppState.projectiles[attacker.projectile_id]) {
-            pConfig = AppState.projectiles[attacker.projectile_id];
+        if (attacker.projectile_id && AppState.ConfigProjectiles && AppState.ConfigProjectiles[attacker.projectile_id]) {
+            pConfig = AppState.ConfigProjectiles[attacker.projectile_id];
             if (pConfig.animations && pConfig.animations[direction]) {
                 framesArray = pConfig.animations[direction];
             }
@@ -407,11 +664,13 @@ export class CombatManager {
         const flySpeed = 0.05;
 
         const animateProjectile = (ticker) => {
-            const deltaMS = ticker.deltaTime * (1000 / 60);
+            const deltaMS = (ticker.deltaTime * AppState.animation.framesPerSecond * 10) / 60;
+            console.log(deltaMS);
 
             // Покадровая смена текстур снаряда в полете
             if (framesArray && framesArray.length > 1 && projectileSprite instanceof PIXI.Sprite) {
                 frameTimer += deltaMS;
+                console.log(pConfig.frameDuration);
                 const duration = pConfig.frameDuration || 100;
 
                 if (frameTimer >= duration) {
@@ -426,7 +685,7 @@ export class CombatManager {
             }
 
             // Плавное перемещение снаряда
-            progress += flySpeed * ticker.deltaTime;
+            progress += flySpeed * deltaMS;
 
             if (progress < 1) {
                 projectileSprite.x = startX + (targetX - startX) * progress;
@@ -440,13 +699,7 @@ export class CombatManager {
                 projectileSprite.x = targetX;
                 projectileSprite.y = targetY;
 
-                // Вызываем мгновенную принудительную перерисовку сцены PixiJS в этом же кадре,
-                // чтобы игрок физически увидел снаряд внутри гекса цели перед его удалением!
-                if (AppState.engine.redrawMap) {
-                    AppState.engine.redrawMap();
-                } else if (window.renderMap) {
-                    window.renderMap();
-                }
+                AppState.engine.renderMap();
 
                 // Теперь безопасно удаляем снаряд при стопроцентном контакте
                 AppState.engine.worldMapContainer.removeChild(projectileSprite);
@@ -456,7 +709,7 @@ export class CombatManager {
 
                 // Запускаем списание урона и эффектов способности строго в момент касания
                 if (onHitCallback) onHitCallback();
-                if (this.redrawMap) this.redrawMap();
+                AppState.engine.renderMap();
             }
         };
 

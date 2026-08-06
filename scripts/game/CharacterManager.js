@@ -185,7 +185,7 @@ export const CharacterManager = {
                 target: targetChar || { id: charId }
             });
         }
-        window.renderMap();
+        AppState.engine.renderMap();
         this._triggerUIRefresh();
         return true;
     },

@@ -659,7 +659,7 @@ export class CatalogManager {
 
     _triggerGlobalUpdates() {
         if (AppState.engine?.uiManager?.updateAll) AppState.engine.uiManager.updateAll();
-        if (window.renderMap) window.renderMap();
+        AppState.engine.renderMap();
     }
 
     _deepCopy(obj) { return JSON.parse(JSON.stringify(obj)); }

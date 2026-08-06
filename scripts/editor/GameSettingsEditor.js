@@ -404,6 +404,17 @@ export class GameSettingsEditor {
                 sfx:   { mute: false, volume: 80 },
                 speech:{ mute: false, volume: 100 }
             }
+        }
+
+        AppState.animation = {
+            "framesPerSecond": 60,
+            "attackTime":1000,
+            "castTime":1000,
+            "movePerHexTime":1000,
+            "runPerHexTime":500,
+            "jumpPerHexTime":500,
+            "fallPerHexTime":200,
+            "dashPerHexTime":200
         };
 
         // Логику подмешивания специфичных для шаблонов полей можно дописать здесь
@@ -465,9 +476,10 @@ export class GameSettingsEditor {
 
         // Массив доступных корневых объектов-конфигов в AppState
         const availableTabs = [
-            { id: 'main', nameRu: 'Главное (main)', nameEn: 'Main (main)' }, // Добавлено!
-            { id: 'game_settings', nameRu: 'Основные настройки (game_settings)', nameEn: 'General Settings (game_settings)' },
-            { id: 'turn_settings', nameRu: 'Настройки ходов (turn_settings)', nameEn: 'Turn Settings (turn_settings)' }
+            { id: 'main', nameRu: 'Главное', nameEn: 'Main' }, // Добавлено!
+            { id: 'game_settings', nameRu: 'Основные настройки', nameEn: 'General Settings' },
+            { id: 'animation', nameRu: 'Настройки анимации', nameEn: 'Animation Settings' },
+            { id: 'turn_settings', nameRu: 'Настройки ходов', nameEn: 'Turn Settings' },
         ];
 
         // Функция обновления отображения вкладок
@@ -492,20 +504,6 @@ export class GameSettingsEditor {
                 tabsScroll.appendChild(tRow);
             });
         };
-
-        // Функция рендеринга формы для активного таба
-        // const renderFormForCurrentTab = () => {
-        //     // Инициализируем ветки в AppState, если их вдруг нет
-        //     if (!AppState[this.currentTab]) AppState[this.currentTab] = {};
-        //     const targetDataObj = AppState[this.currentTab];
-        //
-        //     this._renderDynamicForm(formPanel, targetDataObj, this.currentTab, currentLang, () => {
-        //         // Коллбэк при успешном сохранении формы
-        //         if (AppState.engine?.settingsManager?.update) {
-        //             AppState.engine.settingsManager.update();
-        //         }
-        //     });
-        // };
 
         const renderFormForCurrentTab = () => {
             if (!AppState[this.currentTab]) AppState[this.currentTab] = {};
@@ -557,6 +555,24 @@ export class GameSettingsEditor {
                 Object.keys(gameDefaults).forEach(key => {
                     if (AppState.game_settings[key] === undefined) {
                         AppState.game_settings[key] = gameDefaults[key];
+                    }
+                });
+            }
+            else if (this.currentTab === 'animation') {
+                const gameDefaults = {
+                    "framesPerSecond": 60,
+                    "attackTime":1000,
+                    "castTime":1000,
+                    "movePerHexTime":1000,
+                    "runPerHexTime":500,
+                    "jumpPerHexTime":500,
+                    "fallPerHexTime":200,
+                    "dashPerHexTime":200
+                };
+
+                Object.keys(gameDefaults).forEach(key => {
+                    if (AppState.animation[key] === undefined) {
+                        AppState.animation[key] = gameDefaults[key];
                     }
                 });
             }

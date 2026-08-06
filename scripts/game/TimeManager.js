@@ -129,9 +129,7 @@ export class TimeManager {
             if (char.stats.hp <= 0) {
                 console.log(`💀 [TimeManager] ${char.name} скончался от действия эффекта ${effConfig.name}`);
                 delete AppState.entities[charId];
-                if (AppState.engine.skillManager && AppState.engine.skillManager.redrawMap) {
-                    AppState.engine.skillManager.redrawMap();
-                }
+                AppState.engine.renderMap();
             }
         }
     }
@@ -159,9 +157,7 @@ export class TimeManager {
             char.currentPassiveCircleG = null;
         }
 
-        if (AppState.engine.skillManager && AppState.engine.skillManager.redrawMap) {
-            AppState.engine.skillManager.redrawMap();
-        }
+        AppState.engine.renderMap();
     }
 
     /**

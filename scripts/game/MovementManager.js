@@ -290,21 +290,38 @@ export class MovementManager {
         if (AppState.turn_settings?.turn_mode === "realtime") {
             const currentTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
 
-            // Проверяем клетку, к которой юнит летит ПРЯМО СЕЙЧАС в этом кадре
-            const stepCheck = this.canStepBetween(currentTile, nextTile, char);
+            if(char.type !== 'projectile') {
+                // Проверяем клетку, к которой юнит летит ПРЯМО СЕЙЧАС в этом кадре
+                const stepCheck = this.canStepBetween(currentTile, nextTile, char);
 
-            if (stepCheck !== "walkable" && nextTile.type!=='air') {
-                console.warn(`🏃‍♂️ [Movement Grid Lock] Путь перекрыт! Гекс (${nextTile.q}, ${nextTile.r}) занят статусом [${stepCheck}]. Экстренная остановка ${char.name}.`);
+                if (stepCheck !== "walkable" && nextTile.type!=='air') {
+                    console.log(`🏃‍♂️ [Movement Grid Lock] Путь перекрыт! Гекс (${nextTile.q}, ${nextTile.r}) занят статусом [${stepCheck}]. Экстренная остановка ${char.name}.`);
 
-                char.currentMovementVisualPath = [];
-                char.action = 'idle';
-                char.actionType = '';
+                    char.currentMovementVisualPath = [];
+                    char.action = 'idle';
+                    char.actionType = '';
 
-                if (char.mvmReadyTimer !== undefined) {
-                    char.mvmReadyTimer = 0;
+                    if (char.mvmReadyTimer !== undefined) {
+                        char.mvmReadyTimer = 0;
+                    }
+                    needRedraw = true;
+                    return needRedraw;
                 }
-                needRedraw = true;
-                return needRedraw;
+            }
+            else {
+                for (const id of Object.keys(AppState.entities)) {
+                    const c = AppState.entities[id];
+                    if (c.stats && c.id!==char.owner_id && c.mapPosition.q === currentTile.q && c.mapPosition.r === currentTile.r) {
+                        console.log(c);
+
+                        char.currentMovementVisualPath = [];
+                        char.action = 'idle';
+                        char.actionType = '';
+
+                        if(char.onMovementComplete) char.onMovementComplete(c.id);
+                        break;
+                    }
+                }
             }
         }
 
@@ -322,8 +339,8 @@ export class MovementManager {
         const endY = toPixel.y - toLiftY;
 
         // Поворот взгляда змейкой
-        char.direction = '';
-        char.directionV = '';
+        // char.direction = '';
+        // char.directionV = '';
 
         if (AppState.map.gridMode === 'square') {
             // Определяем горизонталь
@@ -349,14 +366,21 @@ export class MovementManager {
 
         // 3. Расчет шага интерполяции
         let stepDuration;
+
         if(char.actionType === 'jump') {
-            stepDuration = AppState.config.animationSpeed.jumpPerHex || 500;
+            stepDuration = AppState.animation?.jumpPerHexTime || 500;
         }
-        if(char.actionType === 'dash') {
-            stepDuration = AppState.config.animationSpeed.dashPerHex || 200;
+        else if(char.actionType === 'run') {
+            stepDuration = AppState.animation?.runPerHexTime || 500;
+        }
+        else if(char.actionType === 'dash') {
+            stepDuration = AppState.animation?.dashPerHexTime || 200;
+        }
+        else if(char.actionType === 'fall') {
+            stepDuration = AppState.animation?.fallPerHexTime || 200;
         }
         else {
-            stepDuration = AppState.config.animationSpeed.movePerHex || 1000;
+            stepDuration = AppState.animation?.movePerHexTime || 1000;
         }
 
         char.movementLerpTime += deltaMS / stepDuration;
@@ -375,21 +399,34 @@ export class MovementManager {
             char.mapPosition.q = nextTile.q;
             char.mapPosition.r = nextTile.r;
 
-            // Открываем Туман Войны на ходу
-            if (AppState.engine.visionManager) AppState.engine.visionManager.updateFogOfWar();
-
-            // Удаляем пройденный гекс
             char.currentMovementVisualPath.shift();
 
-            AppState.engine.triggerManager.processEvent('tile_enter', {
-                subject: char,      // Кто наступил (например, Рафаэль)
-                tile: char.mapPosition    // На какой гекс наступил (3:2)
-            });
+            if (char.id === AppState.play?.activeCharacterId) {
+                if (AppState.engine.visionManager) AppState.engine.visionManager.updateFogOfWar();
+                AppState.engine.triggerManager.processEvent('tile_enter', {
+                    subject: char,      // Кто наступил (например, Рафаэль)
+                    tile: char.mapPosition    // На какой гекс наступил (3:2)
+                });
+            }
 
             // =========================================================================
             // 🚪 АВТОМАТИЧЕСКИЙ ПЕРЕХОД ПО КАРТАМ (Входы/Выходы через mapTo)
             // =========================================================================
             // Проверяем это ТОЛЬКО для активного персонажа игрока, чтобы боты случайно не улетали в порталы
+
+            // =========================================================================
+
+
+            // 6. МАРШРУТ ПОЛНОСТЬЮ ЗАВЕРШЕН: Очередь пуста, юнит остановился
+            if (char.currentMovementVisualPath.length === 0) {
+                char.action = 'idle'; // Переводим в покой
+                char.actionType = ''; // Переводим в покой
+
+                if(char.onMovementComplete) {
+                    char.onMovementComplete(char)
+                }
+            }
+
             if (char.id === AppState.play?.activeCharacterId) {
                 const currentQ = char.mapPosition.q;
                 const currentR = char.mapPosition.r;
@@ -403,27 +440,18 @@ export class MovementManager {
                         }
                     }
                 });
-                AppState.engine.uiManager.renderInteractionMenu();
-            }
-            // =========================================================================
-
-
-            // 6. МАРШРУТ ПОЛНОСТЬЮ ЗАВЕРШЕН: Очередь пуста, юнит остановился
-            if (char.currentMovementVisualPath.length === 0) {
-                char.action = 'idle'; // Переводим в покой
-                char.actionType = ''; // Переводим в покой
-
                 const activeChar = AppState.entities[AppState.play.activeCharacterId];
                 const reachableTiles = this.getReachableTiles(activeChar);
                 AppState.play.cachedReachableTiles = reachableTiles;
-                AppState.engine.pathRenderer.drawMovementZone(reachableTiles);
 
-                if (char.id === AppState.play.activeCharacterId && playerClickManager) {
+                if (playerClickManager) {
                     const finalTile = getTileFromState(char.mapPosition.q, char.mapPosition.r);
                     if (finalTile) {
                         playerClickManager.executeCharacterSelect(char.id);
                     }
                 }
+
+                AppState.engine.uiManager.renderInteractionMenu();
             }
 
             if (char.action === 'idle' && !AppState.map.isPlatformerMode) {

@@ -37,14 +37,44 @@ export const MapManager = {
             isPlatformerMode: AppState.maps[targetMapId].isPlatformerMode,
         };
 
-        // =========================================================================
-        // 🔄 СБОРКА ИНДЕКСА ТЕКУЩЕЙ КАРТЫ (Объединяем персонажей и объекты)
-        // =========================================================================
-        this._rebuildEntitiesIndex(targetMapId);
-        // =========================================================================
+        // --- ИСПРАВЛЕНИЕ УТЕЧКИ ВИДЕОПАМЯТИ (Очищаем старые контексты) ---
+        if (AppState.engine.HexContexts) {
+            Object.values(AppState.engine.HexContexts).forEach(ctx => ctx && ctx.destroy());
+        }
+        if (AppState.engine.EntityContexts) {
+            Object.values(AppState.engine.EntityContexts).forEach(ctx => ctx && ctx.destroy());
+        }
 
-        console.log(`[MapManager] Движок переключился на карту: "${targetMapId}". Индекс entities пересобран.`);
+        const localCorners = AppState.engine.hexMath.getHexCornerPoints(0, 0);
+
+        // Инициализируем новые контексты для свежей карты
+        AppState.engine.HexContexts = {
+            grid: new PIXI.GraphicsContext().poly(localCorners, true).stroke({ width: 1.5, color: 0x000000, alpha: 0.25 }),
+            activeSelector: new PIXI.GraphicsContext().poly(localCorners, true).fill({ color: 0xffd166, alpha: 0.5 }).stroke({ width: 5, color: 0xffd166, alpha: 1 }),
+            skillZone: new PIXI.GraphicsContext().poly(localCorners, true).fill({ color: 0xffffff, alpha: 0.2 }).stroke({ width: 4, color: 0xffffff, alpha: 0.4 }),
+            faction: new PIXI.GraphicsContext().poly(localCorners, true).fill({ color: 0xffffff, alpha: 0.3 }),
+            fallback: new PIXI.GraphicsContext().poly(localCorners, true).fill({ color: 0xffffff, alpha: 1 }).stroke({ width: 1, color: 0xffffff, alpha: 1 })
+        };
+
+        AppState.engine.EntityContexts = {
+            barPixel: new PIXI.GraphicsContext().rect(0, 0, 1, 1).fill({ color: 0xffffff }),
+            passiveCircle: new PIXI.GraphicsContext().circle(0, 0, 1).stroke({ width: 5, color: 0xffffff }),
+            fallbackCircle: new PIXI.GraphicsContext().circle(0, 0, 14).fill({ color: 0xffffff }).stroke({ width: 2, color: 0xffffff }),
+            cityBg: new PIXI.GraphicsContext().roundRect(0, 0, 100, 24, 4).fill({ color: 0xffffff })
+        };
+
+        // --- ИСПРАВЛЕНИЕ ПУЛА ЮНИТОВ ---
+        // Если пул еще не создан — создаем.
+        // Если создан — НЕ обнуляем его, а оставляем контейнеры для следующей карты!
+        if (!AppState.engine.unitContainerPool) {
+            AppState.engine.unitContainerPool = [];
+        }
+
+        this._rebuildEntitiesIndex(targetMapId);
+
+        console.log(`[MapManager] Движок переключился на карту: "${targetMapId}". Индекс entities пересобран. Память VRAM очищена.`);
     },
+
 
     newMap() {
         if (!AppState.maps) AppState.maps = {};
@@ -95,7 +125,7 @@ export const MapManager = {
 
                 this._rebuildEntitiesIndex(currentMapId);
 
-                window.renderMap();
+                AppState.engine.renderMap();
                 // =========================================================================
 
                 console.log(`[MapManager] Движок переключился на карту: "${currentMapId}". Индекс entities пересобран.`);
@@ -354,9 +384,7 @@ export const MapManager = {
      */
     refreshWorldRender(focusCharId = null) {
         // Запускаем твой очищающий Pixi-рендерер worldMapContainer.removeChildren()
-        if (window.renderMap) {
-            window.renderMap();
-        }
+        AppState.engine.renderMap();
 
         // Центрируем камеру на выбранном или текущем активном персонаже игрока
         const charId = focusCharId || AppState.play?.activeCharacterId || AppState.player?.character;

@@ -137,10 +137,9 @@ export class TerrainInspector extends BaseInspector {
                 if (isNumeric) val = parseFloat(val) || 1;
                 tile[field] = val;
                 if (field === 'type') tile.imageIndex = 0;
-                // this.clickManager.redrawMap();
                 checkTile(field, val);
                 this.render(tile);
-                window.renderMap();
+                AppState.engine.renderMap();
             });
         };
 
@@ -193,7 +192,7 @@ export class ObjectsInspector {
                 tile.worldObject = new WorldObject(uniqueId, selectedType, config.name, defaultInnerMap);
 
                 this.render(tile); // Мгновенно перерисовываем свойства
-                this.clickManager.redrawMap(); // Обновляем графику PixiJS
+                AppState.engine.renderMap();
             });
             return;
         }
@@ -322,32 +321,37 @@ export class ObjectsInspector {
  */
 export class CharactersInspector extends BaseInspector {
     render(tile) {
-        // Берем первого юнита в клетке (Рафаэля)
-        const unit = tile.units ? tile.units[0] : null;
 
-        if (!unit) {
+
+        const units = AppState.engine.getEntitiesOnTile(tile);
+
+        if (!units.length) {
             this.container.innerHTML = `<div class="empty-notice">No character on this tile.</div>`;
             return;
         }
 
-        this.container.innerHTML = `
-            <div class="prop-group">
-                <label>Character Name:</label>
-                <span>${unit.name}</span>
-            </div>
-            <div class="prop-group">
-                <label>Faction:</label>
-                <span style="color: var(--neon-green)">${unit.faction.toUpperCase()}</span>
-            </div>
-            <div class="prop-group">
-                <label>Movement Points (MP):</label>
-                <span id="ins-unit-mp" style="color: var(--accent-pink)">${unit.currentMovePoints} / ${unit.maxMovePoints}</span>
-            </div>
-            <div class="prop-group">
-                <label>Vision Range:</label>
-                <span>${unit.visionRange} Hexes</span>
-            </div>
-        `;
+        this.container.innerHTML = '';
+
+        units.forEach(unit=>{
+            this.container.innerHTML += `
+                <div class="prop-group">
+                    <label>Character Name:</label>
+                    <span>${unit.name}</span>
+                </div>
+                <div class="prop-group">
+                    <label>Faction:</label>
+                    <span style="color: var(--neon-green)">${unit.faction.toUpperCase()}</span>
+                </div>
+                <div class="prop-group">
+                    <label>Movement Points (MP):</label>
+                    <span id="ins-unit-mp" style="color: var(--accent-pink)">${unit.currentMovePoints} / ${unit.maxMovePoints}</span>
+                </div>
+                <div class="prop-group">
+                    <label>Vision Range:</label>
+                    <span>${unit.visionRange} Hexes</span>
+                </div>
+            `;
+        })
     }
 }
 

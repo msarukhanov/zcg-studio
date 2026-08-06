@@ -172,7 +172,7 @@ export function renderPlayerGalleryScreen() {
             });
 
             const imgEl = document.createElement('img');
-            imgEl.src = item.image;
+            imgEl.src = window.gameAssets[item.image] || item.image;
             Object.assign(imgEl.style, {
                 maxHeight: '75vh', maxWidth: '100%', objectFit: 'contain',
                 filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.8))'
@@ -240,7 +240,7 @@ export function renderPlayerGalleryScreen() {
                 previewHolder.innerHTML = '<span style="font-size:26px;">🔒</span>';
             } else if (item.image) {
                 // Если открыто и есть постер — выводим картинку
-                previewHolder.innerHTML = `<img src="${item.image}" style="max-width:100%; max-height:100%; object-fit:contain;" />`;
+                previewHolder.innerHTML = `<img src="${window.gameAssets[item.image] || item.image}" style="max-width:100%; max-height:100%; object-fit:contain;" />`;
             } else {
                 // Если открыто, но это чисто текстовый свиток / документ
                 previewHolder.innerHTML = '<span style="font-size:32px;">📜</span>';

@@ -30,14 +30,15 @@ export class PlatformerMovementManager extends MovementManager {
             if (nextTileDown) {
                 charObj.currentMovementVisualPath = [nextTileDown];
                 charObj.action = 'move';
+                charObj.actionType = 'fall';
                 return;
             }
         }
 
         if (input.jump && isGrounded) {
-            let dir = 1;
-            if (input.left) dir = -1;
-            else if (input.right) dir = 1;
+            let dir = 0;
+            if (input.left) dir = -1;  //|| charObj.direction==='left'
+            else if (input.right) dir = 1;  //|| charObj.direction==='right'
 
             const jumpPath = [];
             let checkQ = currentQ;
@@ -118,6 +119,7 @@ export class PlatformerMovementManager extends MovementManager {
                 if (stepCheck === "walkable" || stepCheck === "ally" || nextTile.type==='air') {
                     charObj.currentMovementVisualPath = [nextTile];
                     charObj.action = 'move';
+                    charObj.direction = walkOffsetQ>0 ? 'right' : 'left';
                 }
             }
         }

@@ -137,6 +137,8 @@ export class AssetLoaderManager {
         else if(AppState.characters) {
             this._collectUniqueUrls(AppState.characters, uniquePaths);
         }
+        this._collectUniqueUrls(AppState.ConfigProjectiles, uniquePaths);
+
         // this._collectUniqueUrls(AppState.characters, uniquePaths);
         if(AppState.ui?.landscape) {
             const lsScreens = {};
@@ -150,7 +152,7 @@ export class AssetLoaderManager {
         }
         // this._collectUniqueUrls(AppState.objects, uniquePaths);
         this._collectUniqueUrls(AppState.playerGallery, uniquePaths);
-        this._collectUniqueUrls(AppState.projectiles, uniquePaths);
+
         this._collectUniqueUrls(AppState.effects, uniquePaths);
         this._collectUniqueUrls(AppState.skills, uniquePaths);
         this._collectUniqueUrls(AppState.dialogs, uniquePaths);

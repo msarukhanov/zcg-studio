@@ -190,7 +190,7 @@ export class EditorControls {
         // Сбрасываем выделение редактора и принудительно перерисовываем PixiJS-карту
         if (window.clickManagerRef) {
             window.clickManagerRef.deselectAll();
-            window.clickManagerRef.redrawMap();
+            AppState.engine.renderMap();
         }
         this.updateUI();
     }
@@ -233,7 +233,7 @@ export class EditorControls {
 
                     AppState.engine.MapManager.switchMap(mapId);
 
-                    window.renderMap()
+                    AppState.engine.renderMap();
                 });
                 this.mapSelectDD.appendChild(btn);
             });

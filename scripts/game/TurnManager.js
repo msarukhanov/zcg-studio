@@ -156,18 +156,11 @@ export class TurnManager {
         // Обновляем ОД (Очки Движения) для персонажей, которые сейчас получили право ходить
         this.refreshMovementPoints(turnBy);
 
+        AppState.engine.renderMap();
         // Перерисовываем карту и обновляем панель кнопок навыков под активный ход
         if (AppState.engine.uiManager && AppState.engine.uiManager.updateAll) {
             AppState.engine.uiManager.updateAll();
         }
-        if (AppState.engine.skillManager && AppState.engine.skillManager.redrawMap) {
-            AppState.engine.skillManager.redrawMap();
-        }
-
-        // СЮДА СЛЕДУЮЩИМ ШАГОМ МЫ ВСТАВИМ ВЫЗОВ ДЛЯ AI И ИГРОКА:
-        // Если право хода перешло боту компьютера — мы скомандуем ИИ начать действовать.
-
-        if (this.redrawMap) this.redrawMap();
 
         if (AppState.engine.aiManager) {
             // Передаем текущую фазу и тип пошагового режима в ИИ

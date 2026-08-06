@@ -1,11 +1,13 @@
 import { HexMath } from '../shared/HexMath.js';
 import { MapData } from '../shared/MapData.js';
-import { renderTile } from '../shared/render.js';
+import { renderTile, renderEntity } from '../shared/render.js';
 
 import { AppState, getActiveMap, getTileFromState, DiplomaticPacts } from '../shared/GameState.js';
 
 import { InitEngine } from '../engine/engine.js';
 import { AssetLoaderManager } from '../engine/AssetLoaderManager.js';
+import { TranslateManager } from '../engine/TranslateManager.js';
+import {RenderFunctions} from '../engine/RenderFunctions.js';
 import { ScreenManager } from '../screens/ScreenManager.js';
 
 import { PathRenderer } from '../game/PathRenderer.js';
@@ -13,9 +15,8 @@ import { PlayerClickManager } from '../game/PlayerClickManager.js';
 
 import { SaveLoadManager } from '../game/SaveLoadManager.js';
 
-import {RenderFunctions} from '../engine/RenderFunctions.js';
-
 window.AppState = AppState;
+window._t = ()=>{};
 
 let screenManager = null;
 let GameId = null;
@@ -82,10 +83,11 @@ async function init() {
     await loader.loadAllGameAssets();
 
     const container = document.getElementById('main-container');
-    screenManager = new ScreenManager(container);
+    AppState.engine.ScreenManager = new ScreenManager(container);
 
-    // Закрепляем ссылку в движке игры, чтобы другие менеджеры могли переключать экраны
-    AppState.engine.ScreenManager = screenManager;
+    AppState.engine.TranslateManager = new TranslateManager();
+    AppState.engine.TranslateManager.setLanguage('en');
+
     AppState.engine.SaveLoadManager = SaveLoadManager;
 
     if (AppState.engine.SaveLoadManager) {
@@ -94,14 +96,13 @@ async function init() {
 
     // 3. Вызываем триггер отрисовки Главного Меню из конфига админки
     console.log("🖥️ Вывод стартового экрана [main_menu]...");
-    screenManager.renderScreen('main_menu');
+    AppState.engine.ScreenManager.renderScreen('main_menu');
 }
 
 
 async function init2(isNewGame = false) {
 
     let worldMapContainer;
-    let uiLayerContainer;
     let hexMath;
     let app;
     let playerClickManager;
@@ -159,15 +160,6 @@ async function init2(isNewGame = false) {
         app.stage.addChild(worldMapContainer);
         AppState.engine.worldMapContainer = worldMapContainer;
 
-        uiLayerContainer = new PIXI.Container();
-        uiLayerContainer.x = worldMapContainer.x;
-        uiLayerContainer.y = worldMapContainer.y;
-        uiLayerContainer.sortableChildren = true;
-        uiLayerContainer.eventMode = 'passive';
-        AppState.engine.uiLayerContainer = uiLayerContainer;
-
-        app.stage.addChild(uiLayerContainer);
-
         AppState.engine.app = app;
         AppState.engine.hexMath = hexMath;
 
@@ -177,15 +169,9 @@ async function init2(isNewGame = false) {
 
     InitEngine();
 
-
-    AppState.engine.skillManager.redrawMap = renderMap;
-
-    AppState.engine.combatManager.redrawMap = renderMap;
-
-    playerClickManager = new PlayerClickManager(renderMap);
+    playerClickManager = new PlayerClickManager();
     AppState.engine.playerClickManager = playerClickManager;
-    // AppState.engine.MapManager.loadMap();
-    //
+
     if(isNewGame) {
         console.log("NEW GAME =====");
 
@@ -216,13 +202,11 @@ async function init2(isNewGame = false) {
         if(AppState.characters) {
             Object.values(AppState.characters).forEach(char => {
                 const defaults = structuredClone(defaultCharacterProperties);
+                const proto = structuredClone(AppState.ConfigCharacter[char.id]);
                 Object.assign(char, {
                     ...defaults,
+                    ...proto,
                     ...char,
-                    animations: {
-                        idle: { ...defaults.animations.idle, ...(char.animations?.idle || {}) },
-                        move: { ...defaults.animations.move, ...(char.animations?.move || {}) }
-                    }
                 });
                 AppState.engine.CharacterLevelUpManager.initCharacterExpAndStats(char);
             });
@@ -240,22 +224,10 @@ async function init2(isNewGame = false) {
         AppState.play.activeCharacterId = AppState.player.character;
         AppState.play.activeFactionId = AppState.player.faction;
         AppState.play.visibleTiles = new Set();
-
-        if (AppState.player?.character && AppState.game_settings) {
-            playerClickManager.executeCharacterSelect(AppState.player.character);
-
-            if (AppState.engine.centerCameraOnCharacter) {
-                AppState.engine.centerCameraOnCharacter(AppState.player.character);
-            }
-        }
     }
 
     if(AppState.maps) {
-        // AppState.engine.MapManager.switchMap('world_map');
         AppState.engine.MapManager.switchMap('world_map');
-        // AppState.map.gridMode = 'pointyHex';
-        // AppState.map.gridMode = 'square';
-        // AppState.map.isPlatormerMode = true;
 
         if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
             playerClickManager.executeCharacterSelect(AppState.player?.character);
@@ -281,404 +253,101 @@ async function init2(isNewGame = false) {
     function renderMap() {
         if(!AppState.maps) return;
 
+        worldMapContainer.children.forEach(child => {
+            if (child.isUnitContainer) {
+                child.visible = false;
+                AppState.engine.unitContainerPool.push(child);
+            }
+        });
         worldMapContainer.removeChildren();
 
-        uiLayerContainer.visible = true;
+        const tileEntities = {};
+
+        Object.keys(AppState.entities).forEach(id => {
+            const char = AppState.entities[id];
+            if (char.mapPosition.q && char.mapPosition.r) {
+                const key = `${char.mapPosition.q},${char.mapPosition.r}`;
+                if(!tileEntities[key]) tileEntities[key] = {entities:[],charsOnThisTile:0};
+                tileEntities[key].entities.push(char);
+
+                // const isObject = !!AppState.objects[char.id];
+                if(!!AppState.characters[char.id]) tileEntities[key].charsOnThisTile++;
+            }
+        });
+
+        let screenW = app.screen.width;
+        let screenH = app.screen.height;
+
+        // Учитываем ваш CSS-разворот осей при ресайзе, если он активен
+        if (window.windowResized) {
+            const temp = screenW;
+            screenW = screenH;
+            screenH = temp;
+        }
+
+        // Переводим границы экрана в локальные координаты карты с учетом текущего сдвига и зума
+        const minX = -worldMapContainer.x / currentZoom;
+        const minY = -worldMapContainer.y / currentZoom;
+        const maxX = minX + (screenW / currentZoom);
+        const maxY = minY + (screenH / currentZoom);
+
+        // Добавляем запас (padding) в пикселях, чтобы высокие стены тайлов
+        // или тайлы на самых краях экрана не исчезали грубо при скролле
+        const padding = AppState.sizes.hex * 3;
 
         AppState.map.tiles.forEach((tile) => {
+
+            const hexMath = AppState.engine.hexMath;
+            const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
+
+            // Если тайл находится далеко за пределами видимого окна — просто пропускаем его!
+            if (
+                pixelPos.x < minX - padding ||
+                pixelPos.x > maxX + padding ||
+                pixelPos.y < minY - padding ||
+                pixelPos.y > maxY + padding
+            ) {
+                return; // Завершаем итерацию для этого тайла, процессор отдыхает
+            }
 
             const renderedTile = renderTile(tile);
             if(!renderedTile) return;
 
-            const {pixelPos, roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
+            const { roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
 
-            const unitsOnThisTile = [];
-            let charsOnThisTile = 0;
+            const entities = tileEntities[`${tile.q},${tile.r}`] ?  tileEntities[`${tile.q},${tile.r}`].entities : null;
+            const chars = entities ? tileEntities[`${tile.q},${tile.r}`].charsOnThisTile : 0;
 
-            Object.keys(AppState.entities).forEach(id => {
-                const char = AppState.entities[id];
-                if (char.mapPosition.q === tile.q && char.mapPosition.r === tile.r) {
-                    unitsOnThisTile.push(char);
-                    const isChar = !!AppState.characters[char.id];
-                    // const isObject = !!AppState.objects[char.id];
-                    if(isChar) charsOnThisTile++;
-                }
-            });
-
-            if (unitsOnThisTile.length > 0 && isVisible) {
-                unitsOnThisTile.forEach((unit, index) => {
-                    const unitContainer = new PIXI.Container();
-
-                    // Сдвиг по оси X, если на одном гексе стоят несколько союзников/нейтралов
-                    const shiftX = (charsOnThisTile > 1) ? (index - (charsOnThisTile - 1) / 2) * 14 : 0;
-
-                    // --- КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Читаем плавные визуальные координаты из AppState ---
-                    // Если персонаж в покое — его visualX/visualY равны центру 3D-крышки гекса
-                    if (!unit.action || unit.action === 'idle') {
-                        unit.visualX = pixelPos.x;
-                        unit.visualY = roofY;
-                    }
-
-                    const isObject = !!AppState.objects[unit.id];
-                    const isChar = !!AppState.characters[unit.id];
-
-                    unitContainer.x = unit.visualX + (isObject?0:shiftX);
-                    unitContainer.y = unit.visualY;
-
-                    // --- КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: ДИНАМИЧЕСКИЙ Z-INDEX В ПОЛЕТЕ ---
-                    if (unit.action === 'move') {
-                        // Если персонаж идет — выставляем ему огромный zIndex (10000).
-                        // Он взлетит над любыми 3D-стенами и деревьями на своем пути!
-                        unitContainer.zIndex = 10000 + index;
-                    } else {
-                        // Если он стоит — возвращаем классический изометрический zIndex крышки гекса
-                        unitContainer.zIndex = roofSprite.zIndex + 0.05 + (index * 0.01);
-                    }
-
-                    let frameImagePath = null;
-
-                    if (unit.animations && unit.animations[unit.action] && unit.animations[unit.action][unit.directionV]) {
-                        const animArray = unit.animations[unit.action][unit.directionV];
-                        if (animArray && animArray.length > 0) {
-                            // Берем строковую ссылку на .png на основе высчитанного в тикере индекса
-                            frameImagePath = animArray[unit.currentFrameIndex % animArray.length];
-                        }
-                    }
-                    else if (unit.animations && unit.animations[unit.action] && unit.animations[unit.action][unit.direction]) {
-                        const animArray = unit.animations[unit.action][unit.direction];
-                        if (animArray && animArray.length > 0) {
-                            // Берем строковую ссылку на .png на основе высчитанного в тикере индекса
-                            frameImagePath = animArray[unit.currentFrameIndex % animArray.length];
-                        }
-                    }
-                    else {
-                        frameImagePath = unit.image;
-                    }
-
-                    // Проверяем: загружена ли эта конкретная картинка кадра в память WebGL PixiJS v8?
-                    let hasSpriteLoaded = false;
-                    if (frameImagePath && typeof PIXI.Assets !== 'undefined' && PIXI.Assets.cache.has(frameImagePath)) {
-                        hasSpriteLoaded = true;
-                    }
-
-                    let YoffsetHeight = 12;
-
-                    if (hasSpriteLoaded) {
-                        // =========================================================================
-                        // 🟢 ВАРИАНТ А: КАРТИНКА НАЙДЕНА -> Рисуем живой покадровый спрайт ходьбы
-                        // =========================================================================
-                        const texture = PIXI.Assets.get(frameImagePath);
-                        const characterSprite = new PIXI.Sprite(texture);
-                        characterSprite.anchor.set(0.5, 1.0);
-
-                        characterSprite.width = AppState.sizes.char.width;
-                        characterSprite.height = AppState.sizes.char.height;
-
-                        if(unit.ar) {
-                            characterSprite.width = characterSprite.height / unit.ar;
-                        }
-
-                        const maxHexWidth = 1.73205 * AppState.sizes.hex;
-
-                        if (characterSprite.width > maxHexWidth) {
-                            // Принудительно вписываем ширину в границы гекса
-                            characterSprite.width = maxHexWidth;
-
-                            // Пропорционально пересчитываем высоту обратно, чтобы сохранить аспект рэшио!
-                            if (unit.ar) {
-                                // Если ширина = высота / ar, значит новая высота = ширина * ar
-                                characterSprite.height = characterSprite.width * unit.ar;
-                            } else {
-                                // Фолбэк на случай, если ar в конфиге почему-то забыли прописать:
-                                // Берем оригинальное соотношение сторон текстуры самого спрайта
-                                const textureAr = characterSprite.texture.height / characterSprite.texture.width;
-                                characterSprite.height = characterSprite.width * textureAr;
-                            }
-                        }
-
-                        characterSprite.y = 12;
-
-                        if(unit.centered) {
-                            characterSprite.y = characterSprite.height/2;
-                            YoffsetHeight = characterSprite.height/2;
-                        }
-
-                        if (unit.damageFlashTimer && unit.damageFlashTimer > 0) {
-                            characterSprite.tint = 0xff5555; // Красим созданный Pixi-спрайт в красный урон
-                        }
-                        else if (unit.healFlashTimer && unit.healFlashTimer > 0) {
-                            characterSprite.tint = 0x55ff55; // Красим созданный Pixi-спрайт в зеленый хил
-                        }
-                        else {
-                            characterSprite.tint = 0xffffff; // Чистый, исходный цвет ассета без мутаций
-                        }
-
-                        if (unit.isDead === true) {
-                            // Смещаем точку опоры спрайта в центр, чтобы он крутился красиво, а не улетал за угол
-                            characterSprite.anchor.set(0.5, 0.5);
-
-                            // Поворачиваем на 90 градусов (Math.PI / 2 радиан) — моделька ложится на бок!
-                            characterSprite.rotation = Math.PI / 2;
-
-                            // Можно слегка притемнить труп фильтром или альфой, чтобы отличался от живых
-                            characterSprite.alpha = 0.9;
-
-                            unitContainer.zIndex = roofSprite.zIndex + 1000.05 + (index * 0.01);
-                        }
-
-                        unitContainer.addChild(characterSprite);
-                    }
-                    else {
-                        // =========================================================================
-                        // 🔴 ВАРИАНТ Б: КАРТИНКА НЕ НАЙДЕНА (FALLBACK) -> Включаем неоновый кружок
-                        // =========================================================================
-                        let markerColor = 0x1f6feb;
-                        let strokeColor = 0x58a6ff;
-                        const currentPact = AppState.engine.factionManager.getPact(AppState.player.faction, unit.faction);
-
-                        if (unit.id === 'rafael') {
-                            markerColor = 0x1f6feb;
-                            strokeColor = 0x58a6ff;
-                        } else if (currentPact === DiplomaticPacts.ALLIANCE) {
-                            markerColor = 0x2ea44f;
-                            strokeColor = 0x7ee787;
-                        } else if (currentPact === DiplomaticPacts.WAR) {
-                            markerColor = 0xda3637;
-                            strokeColor = 0xff7b72;
-                        } else if (currentPact === DiplomaticPacts.NONE || currentPact === DiplomaticPacts.NON_AGGRESSION) {
-                            markerColor = 0x8b949e;
-                            strokeColor = 0xc9d1d9;
-                        }
-
-                        const circle = new PIXI.Graphics();
-                        circle.circle(0, 0, 14);
-                        circle.fill({ color: markerColor });
-                        circle.stroke({ width: 2, color: strokeColor });
-                        unitContainer.addChild(circle);
-
-                        // Стрелочка направления взгляда
-                        const dirArrow = unit.direction === 'left' ? '◀' : '▶';
-                        const textLabel = unit.id === 'rafael' ? `${dirArrow}${unit.name.charAt(0)}` : unit.name.charAt(0).toUpperCase();
-
-                        const text = new PIXI.Text({
-                            text: textLabel,
-                            style: { fontSize: 11, fill: 0xffffff, fontWeight: 'bold' }
-                        });
-                        text.anchor.set(0.5, 0.5);
-                        unitContainer.addChild(text);
-                    }
-
-                    // =========================================================================
-                    // 📊 ОТРИСОВКА HP И ENERGY БАРОВ (КОРРЕКТИРОВКА ВЫСОТЫ НАД ГОЛОВОЙ)
-                    // =========================================================================
-                    if (unit.stats) {
-                        const barsG = new PIXI.Graphics();
-
-                        // Размеры индикаторов
-                        const barWidth = AppState.sizes.char.width;
-                        const barHeight = 4;
-                        const barSpacing = 2;
-                        const offsetY = -1*AppState.sizes.char.height + YoffsetHeight;
-
-                        const startX = (unit.visualX + shiftX) - barWidth / 2;
-                        const startY = unit.visualY + offsetY;
-
-                        // 🟥 1. HP БАР
-                        const currentHp = unit.stats.hp || 0;
-                        const maxHp = unit.stats.maxHp || 100;
-                        const hpRatio = Math.max(0, Math.min(1, currentHp / maxHp));
-
-                        barsG.beginFill(0x222222, 0.8);
-                        barsG.drawRect(startX, startY, barWidth, barHeight);
-                        barsG.endFill();
-
-                        if (hpRatio > 0) {
-                            barsG.beginFill(0x2ecc71);
-                            barsG.drawRect(startX, startY, barWidth * hpRatio, barHeight);
-                            barsG.endFill();
-                        }
-
-                        // 🟦 2. ENERGY БАР
-                        const currentEnergy = unit.stats.energy || 0;
-                        const maxEnergy = unit.stats.maxEnergy || 100;
-                        const energyRatio = Math.max(0, Math.min(1, currentEnergy / maxEnergy));
-                        const energyY = startY + barHeight + barSpacing;
-
-                        barsG.beginFill(0x222222, 0.8);
-                        barsG.drawRect(startX, energyY, barWidth, barHeight);
-                        barsG.endFill();
-
-                        if (energyRatio > 0) {
-                            barsG.beginFill(0x3498db);
-                            barsG.drawRect(startX, energyY, barWidth * energyRatio, barHeight);
-                            barsG.endFill();
-                        }
-
-                        // Также поднимаем zIndex повыше, чтобы полоски не перекрывались соседними высокими тайлами ландшафта
-                        barsG.zIndex = roofSprite.zIndex + 500;
-
-                        worldMapContainer.addChild(barsG);
-                    }
-
-                    if (unit.type === 'city') {
-                        if(tile.province) {
-                            unit.province = tile.province;
-                        }
-                        const cityG = new PIXI.Graphics();
-
-                        // 1. Координаты строго ПОД картинкой города
-                        const centerX = unit.visualX + shiftX;
-                        // Спускаемся от верха юнита ровно на высоту картинки + небольшой зазор в 4px
-                        const startY = unit.visualY + AppState.sizes.hex/2;// .height + 4;
-
-                        // 2. Текст названия и дохода
-                        const cityName = unit.name || 'City';
-                        const cityIncome = unit.production?.gold >= 0 ? `+${unit.production?.gold}` : `${unit.production?.gold || 0}`;
-                        const infoText = `${cityName} (${cityIncome})`;
-
-                        const textStyle = new PIXI.TextStyle({
-                            fontFamily: 'sans-serif',
-                            fontSize: 11,
-                            fill: '#ffffff',
-                            align: 'center'
-                        });
-
-                        const cityText = new PIXI.Text(infoText, textStyle);
-
-                        // Центрируем текст ровно по центру под картинкой
-                        cityText.anchor.set(0.5, 0);
-                        cityText.x = centerX;
-                        cityText.y = startY;
-
-                        // 3. Полупрозрачная плашка (подстраивается под длину текста)
-                        const bgPaddingHorizontal = 6;
-                        const bgPaddingVertical = 3;
-                        const bgWidth = AppState.sizes.char.width;// cityText.width + bgPaddingHorizontal * 2;
-                        const bgHeight = cityText.height + bgPaddingVertical * 2;
-
-                        // Центрируем плашку относительно centerX
-                        const bgX = centerX - bgWidth / 2;
-                        const bgY = startY - bgPaddingVertical;
-
-                        const cityTextBg = tileFaction ? tileFaction.color : 0x000000;
-                        // Рисуем подложку
-                        cityG.beginFill(cityTextBg, 0.6);
-                        cityG.drawRoundedRect(bgX, bgY, bgWidth, bgHeight, 4);
-                        cityG.endFill();
-
-                        // 4. Сортировка слоев поверх ландшафта
-                        cityG.zIndex = roofSprite.zIndex + 500;
-                        cityText.zIndex = cityG.zIndex + 1;
-
-                        // Добавляем на карту
-                        worldMapContainer.addChild(cityG);
-                        worldMapContainer.addChild(cityText);
-                    }
-
-                    if (unit.currentPassiveCircleG) {
-                        if (unit.currentPassiveCircleG.parent) {
-                            unit.currentPassiveCircleG.parent.removeChild(unit.currentPassiveCircleG);
-                        }
-                        unit.currentPassiveCircleG.destroy();
-                        unit.currentPassiveCircleG = null;
-                    }
-
-                    // Если у юнита есть активные эффекты в стейте
-                    if (unit.effects && unit.effects.length > 0) {
-                        unit.effects.forEach(eff => {
-                            // Читаем ID эффекта, учитывая оба возможных ключа из вашей структуры данных
-                            const effId = eff.id || eff.effect_id;
-                            if (!effId || !AppState.effects) return;
-
-                            const effectConfig = AppState.effects[effId];
-                            // Строгая защита от undefined: если такого конфига нет, просто пропускаем
-                            if (!effectConfig) return;
-
-                            const activeHexG = new PIXI.Graphics();
-
-                            // Динамически берем цвет ИЗ ПЕРЕМЕННОЙ конфигурации эффекта
-                            let color = 0xffffff; // Дефолтный белый
-                            if (effectConfig.visual_color === "gold") color = 0xf1c40f;
-                            if (effectConfig.visual_color === "orange") color = 0xff6b6b;
-                            if (effectConfig.visual_color === "blue") color = 0x00d2ff;
-                            if (effectConfig.visual_color === "green") color = 0x2ecc71;
-                            if (effectConfig.visual_color === "purple") color = 0x9b59b6;
-                            if (effectConfig.visual_color === "white") color = 0xffffff;
-
-                            const radius = hexMath.size * 0.5;
-
-                            const passiveHexG = new PIXI.Graphics();
-
-                            passiveHexG.lineStyle(5, color, 1);
-                            passiveHexG.beginFill(0xffffff, 0);
-
-                            const centerX = unit.visualX + shiftX;
-                            const centerY = unit.visualY;
-
-                            const h = Math.sqrt(3) * radius;
-
-                            const points = [
-                                centerX + radius,       centerY,
-                                centerX + radius / 2,   centerY + h / 2,
-                                centerX - radius / 2,   centerY + h / 2,
-                                centerX - radius,       centerY,
-                                centerX - radius / 2,   centerY - h / 2,
-                                centerX + radius / 2,   centerY - h / 2
-                            ];
-
-                            passiveHexG.drawCircle(centerX, centerY, radius);
-                            passiveHexG.endFill();
-
-                            // passiveHexG.drawPolygon(points);
-                            // passiveHexG.endFill();
-
-                            passiveHexG.zIndex = roofSprite.zIndex + 0.01;
-
-                            worldMapContainer.addChild(passiveHexG);
-                        });
-                    }
-
-                    worldMapContainer.addChild(unitContainer);
+            if (entities?.length > 0 && isVisible) {
+                entities.forEach((unit, index) => {
+                    renderEntity(unit, chars, index, tile, tileFaction, roofSprite, pixelPos, roofY);
                 });
             }
         });
 
+        // if (AppState.engine.pathRenderer) {
+        //     AppState.engine.pathRenderer.clearPath();
+        // }
 
-
-        if (AppState.engine.pathRenderer) {
-            AppState.engine.pathRenderer.clearPath();
-        }
-
-        if (AppState.play.activeCharacterId) {
-            const activeChar = AppState.entities[AppState.play.activeCharacterId];
-            const charTile = getTileFromState(activeChar.mapPosition.q, activeChar.mapPosition.r);
-
-            if(AppState.main.MovementCells) {
-                if (activeChar && activeChar.action !== 'move') {
-                    if (AppState.play.cachedReachableTiles && AppState.play.cachedReachableTiles.length > 0) {
-                        AppState.engine.pathRenderer.drawMovementZone(AppState.play.cachedReachableTiles);
-                    }
-                } else {
-                    if (AppState.engine.pathRenderer) AppState.engine.pathRenderer.clearZone(); // Скрываем подложки на время анимации
-                }
-            }
-            if(AppState.main.MovementLine) {
-                if (activeChar.currentActivePath && activeChar.currentActivePath.length > 0 && activeChar.action !== 'move') {
-                    AppState.engine.pathRenderer.drawPath(activeChar.currentActivePath, activeChar);
-                }
-            }
-        }
-
-
+        // if (AppState.play.activeCharacterId) {
+        //     const activeChar = AppState.entities[AppState.play.activeCharacterId];
+        //     const charTile = getTileFromState(activeChar.mapPosition.q, activeChar.mapPosition.r);
+        //
+        //     if(AppState.main.MovementLine) {
+        //         if (activeChar.currentActivePath && activeChar.currentActivePath.length > 0 && activeChar.action !== 'move') {
+        //             AppState.engine.pathRenderer.drawPath(activeChar.currentActivePath, activeChar);
+        //         }
+        //     }
+        // }
 
         worldMapContainer.sortChildren();
-        uiLayerContainer.sortChildren();
         app.render();
     }
 
+    AppState.engine.renderMap = renderMap;
+
     if(AppState.maps) {
-        renderMap();
-        window.renderMap = renderMap;
+        AppState.engine.renderMap();
 
         app.stage.eventMode = 'static';
         app.stage.hitArea = app.screen;
@@ -740,11 +409,7 @@ async function init2(isNewGame = false) {
                 worldMapContainer.x = mapStartPos.x + dx;
                 worldMapContainer.y = mapStartPos.y + dy;
 
-                // Синхронизируем UI-слой, если он используется
-                if (typeof uiLayerContainer !== 'undefined') {
-                    uiLayerContainer.x = worldMapContainer.x;
-                    uiLayerContainer.y = worldMapContainer.y;
-                }
+                AppState.engine.renderMap();
             } else {
                 // 🌟 СТРОГИЙ ФИКС HOVER: Подсовываем менеджеру подсветки гексов правильные координаты
                 // playerClickManager.handleMapHover(currentVirtualX, currentVirtualY);
@@ -753,128 +418,107 @@ async function init2(isNewGame = false) {
 
         app.stage.on('pointerupoutside', () => isDragging = false);
 
-        // Зум к курсору
-        // app.canvas.addEventListener('wheel', (event) => {
-        //     const settings = AppState.game_settings;
-        //     if (settings.playerCamera === 'fixed') {
-        //         return
-        //     }
-        //     event.preventDefault();
-        //     // const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
-        //     // const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-        //     // const mouseX = event.clientX - wrapper.getBoundingClientRect().left;
-        //     // const opacityY = event.clientY - wrapper.getBoundingClientRect().top;
-        //     // const localX = (mouseX - worldMapContainer.x) / currentZoom;
-        //     // const localY = (opacityY - worldMapContainer.y) / currentZoom;
-        //     // currentZoom = newZoom;
-        //     //
-        //     // AppState.camera.currentZoom = currentZoom;
-        //     //
-        //     // worldMapContainer.scale.set(currentZoom);
-        //     // worldMapContainer.x = mouseX - localX * currentZoom;
-        //     // worldMapContainer.y = opacityY - localY * currentZoom;
-        //     //
-        //     // uiLayerContainer.scale.set(currentZoom);
-        //     // uiLayerContainer.x = worldMapContainer.x;
-        //     // uiLayerContainer.y = worldMapContainer.y;
-        //
-        //     const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
-        //     const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-        //
-        //     // clientX и clientY — это сырые координаты окна браузера.
-        //     // Если у тебя CSS повернул body/wrapper, то mouseX и mouseY для зума нужно скорректировать по твоей же схеме
-        //     let mouseX = event.clientX - wrapper.getBoundingClientRect().left;
-        //     let mouseY = event.clientY - wrapper.getBoundingClientRect().top;
-        //
-        //     if (window.windowResized) {
-        //         const rawX = mouseX;
-        //         const rawY = mouseY;
-        //         // Разворачиваем оси координат мыши относительно физического окна обертки
-        //         mouseX = rawY / window.innerWidth * window.innerHeight;
-        //         mouseY = window.innerWidth - rawX / window.innerHeight * window.innerWidth;
-        //     }
-        //
-        //     const localX = (mouseX - worldMapContainer.x) / currentZoom;
-        //     const localY = (mouseY - worldMapContainer.y) / currentZoom;
-        //     currentZoom = newZoom;
-        //
-        //     AppState.camera.currentZoom = currentZoom;
-        //
-        //     worldMapContainer.scale.set(currentZoom);
-        //     worldMapContainer.x = mouseX - localX * currentZoom;
-        //     worldMapContainer.y = mouseY - localY * currentZoom;
-        //
-        //     if (typeof uiLayerContainer !== 'undefined') {
-        //         uiLayerContainer.scale.set(currentZoom);
-        //         uiLayerContainer.x = worldMapContainer.x;
-        //         uiLayerContainer.y = worldMapContainer.y;
-        //     }
-        // }, { passive: false });
+        app.canvas.addEventListener('wheel', (event) => {
+            const settings = AppState.game_settings;
+            if (settings.playerCamera === 'fixed' && !settings.playerZoom) {
+                return;
+            }
+            event.preventDefault();
+
+            const zoomFactor = event.deltaY < 0 ? 1.05 : 1 / 1.05;
+            const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
+
+            // const intensity = Math.abs(event.deltaY) * 0.0005; // Настройте этот коэф под себя (меньше = плавнее)
+            // const zoomFactor = event.deltaY < 0 ? (1 + intensity) : 1 / (1 + intensity);
+            //
+            // const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
+
+            // 🌟 ИСПРАВЛЕНИЕ: Берем глобальные координаты из PixiJS, как в pointermove
+            const globalMouse = app.renderer.events.pointer.global;
+            let mouseX = globalMouse.x;
+            let mouseY = globalMouse.y;
+
+            // Применяем вашу рабочую схему разворота осей, если экран повернут через CSS
+            if (window.windowResized) {
+                const rawX = mouseX;
+                const rawY = mouseY;
+                mouseX = rawY / window.innerWidth * window.innerHeight;
+                mouseY = window.innerWidth - rawX / window.innerHeight * window.innerWidth;
+            }
+
+            // Запоминаем старый зум перед изменением
+            const oldZoom = currentZoom;
+            currentZoom = newZoom;
+            AppState.camera.currentZoom = currentZoom;
+
+            // Находим локальную точку внутри карты относительно СТАРОГО зума
+            const localX = (mouseX - worldMapContainer.x) / oldZoom;
+            const localY = (mouseY - worldMapContainer.y) / oldZoom;
+
+            // Применяем масштаб к контейнеру
+            worldMapContainer.scale.set(currentZoom);
+
+            // Сдвигаем контейнер так, чтобы точка под курсором осталась на месте
+            worldMapContainer.x = mouseX - localX * currentZoom;
+            worldMapContainer.y = mouseY - localY * currentZoom;
+
+            AppState.engine.renderMap();
+
+        }, { passive: false });
 
 
-
-        // =========================================================================
-        // 🔄 ЕДИНЫЙ ИГРОВОЙ ТИКЕР: ПЛАВНОЕ ДВИЖЕНИЕ, ДИНАМИЧЕСКИЙ Z-INDEX И ОБНОВЛЕНИЕ ЗОНЫ
-        // =========================================================================
         app.ticker.add((ticker) => {
-            const deltaMS = ticker.deltaTime * (1000 / 60);
-            const hexMath = AppState.engine.hexMath;
+            const deltaMS = (ticker.deltaTime * AppState.animation.framesPerSecond * 10) / 60;
             let needRedraw = false;
 
             if(AppState.map.isPlatformerMode) {
-                // AppState.engine.movementManager.updatePlatformer(deltaMS);
                 AppState.engine.movementManager.updateCharacter(AppState.characters[AppState.play.activeCharacterId]);
                 needRedraw = true;
             }
 
-            // Сканируем всех персонажей в глобальном стейте AppState
-            Object.keys(AppState.entities).forEach(charId => {
+            for (const charId in AppState.entities) {
                 const char = AppState.entities[charId];
-                if(!char) return;
+                if(!char) continue;
 
                 if (char.damageFlashTimer > 0) {
                     char.damageFlashTimer = Math.max(0, char.damageFlashTimer - deltaMS);
-                    needRedraw = true; // Пока персонаж горит красным — заставляем холст обновляться
+                    needRedraw = true;
                 }
 
                 if (char.healFlashTimer > 0) {
                     char.healFlashTimer = Math.max(0, char.healFlashTimer - deltaMS);
-                    needRedraw = true; // Пока персонаж горит зеленым — заставляем холст обновляться
+                    needRedraw = true;
                 }
 
                 if (char.animations && char.animations[char.action]) {
                     const currentActionAnims = char.animations[char.action][char.direction];
 
                     if (currentActionAnims && currentActionAnims.length > 1) {
-                        char.frameTimer += deltaMS;
+                        const animationTime = AppState.animation[char.action+"Time"] || 1000;
+                        char.frameTimer += deltaMS * 1000 / animationTime;
 
                         if (char.frameTimer >= char.frameDuration) {
                             char.frameTimer = 0;
-                            // Циклически переключаем индекс кадра вперед
                             char.currentFrameIndex = (char.currentFrameIndex + 1) % currentActionAnims.length;
-                            needRedraw = true; // Заставляем PixiJS перерисовать кадр анимации
+                            needRedraw = true;
                         }
                     } else {
-                        char.currentFrameIndex = 0; // Если кадр один — жестко держим индекс 0
+                        char.currentFrameIndex = 0;
                     }
                 }
 
-                // Если у персонажа есть очередь клеток для плавного марш-броска
                 if(AppState.engine.movementManager.animateMovement(char, deltaMS)) needRedraw = true;
+                if(AppState.engine.combatManager.animateAttack(char, deltaMS)) needRedraw = true;
+            }
 
-                if (AppState.play.activeCharacterId && AppState.engine.updateCameraSystem && (AppState.game_settings.playerCamera === 'fixed')) {
-                    AppState.engine.updateCameraSystem(ticker);
-                }
-            });
+            if (AppState.play.activeCharacterId && AppState.engine.updateCameraSystem && (AppState.game_settings.playerCamera === 'fixed')) {
+                AppState.engine.updateCameraSystem(ticker);
+            }
 
             if (needRedraw) {
-                renderMap();
-            } else if (AppState.play.activeCharacterId) {
-                AppState.engine.visionManager.updateFogOfWar();
-                app.render();
+                AppState.engine.renderMap();
             }
         });
-
 
         window.stopTicker = () => {
             app.ticker.stop();
@@ -893,14 +537,9 @@ async function init2(isNewGame = false) {
                 // char.clearMovementCache();
             });
             AppState.engine.visionManager.updateFogOfWar();
-            renderMap();
+            AppState.engine.renderMap();
         });
     }
-
-    // =========================================================================
-    // 🎮 ОБРАБОТКА СУЩЕСТВУЮЩЕЙ КАМЕРЫ + КЛИКОВ ПО КАНВАСУ
-    // =========================================================================
-
 
     if (AppState.game_settings?.audio?.music?.mute === false) {
         console.log("music start");
@@ -950,10 +589,6 @@ window.applyGlobalAutoRotation = function() {
 
         console.log("📱 Глобальный автоповорот: разворачиваем ВЕСЬ ДОМ и Pixi в Ландшафт...");
 
-        // 1. Нативно расширяем Pixi-рендерер под виртуальные ландшафтные размеры
-
-
-        // 2. Поворачиваем ВЕСЬ HTML-слой игры (вместе с кнопками, ресурсами и виджетами!) через CSS
         gameContainer.style.width = `${h}px`;
         gameContainer.style.height = `${w}px`;
         gameContainer.style.position = 'absolute';
@@ -963,19 +598,8 @@ window.applyGlobalAutoRotation = function() {
         gameContainer.style.transformOrigin = 'top left';
         gameContainer.style.overflow = 'hidden';
 
-        // 3. 🔥 КРИТИЧЕСКИЙ ФИКС КЛИКОВ PIXI: Пересчитываем координаты тачей пальца под CSS-поворот 90гр.
-        // Браузер шлет клик по физическому экрану (X, Y), а мы переводим его в виртуальный ландшафт Pixi
-
         if(app) {
             app.renderer.resize(h, w);
-
-            // const interactionManager = app.renderer.events || app.renderer.plugins?.interaction;
-            // if (interactionManager) {
-            //     interactionManager.mapPosition = (point, x, y) => {
-            //         point.x = y;
-            //         point.y = h - x;
-            //     };
-            // }
         }
 
         window.windowResized = true;
@@ -997,8 +621,7 @@ window.applyGlobalAutoRotation = function() {
         window.windowResized = false;
     }
 
-    // Перерисовываем сетку гексов под новое пространство
-    if (window.renderMap && AppState.maps) window.renderMap();
+    if( AppState.engine.renderMap) AppState.engine.renderMap();
 };
 
 // Вешаем на системный ресайз, чтобы игра адаптировалась, если телефон физически повернули

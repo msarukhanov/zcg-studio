@@ -1,8 +1,7 @@
 export class HistoryManager {
-    constructor(redrawCallback) {
+    constructor() {
         this.undoStack = [];
         this.redoStack = [];
-        this.redrawMap = redrawCallback;
         this.maxHistorySize = 50;
 
         this.initDOMReferences();
@@ -135,7 +134,7 @@ export class HistoryManager {
 
     finalizeStep() {
         this.updateButtonsState();
-        this.redrawMap(); // Перерисовываем холст PixiJS
+        AppState.engine.renderMap();
 
         // Синхронизируем инспектор, если текущий выделенный тайл изменился
         if (window.clickManagerRef && window.clickManagerRef.selectedTile) {

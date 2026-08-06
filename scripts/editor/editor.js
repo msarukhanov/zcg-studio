@@ -21,6 +21,7 @@ import { TranslateManager } from '../engine/TranslateManager.js';
 import { AssetLoaderManager } from '../engine/AssetLoaderManager.js';
 import { AssetGalleryManager } from '../engine/AssetGalleryManager.js';
 import {RenderFunctions} from '../engine/RenderFunctions.js';
+import { initAdditionalFunctions } from '../engine/AdditionalFunctions.js';
 
 
 window.getActiveMap = getActiveMap;
@@ -108,6 +109,8 @@ async function init() {
     AppState.engine.DialogEditor = DialogEditor;
     AppState.engine.TranslateEditor = TranslateEditor;
 
+    initAdditionalFunctions();
+
     // Запускаем менеджер управления интерфейсом
     const editorControls = new EditorControls();
     AppState.engine.editorControls = editorControls;
@@ -185,9 +188,9 @@ async function init() {
 
 
     // Запускаем менеджеры ввода
-    const editorClickManager = new EditorClickManager(renderMap);
+    const editorClickManager = new EditorClickManager();
 
-    const historyManager = new HistoryManager(renderMap);
+    const historyManager = new HistoryManager();
     editorClickManager.historyManager = historyManager;
 
     window.clickManagerRef = editorClickManager;
@@ -210,13 +213,7 @@ async function init() {
 
             const {pixelPos, roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
 
-            const unitsOnThisTile = [];
-            Object.keys(AppState.entities).forEach(id => {
-                const char = AppState.entities[id];
-                if (char.mapPosition.q === tile.q && char.mapPosition.r === tile.r) {
-                    unitsOnThisTile.push(char);
-                }
-            });
+            const unitsOnThisTile = AppState.engine.getEntitiesOnTile(tile);
 
             if (unitsOnThisTile.length > 0) {
                 unitsOnThisTile.forEach((unit, index) => {
@@ -230,7 +227,7 @@ async function init() {
                     unitContainer.x = unit.visualX + shiftX;
                     unitContainer.y = unit.visualY;
 
-                    unitContainer.zIndex = roofSprite.zIndex + 0.05 + (index * 0.01);
+                    unitContainer.zIndex = roofSprite.zIndex + 0.5 + (index * 0.01);
 
                     let frameImagePath = null;
 
@@ -495,20 +492,6 @@ async function init() {
                 });
             }
 
-            // Черный контур рельефа гекса
-            const strokeGraphics = new PIXI.Graphics();
-            const localCorners = hexMath.getHexCornerPoints(0, 0);
-            strokeGraphics.poly(localCorners, true);
-            strokeGraphics.stroke({ width: 1.5, color: 0x000000, alpha: 0.25 });
-            strokeGraphics.x = pixelPos.x;
-            strokeGraphics.y = roofY;
-            strokeGraphics.zIndex = roofSprite.zIndex + 0.02;
-
-
-
-            worldMapContainer.addChild(strokeGraphics);
-
-
             // if (tileFaction) {
             //     const factionConfig = tileFaction || { color: 0x0077ff, strokeColor: 0x00dfff };
             //
@@ -536,16 +519,16 @@ async function init() {
 
         app.render();
     }
+    AppState.engine.renderMap = renderMap;
 
     window.newMap = ()=> {
         AppState.map = new MapData(1, 1);
         AppState.map.mapId = 'world_map';
         AppState.maps['world_map'] = AppState.map;
-        renderMap();
+        AppState.engine.renderMap();
     }
 
-    renderMap();
-    window.renderMap = renderMap;
+    AppState.engine.renderMap();
 
     // =========================================================================
     // 🎮 ОБРАБОТКА СУЩЕСТВУЮЩЕЙ КАМЕРЫ + КЛИКОВ ПО КАНВАСУ
@@ -598,6 +581,8 @@ async function init() {
 
             worldMapContainer.x = mapStartPos.x + dx;
             worldMapContainer.y = mapStartPos.y + dy;
+
+            AppState.engine.renderMap();
         } else {
             const canvasX = event.data.global.x;
             const canvasY = event.data.global.y;
@@ -608,30 +593,46 @@ async function init() {
 
     // Зум к курсору
     app.canvas.addEventListener('wheel', (event) => {
+        const settings = AppState.game_settings;
+
         event.preventDefault();
+
         const zoomFactor = event.deltaY < 0 ? 1.1 : 1 / 1.1;
         const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-        const mouseX = event.clientX - wrapper.getBoundingClientRect().left;
-        const opacityY = event.clientY - wrapper.getBoundingClientRect().top;
-        const localX = (mouseX - worldMapContainer.x) / currentZoom;
-        const localY = (opacityY - worldMapContainer.y) / currentZoom;
-        currentZoom = newZoom;
 
+        // 🌟 ИСПРАВЛЕНИЕ: Берем глобальные координаты из PixiJS, как в pointermove
+        const globalMouse = app.renderer.events.pointer.global;
+        let mouseX = globalMouse.x;
+        let mouseY = globalMouse.y;
+
+        // Запоминаем старый зум перед изменением
+        const oldZoom = currentZoom;
+        currentZoom = newZoom;
         AppState.camera.currentZoom = currentZoom;
 
+        // Находим локальную точку внутри карты относительно СТАРОГО зума
+        const localX = (mouseX - worldMapContainer.x) / oldZoom;
+        const localY = (mouseY - worldMapContainer.y) / oldZoom;
+
+        // Применяем масштаб к контейнеру
         worldMapContainer.scale.set(currentZoom);
+
+        // Сдвигаем контейнер так, чтобы точка под курсором осталась на месте
         worldMapContainer.x = mouseX - localX * currentZoom;
-        worldMapContainer.y = opacityY - localY * currentZoom;
+        worldMapContainer.y = mouseY - localY * currentZoom;
+
+        AppState.engine.renderMap();
+
     }, { passive: false });
 
 
     app.ticker.add((ticker) => {
-        const deltaMS = ticker.deltaTime * (1000 / 60);
+        const deltaMS = ticker.deltaTime * (1000 / (AppState.animation.framesPerSecond || 60));
         const hexMath = AppState.engine.hexMath;
         let needRedraw = false;
 
         if (needRedraw) {
-            renderMap();
+            AppState.engine.renderMap();
         }
     });
 

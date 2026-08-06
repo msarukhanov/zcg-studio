@@ -154,62 +154,6 @@ export class PathRenderer {
         }
     }
 
-    /**
-     * НАСТОЯЩАЯ ПОДСТОЯННАЯ ПОДСВЕТКА: Через стабильные Pixi-спрайты с тинтом
-     */
-    drawMovementZone(tilesArray) {
-        this.clearZone(); // Очищаем старые спрайты подсветки
-
-        if (!tilesArray || tilesArray.length === 0) return;
-
-        const hexMath = AppState.engine.hexMath;
-
-        tilesArray.forEach(tile => {
-            // Достаем ту же самую текстуру ландшафта, которая гарантированно работает на карте
-            const config = AppState.ConfigTerrain ? AppState.ConfigTerrain[tile.type] : null;
-            if (!config) return;
-
-            const assetVariant = config.images[tile.imageIndex] || config.images;
-            const imagePath = assetVariant.base || assetVariant;
-            let tileTexture = PIXI.Assets.cache.has(imagePath) ? PIXI.Assets.get(imagePath) : PIXI.Texture.WHITE;
-
-            // Создаем спрайт подсветки
-            const zoneSprite = new PIXI.Sprite(tileTexture);
-            zoneSprite.anchor.set(0.5, 0.5);
-
-            const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
-            const liftY = (tile.height - 1) * (hexMath.size * 0.25);
-
-            // Ставим спрайт ровно на 3D-крышку гекса
-            zoneSprite.x = pixelPos.x;
-            zoneSprite.y = pixelPos.y - liftY;
-
-            // Масштабируем строго под размеры сетки
-            if (tileTexture !== PIXI.Texture.WHITE) {
-                zoneSprite.scale.set(hexMath.width / tileTexture.width, hexMath.height / tileTexture.height);
-            } else {
-                zoneSprite.width = hexMath.width;
-                zoneSprite.height = hexMath.height;
-            }
-
-            // Перед zoneSprite.tint проверяем флаг:
-            zoneSprite.tint = tile.isEnemyTarget ? 0xff3333 : 0x00f5d4; // Красный если враг, бирюзовый если ход
-
-            zoneSprite.alpha = 0.35;    // Высокая полупрозрачность, чтобы текстуру было видно под ней
-
-            zoneSprite.zIndex = pixelPos.y + (tile.height * 0.1) + 0.03;
-
-            // Добавляем на карту и сохраняем ссылку для будущей очистки
-            AppState.engine.worldMapContainer.addChild(zoneSprite);
-            this.activeZoneSprites.push(zoneSprite);
-        });
-
-        // Просим карту пересортировать детей, чтобы бирюзовые подложки встали на нужные слои
-        if (AppState.engine.worldMapContainer.sortChildren) {
-            AppState.engine.worldMapContainer.sortChildren();
-        }
-    }
-
 
     clearPath() {
         this.activePathSprites.forEach(sprite => {
