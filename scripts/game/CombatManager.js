@@ -321,7 +321,7 @@ export class CombatManager {
             // });
         }
 
-        AppState.engin.renderMap();
+        AppState.engine.renderMap();
     }
 
     animateAttack(char, deltaMS) {

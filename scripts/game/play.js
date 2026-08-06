@@ -107,6 +107,11 @@ async function init2(isNewGame = false) {
     let app;
     let playerClickManager;
 
+    let isDragging = false;
+    let hasMoved = false; // Флаг, чтобы отличать перетаскивание карты от точечного клика
+    let dragStartPos = { x: 0, y: 0 };
+    let mapStartPos = { x: 0, y: 0 };
+    let currentZoom = 1.0;
 
     // AppState.isPlatformerMode = true;
     //
@@ -226,31 +231,8 @@ async function init2(isNewGame = false) {
         AppState.play.visibleTiles = new Set();
     }
 
-    if(AppState.maps) {
-        AppState.engine.MapManager.switchMap('world_map');
 
-        if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
-            playerClickManager.executeCharacterSelect(AppState.player?.character);
-
-            if (AppState.engine.centerCameraOnCharacter) {
-                AppState.engine.centerCameraOnCharacter(AppState.play.activeCharacterId);
-            }
-        }
-
-        AppState.engine.visionManager.updateFogOfWar();
-    }
-
-    AppState.engine.uiManager.init();
-    AppState.engine.questManager.refreshQuestChains();
-
-
-    let isDragging = false;
-    let hasMoved = false; // Флаг, чтобы отличать перетаскивание карты от точечного клика
-    let dragStartPos = { x: 0, y: 0 };
-    let mapStartPos = { x: 0, y: 0 };
-    let currentZoom = 1.0;
-
-    function renderMap() {
+    AppState.engine.renderMap = () => {
         if(!AppState.maps) return;
 
         worldMapContainer.children.forEach(child => {
@@ -260,6 +242,7 @@ async function init2(isNewGame = false) {
             }
         });
         worldMapContainer.removeChildren();
+
 
         const tileEntities = {};
 
@@ -295,19 +278,24 @@ async function init2(isNewGame = false) {
         // или тайлы на самых краях экрана не исчезали грубо при скролле
         const padding = AppState.sizes.hex * 3;
 
+
         AppState.map.tiles.forEach((tile) => {
 
-            const hexMath = AppState.engine.hexMath;
             const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
 
-            // Если тайл находится далеко за пределами видимого окна — просто пропускаем его!
-            if (
-                pixelPos.x < minX - padding ||
-                pixelPos.x > maxX + padding ||
-                pixelPos.y < minY - padding ||
-                pixelPos.y > maxY + padding
-            ) {
-                return; // Завершаем итерацию для этого тайла, процессор отдыхает
+            if (!AppState.play.isFirstPersonMode) {
+                const hexMath = AppState.engine.hexMath;
+
+
+                // Если тайл находится далеко за пределами видимого окна — просто пропускаем его!
+                if (
+                    pixelPos.x < minX - padding ||
+                    pixelPos.x > maxX + padding ||
+                    pixelPos.y < minY - padding ||
+                    pixelPos.y > maxY + padding
+                ) {
+                    return; // Завершаем итерацию для этого тайла, процессор отдыхает
+                }
             }
 
             const renderedTile = renderTile(tile);
@@ -323,6 +311,7 @@ async function init2(isNewGame = false) {
                     renderEntity(unit, chars, index, tile, tileFaction, roofSprite, pixelPos, roofY);
                 });
             }
+
         });
 
         // if (AppState.engine.pathRenderer) {
@@ -342,9 +331,26 @@ async function init2(isNewGame = false) {
 
         worldMapContainer.sortChildren();
         app.render();
+    };
+
+
+
+    if(AppState.maps) {
+        AppState.engine.MapManager.switchMap('world_map');
+
+        if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
+            playerClickManager.executeCharacterSelect(AppState.player?.character);
+
+            if (AppState.engine.centerCameraOnCharacter) {
+                AppState.engine.centerCameraOnCharacter(AppState.play.activeCharacterId);
+            }
+        }
+
+        AppState.engine.visionManager.updateFogOfWar();
     }
 
-    AppState.engine.renderMap = renderMap;
+    AppState.engine.uiManager.init();
+    AppState.engine.questManager.refreshQuestChains();
 
     if(AppState.maps) {
         AppState.engine.renderMap();

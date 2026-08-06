@@ -135,6 +135,7 @@ export function renderTile(tile) {
         worldMapContainer.addChild(gridGfx);
     }
 
+
     if (AppState.main.MovementCells && AppState.play.cachedReachableTiles && AppState.play.cachedReachableTiles.length && AppState.play.activeCharacterId) {
         const activeChar = AppState.entities[AppState.play.activeCharacterId];
 
@@ -164,6 +165,7 @@ export function renderTile(tile) {
 
     return { pixelPos, roofY, isVisible, roofSprite, isVisited, tileFaction };
 }
+
 
 export function renderEntity(unit, charsOnThisTile, index, tile, tileFaction, roofSprite, pixelPos, roofY) {
     let hasSpriteLoaded = false;
@@ -414,7 +416,7 @@ export function renderEntity(unit, charsOnThisTile, index, tile, tileFaction, ro
             passiveHexG.scale.set(radius);
             passiveHexG.tint = color;
 
-            unitContainer.addChild(passiveHexG);
+            // unitContainer.addChild(passiveHexG);
         });
     }
 
