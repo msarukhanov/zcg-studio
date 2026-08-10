@@ -10,10 +10,6 @@ export function renderSavesScreen() {
     // 1. Запоминаем ID экрана, из которого мы уходим, чтобы потом вернуться назад
     const previousScreenId = screenManager.currentScreenId || 'main_menu';
 
-    // 2. СТРОГИЙ ФИКС: Гасим старое меню твоим родным методом!
-    // Никаких innerHTML = '', все старые кнопки аккуратно удаляются из памяти.
-    screenManager.clearCurrentScreen();
-
     // 3. Строим абсолютно изолированный новый оверлей для сейвов с нуля
     const saveWrapper = document.createElement('div');
     saveWrapper.id = 'screen-save_slots_menu';

@@ -555,7 +555,7 @@ export class UIManager {
      * ⏳ 2.4. СБОРКА И СТИЛИЗАЦИЯ КНОПКИ НАВЫКА С УЧЕТОМ КУЛДАУНОВ
      */
     createSkillButton(char, skillInfo, index, isMobile) {
-        console.log(skillInfo);
+
         const skillId = skillInfo.skill_id;
         const isAutoAttack = skillInfo.isAutoAttack;
 
@@ -747,7 +747,7 @@ export class UIManager {
      * 📜 2.6. ТРЕКЕР КВЕСТОВ (Правая панель, под шестерёнкой)
      */
     renderQuestTracker() {
-
+        if (!AppState.main.Quests) return;
 
         // 1. Ищем первый активный квест для быстрого отображения на HUD
         const playerQuestIds = AppState.player?.quests || [];
@@ -827,6 +827,7 @@ export class UIManager {
      * 🗺️ 2.7. КОМПАКТНАЯ МИНИ-КАРТА (Правый верхний угол, под шестеренкой)
      */
     renderMinimap() {
+        if (!AppState.main.Minimap) return;
         // if (AppState.engine?.ScreenManager?.currentScreenId) return;
 
         const container = document.createElement('div');

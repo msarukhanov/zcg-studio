@@ -9,9 +9,6 @@ export function renderTradeScreen() {
     const merchantEntity = AppState.play?.selectedObject;
     if (!merchantEntity) return;
 
-    screenManager.clearCurrentScreen();
-    screenManager.currentScreenId = 'trade_screen';
-
     // Находим активного героя игрока, который инициировал торговлю
     const activeCharId = AppState.play?.activeCharacterId;
     const heroUnit = activeCharId ? AppState.characters?.[activeCharId] : null;

@@ -1,5 +1,271 @@
 import { AppState, getActiveMap, getTileFromState, getPactBetween, DiplomaticPacts } from '../shared/GameState.js';
 
+export function renderTile222(tile) {
+    const worldMapContainer = AppState.engine.worldMapContainer;
+    const hexMath = AppState.engine.hexMath;
+    const app = AppState.engine.app;
+    const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
+    const config = AppState.ConfigTerrain[tile.type];
+    if (!config) return;
+
+    // Проверка видимости
+    let isVisible = AppState.editor.globalMode === 'Editor' ? true : AppState.play.visibleTiles.has(`${tile.q},${tile.r}`);
+    let isVisited = AppState.editor.globalMode === 'Editor' ? true : AppState.player.exploredTiles.has(`${tile.q},${tile.r}`);
+    if (!isVisible && !isVisited) return;
+
+    // Фракции
+    const tileFactionId = AppState.engine.factionManager.getTileFaction(tile);
+    const tileFaction = tileFactionId ? AppState.factions?.[tileFactionId] : null;
+
+    // Текстуры (Перенесли чуть выше для расчета размеров)
+    const assetVariant = config.images[tile.imageIndex] || config.images;
+    const imagePath = assetVariant.base || assetVariant;
+    let tileTexture = PIXI.Assets.cache.has(imagePath) ? PIXI.Assets.get(imagePath) : null;
+
+    // Базовый расчет высот и координат для дефолтного 2D режима (Ваш оригинал)
+    const groundY = pixelPos.y;
+    const targetHeight = tile.height;
+    const roofY = groundY - (targetHeight - 1) * AppState.config.heightStep;
+
+    // Переменные, которые пойдут во все спрайты и графику ниже
+    let renderX = pixelPos.x;
+    let renderY = roofY;
+    let renderCenterX = pixelPos.x;
+    let renderCenterY = roofY;
+
+    // Переменные масштаба
+    let currentScaleX = tileTexture ? (hexMath.width / tileTexture.width) : 1;
+    let currentScaleY = tileTexture ? (hexMath.height / tileTexture.height) : 1;
+    let graphicsScaleX = 1;
+    let graphicsScaleY = 1;
+
+    // РЕЖИМ ОТ ПЕРВОГО ЛИЦА (Ваш честный 3D-пересчет осей)
+    if (AppState.play.isFirstPersonMode) {
+        const playerChar = AppState.characters[AppState.player?.character];
+        const playerPixelPos = hexMath.cubeToPixel(playerChar.mapPosition.q, playerChar.mapPosition.r);
+        const playerAngle = AppState.player.angle || 0;
+
+        let screenW = app.screen.width;
+        let screenH = app.screen.height;
+        if (window.windowResized) { const temp = screenW; screenW = screenH; screenH = temp; }
+
+        // 1. Вводим искусственную ось Z (Высота глаз)
+        const eyeHeight = 10;
+
+        // Находим вектор между изометрическими центрами клеток
+        const dx = pixelPos.x - playerPixelPos.x;
+        const dy = pixelPos.y - playerPixelPos.y;
+
+        // 2. Находим исходное 2D расстояние на карте
+        const distance2D = Math.hypot(dx, dy);
+
+        // 3. Вычисляем угол, на котором клетка находится от центра игрока
+        const cellMapAngle = Math.atan2(dy, dx);
+        let relativeAngle = cellMapAngle - playerAngle;
+        relativeAngle = Math.atan2(Math.sin(relativeAngle), Math.cos(relativeAngle));
+
+        // Отсекаем то, что вне 90 градусов взгляда
+        const maxFovHalf = Math.PI / 4;
+        if (relativeAngle < -maxFovHalf || relativeAngle > maxFovHalf) {
+            renderX = -9999; renderY = -9999;
+            renderCenterX = -9999; renderCenterY = -9999;
+            return;
+        }
+
+        if (distance2D > 0) {
+            // ЧЕСТНЫЙ ТРЕХМЕРНЫЙ ПЕРЕСЧЕТ: Находим гипотенузу (новое расстояние до клетки с высоты взгляда)
+            const realDistance3D = Math.hypot(distance2D, eyeHeight);
+
+            // Коэффициент изменения масштаба и шага на основе нового 3D расстояния
+            const distanceScale = 1 / (realDistance3D * 0.0015 + 1);
+
+            const tilt = 0.82;
+            const yScale = 1 - tilt;
+            const horizonY = screenH - 60; // Точка низа экрана
+
+            // 4. ВЫЧИСЛЯЕМ НОВЫЙ ЦЕНТР: Шаг по оси Y теперь изменен, так как мы смотрим с высоты eyeHeight
+            renderX = (screenW / 2) + (relativeAngle / maxFovHalf) * (screenW / 2);
+            renderY = horizonY - (realDistance3D * yScale) - eyeHeight;
+
+            renderCenterX = renderX;
+            renderCenterY = renderY;
+
+            // 5. РАСТЯГИВАЕМ ТАЙЛ СООТВЕТСТВЕННО НОВОМУ РАССТОЯНИЮ И НАКЛОНУ ВЗГЛЯДА
+            currentScaleX = (tileTexture ? (hexMath.width / tileTexture.width) : 1) * distanceScale;
+            currentScaleY = (tileTexture ? (hexMath.height / tileTexture.height) : 1) * distanceScale * yScale;
+
+            graphicsScaleX = distanceScale;
+            graphicsScaleY = distanceScale * yScale;
+        } else {
+            // Клетка строго под ногами игрока
+            renderX = screenW / 2;
+            renderY = screenH - 60 - eyeHeight;
+            renderCenterX = renderX;
+            renderCenterY = renderY;
+        }
+    }
+
+
+
+
+
+    // const centerX = renderCenterX;
+    // const centerY = renderCenterY;
+
+    let tileSkewX = 0; // Для панорамного обзора
+
+
+    // --- 1. ОТРИСОВКА СТЕНЫ (Ваша оригинальная логика) ---
+    let wallTint = 0x555555;
+    if (targetHeight > 1) {
+        const neighbors = hexMath.getNeighbors(tile.q, tile.r);
+        let maxSouthDrop = 0;
+        neighbors.forEach(n => {
+            const neighborTile = AppState.engine.MapManager.getTile(n.q, n.r);
+            if (neighborTile && hexMath.cubeToPixel(neighborTile.q, neighborTile.r).y > groundY) {
+                const drop = tile.height - neighborTile.height;
+                if (drop > maxSouthDrop) maxSouthDrop = drop;
+            }
+        });
+        wallTint = maxSouthDrop <= 0.5 ? 0x999999 : 0x444444;
+    }
+
+    if (targetHeight > 1) {
+        const sliceStep = Math.max(1, Math.floor(hexMath.size * 0.05));
+        for (let pixelY = groundY; pixelY >= roofY; pixelY -= sliceStep) {
+            const wallSlice = new PIXI.Sprite(tileTexture);
+            wallSlice.anchor.set(0.5, 0.5);
+            wallSlice.x = pixelPos.x;
+            wallSlice.y = pixelY;
+
+            if (tileTexture) {
+                wallSlice.scale.set(hexMath.width / tileTexture.width, hexMath.height / tileTexture.height);
+            } else {
+                wallSlice.width = hexMath.width;
+                wallSlice.height = hexMath.height;
+            }
+
+            wallSlice.tint = wallTint;
+            if (isVisited && !isVisible) {
+                wallSlice.tint = 0x222222;
+            }
+            wallSlice.zIndex = groundY + 0.01;
+            worldMapContainer.addChild(wallSlice);
+        }
+    }
+
+    let roofSprite;
+    if (tileTexture) {
+        roofSprite = new PIXI.Sprite(tileTexture);
+        roofSprite.anchor.set(0.5, 0.5);
+
+        // Подставляем новые пересчитанные координаты
+        roofSprite.x = renderX;
+        roofSprite.y = renderY;
+
+        // ЖЕСТКО РАСТЯГИВАЕМ СПРАЙТ В ПИКСЕЛЯХ ПО НАШИМ ДАННЫМ
+        // roofSprite.width = targetWidth;
+        // roofSprite.height = targetHeightPx;
+
+        roofSprite.zIndex = AppState.play.isFirstPersonMode ? renderY : (groundY + 0.1);
+        if (isVisible) roofSprite.tint = 0xffffff;
+        else if (isVisited) roofSprite.tint = 0x555555;
+        worldMapContainer.addChild(roofSprite);
+    } else {
+        // Оптимизированный фолбек земли через GraphicsContext
+        roofSprite = new PIXI.Graphics(AppState.engine.HexContexts.fallback);
+        roofSprite.tint = config.fallbackColor;
+        roofSprite.position.set(renderCenterX, renderCenterY);
+
+        // В v8 у Graphics тоже можно напрямую задать ширину и высоту в пикселях
+        if (AppState.play.isFirstPersonMode) {
+            roofSprite.width = targetWidth;
+            roofSprite.height = targetHeightPx;
+        }
+
+        roofSprite.zIndex = AppState.play.isFirstPersonMode ? renderY : (groundY + 0.1);
+        worldMapContainer.addChild(roofSprite);
+    }
+
+
+    // --- 3. ИНТЕРФЕЙСНЫЕ СЛОИ (Оптимизировано через v8 GraphicsContext) ---
+
+    // Подсветка активного персонажа (селектор)
+    if (AppState.play.activeCharacterId) {
+        const activeChar = AppState.entities[AppState.play.activeCharacterId];
+        if (activeChar && activeChar.mapPosition.q === tile.q && activeChar.mapPosition.r === tile.r && activeChar.action === 'idle') {
+            const selectorGfx = new PIXI.Graphics(AppState.engine.HexContexts.activeSelector);
+            selectorGfx.position.set(centerX, centerY);
+            selectorGfx.zIndex = roofSprite.zIndex + 0.02;
+            worldMapContainer.addChild(selectorGfx);
+        }
+    }
+
+    // Зона каста способностей
+    if (tile.isSkillTargetZone) {
+        let color = 0xf1c40f;
+        if (tile.skillVisualColor === "white") color = 0xffffff;
+        if (tile.skillVisualColor === "orange") color = 0xff6b6b;
+        if (tile.skillVisualColor === "blue") color = 0x00d2ff;
+        if (tile.skillVisualColor === "green") color = 0x2ecc71;
+        if (tile.skillVisualColor === "purple") color = 0x9b59b6;
+
+        const skillGfx = new PIXI.Graphics(AppState.engine.HexContexts.skillZone);
+        skillGfx.tint = color;
+        skillGfx.position.set(centerX, centerY);
+        skillGfx.zIndex = roofSprite.zIndex + 0.03;
+        worldMapContainer.addChild(skillGfx);
+    }
+
+    // Подложка фракции
+    if (tileFaction) {
+        const factionConfig = tileFaction || { color: 0x0077ff };
+        const factionGfx = new PIXI.Graphics(AppState.engine.HexContexts.faction);
+        factionGfx.tint = factionConfig.color;
+        factionGfx.position.set(centerX, centerY);
+        factionGfx.zIndex = roofSprite.zIndex + 0.01;
+        worldMapContainer.addChild(factionGfx);
+    }
+
+    // Черный контур сетки гекса
+    if (AppState.main.Grid) {
+        const gridGfx = new PIXI.Graphics(AppState.engine.HexContexts.grid);
+        gridGfx.position.set(centerX, centerY);
+        gridGfx.zIndex = roofSprite.zIndex + 0.04;
+        worldMapContainer.addChild(gridGfx);
+    }
+
+
+    if (AppState.main.MovementCells && AppState.play.cachedReachableTiles && AppState.play.cachedReachableTiles.length && AppState.play.activeCharacterId) {
+        const activeChar = AppState.entities[AppState.play.activeCharacterId];
+
+        // Рисуем подсветку только если есть активный чар и он не в движении
+        if (activeChar && activeChar.action !== 'move') {
+            // Быстро проверяем, входит ли текущий тайл в список подсвечиваемых клеток
+            const isReachable = AppState.play.cachedReachableTiles.some(t => t.q === tile.q && t.r === tile.r);
+
+            if (isReachable) {
+                // Находим этот тайл в кэше, чтобы узнать, вражеский ли это таргет
+                const targetTile = AppState.play.cachedReachableTiles.find(t => t.q === tile.q && t.r === tile.r);
+                const zoneColor = targetTile?.isEnemyTarget ? 0xff3333 : 0x00f5d4; // Красный враг, бирюзовый ход
+
+                // Штампуем оптимизированную геометрию гекса из вашего HexContexts
+                const movementZoneGfx = new PIXI.Graphics(AppState.engine.HexContexts.skillZone);
+                movementZoneGfx.tint = zoneColor;
+                movementZoneGfx.alpha = 0.35; // Полупрозрачность, как у вас и было
+                movementZoneGfx.position.set(centerX, centerY); // Встает ровно на крышку гекса roofY
+
+                // Кладём строго поверх крышки, но под сетку гекса
+                movementZoneGfx.zIndex = roofSprite.zIndex + 0.02;
+
+                worldMapContainer.addChild(movementZoneGfx);
+            }
+        }
+    }
+
+    return { pixelPos, roofY, isVisible, roofSprite, isVisited, tileFaction };
+}
+
 export function renderTile(tile) {
     const worldMapContainer = AppState.engine.worldMapContainer;
     const hexMath = AppState.engine.hexMath;
@@ -16,7 +282,7 @@ export function renderTile(tile) {
     const tileFactionId = AppState.engine.factionManager.getTileFaction(tile);
     const tileFaction = tileFactionId ? AppState.factions?.[tileFactionId] : null;
 
-    // Текстуры
+    //Текстуры
     const assetVariant = config.images[tile.imageIndex] || config.images;
     const imagePath = assetVariant.base || assetVariant;
     let tileTexture = PIXI.Assets.cache.has(imagePath) ? PIXI.Assets.get(imagePath) : null;
@@ -27,6 +293,9 @@ export function renderTile(tile) {
     const roofY = groundY - (targetHeight - 1) * AppState.config.heightStep;
     const centerX = pixelPos.x;
     const centerY = roofY;
+
+    // Текстуры (Перенесли чуть выше для расчета размеров)
+
 
     // --- 1. ОТРИСОВКА СТЕНЫ (Ваша оригинальная логика) ---
     let wallTint = 0x555555;

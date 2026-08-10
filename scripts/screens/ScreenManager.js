@@ -1,9 +1,22 @@
 import { AppState, getActiveMap, getTileFromState, getPactBetween, DiplomaticPacts } from '../shared/GameState.js';
 
+import { renderTopResourcesBar, renderPlayerBar, renderCloseButton } from './PlayerBars.js';
+
 import { renderCharacterScreen, renderCharacterTransferScreen } from './CharacterScreen.js';
 import { renderObjectScreen } from './ObjectManagementScreen.js';
 import { renderTradeScreen } from './TradeScreen.js';
 import { renderQuestsScreen } from './QuestsScreen.js';
+import { renderHeroListScreen } from './HeroListScreen.js';
+import { renderHeroViewScreen } from './HeroViewScreen.js';
+import { renderGachaScreen } from './GachaScreen.js';
+import { renderLeaderboardScreen } from './LeaderboardScreen.js';
+import { renderFriendsScreen } from './FriendsScreen.js';
+import { renderGuildsScreen } from './GuildsScreen.js';
+import { renderMailScreen } from './MailScreen.js';
+import { renderPlayerInventoryScreen } from './PlayerInventoryScreen.js';
+import { renderPlayerShopScreen } from './PlayerShopScreen.js';
+import { renderBountyBoardScreen } from './BountyBoardScreen.js';
+import { renderPlayerMissionsScreen } from './PlayerMissionsScreen.js';
 
 import { renderSavesScreen } from './SavesScreen.js';
 import { renderSettingsScreen } from './SettingsScreen.js';
@@ -24,76 +37,156 @@ export class ScreenManager {
         console.log(screenId);
         if (!this.rootContainer) return;
 
+        // 1. Создаем корневую подложку экрана
+        const screensConfig = AppState.ui?.landscape || [];
+        const screenSettings = screensConfig.find(s => s.id === screenId);
+
+        if (!screenSettings) {
+            console.error(`[ScreenManager] Конфиг для экрана "${screenId}" не найден.`);
+            return;
+        }
+
+        this.clearCurrentScreen();
+
+        this.currentScreenId = screenId;
+
+        if(screenSettings.topBarPlayer) {
+            renderPlayerBar(this.rootContainer);
+        }
+        else {
+            const oldBar = this.rootContainer.querySelector('.player-profile-bar-node');
+            if (oldBar) oldBar.remove();
+        }
+
+        if(screenSettings.topCloseButton) {
+            renderCloseButton(this.rootContainer, screenSettings.topCloseButton);
+        }
+        else {
+            const oldBtn = this.rootContainer.querySelector('.global-screen-close-btn');
+            if (oldBtn) oldBtn?.remove();
+        }
+
+        if(screenSettings.topBarResources) {
+            renderTopResourcesBar(this.rootContainer, screenSettings.topBarResources);
+        }
+        else {
+            const oldBar = this.rootContainer.querySelector('.global-top-resources-bar');
+            if (oldBar) oldBar.remove();
+        }
+
         if (screenId === 'object_screen') {
             renderObjectScreen();
         }
 
         if (screenId === 'character_screen') {
             renderCharacterScreen();
-            return;
+            // return;
         }
 
         if (screenId === 'character_transfer') {
             renderCharacterTransferScreen();
-            return;
+            // return;
         }
 
         if (screenId === 'trade_screen') {
             renderTradeScreen();
-            return;
+            // return;
         }
 
         if (screenId === 'quests_screen') {
             renderQuestsScreen();
-            return;
+            // return;
         }
 
         if (screenId === 'player_gallery_screen') {
             renderPlayerGalleryScreen();
-            return;
+            // return;
         }
 
-        // Ищем конфиг экрана в стейте
-        const screensConfig = AppState.ui?.landscape || [];
-        const screenConfig = screensConfig.find(s => s.id === screenId);
-
-        if (!screenConfig) {
-            console.warn(`[ScreenManager] Конфиг для экрана "${screenId}" не найден.`);
-            return;
+        if (screenId === 'hero_list') {
+            renderHeroListScreen();
+            // return;
         }
 
-        // Очищаем старый экран, если он был
-        this.clearCurrentScreen();
-        this.currentScreenId = screenId;
+        if (screenId === 'hero_view') {
+            renderHeroViewScreen();
+            // return;
+        }
 
-        // 1. Создаем корневую подложку экрана
-        const screenWrapper = document.createElement('div');
-        screenWrapper.id = `screen-${screenId}`;
+        if (screenId === 'gacha') {
+            renderGachaScreen();
+            // return;
+        }
 
-        // Получаем закэшированный фон через твой window.gameAssets
-        const rawBg = screenConfig.backgroundImage || '';
+        if (screenId === 'leaderboard') {
+            renderLeaderboardScreen();
+            // return;
+        }
 
-        const cachedBg = window.gameAssets[rawBg];
-        console.log(rawBg, cachedBg);
+        if (screenId === 'friends') {
+            renderFriendsScreen();
+            // return;
+        }
+
+        if (screenId === 'guilds') {
+            renderGuildsScreen();
+            // return;
+        }
+
+        if (screenId === 'mail') {
+            renderMailScreen();
+            // return;
+        }
+
+        if (screenId === 'inventory') {
+            renderPlayerInventoryScreen();
+            // return;
+        }
+
+        if (screenId === 'player_shop') {
+            renderPlayerShopScreen();
+            // return;
+        }
+
+        if (screenId === 'player_missions') {
+            renderPlayerMissionsScreen();
+            // return;
+        }
+
+        if (screenId === 'bounty_board') {
+            renderBountyBoardScreen();
+            // return;
+        }
+
+        let screenWrapper = document.getElementById(`screen-${screenId}`)
+        if(!screenWrapper) {
+            screenWrapper = document.createElement('div');
+            screenWrapper.id = `screen-${screenId}`;
+            this.rootContainer.appendChild(screenWrapper);
+        }
+
+        const rawBg = screenSettings.backgroundImage || '';
+
+        const cachedBg = rawBg?window.gameAssets[rawBg]:null;
 
         Object.assign(screenWrapper.style, {
             position: 'absolute',
             inset: '0',
             width: '100%',
             height: '100%',
-            backgroundImage: cachedBg ? `url("${cachedBg}")` : 'none',
+            backgroundImage: cachedBg ? `url(${cachedBg})` : 'none',
             backgroundPosition: 'center',
             backgroundSize: 'cover',
             backgroundRepeat: 'no-repeat',
-            overflow: screenConfig.scrollable ? 'auto' : 'hidden',
+            overflow: screenSettings.scrollable ? 'auto' : 'hidden',
             pointerEvents: 'auto', // Экран перехватывает мышь, чтобы сквозь меню не кликалась карта
             userSelect: 'none',
-            zIndex: screenConfig.zIndex || 500 // Слой меню поверх основной карты игры
+            zIndex: screenSettings.zIndex || 500 // Слой меню поверх основной карты игры
         });
 
         // 2. РЕНДЕР КУСКА: Главный герой на домашнем экране (home_hero_layout), если он прописан
-        if (screenConfig.home_hero_layout) {
-            const heroLayout = screenConfig.home_hero_layout;
+        if (screenSettings.home_hero_layout) {
+            const heroLayout = screenSettings.home_hero_layout;
             const heroContainer = document.createElement('div');
             heroContainer.className = `hud-hero-avatar ${heroLayout.animation || ''}`;
 
@@ -119,16 +212,14 @@ export class ScreenManager {
         }
 
         // 3. РЕНДЕР КУСКА: Виджеты и динамические кнопки (widgets)
-        if (Array.isArray(screenConfig.widgets)) {
-            screenConfig.widgets.forEach(widgetConfig => {
+        if (Array.isArray(screenSettings.widgets)) {
+            screenSettings.widgets.forEach(widgetConfig => {
                 const widgetElement = this.buildWidget(widgetConfig);
                 if (widgetElement) {
                     screenWrapper.appendChild(widgetElement);
                 }
             });
         }
-
-        this.rootContainer.appendChild(screenWrapper);
     }
 
     /**
@@ -217,7 +308,7 @@ export class ScreenManager {
         if (layout.textPosition === 'bottom') {
             // Текст выносится под круглую кнопку (как иконки на рабочем столе или в мобильных RPG)
             el.innerHTML = `
-                <div style="position: absolute; bottom: -22px; left: 50%; transform: translateX(-50%); 
+                <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); 
                             background: ${layout.textBG || 'rgba(0,0,0,0.5)'}; padding: 2px 6px; 
                             border-radius: 4px; font-size: 11px; white-space: nowrap; color: ${layout.textColor || '#fff'};">
                     ${textLabel}
@@ -248,6 +339,8 @@ export class ScreenManager {
         console.log(`🎯 [ScreenManager] Выполнено действие виджета: "${actionName}"`);
 
         const currentLang = AppState.game_settings?.language || 'en';
+
+        let screenId;
 
         switch (actionName) {
             case 'new_game':
@@ -344,6 +437,46 @@ export class ScreenManager {
             }
                 break;
 
+            case 'open_heroes':
+                screenId = 'hero_list';
+                break;
+
+            case 'open_gacha':
+                screenId = 'gacha';
+                break;
+
+            case 'open_leaderboard':
+                screenId = 'leaderboard';
+                break;
+
+            case 'open_friends':
+                screenId = 'friends';
+                break;
+
+            case 'open_guilds':
+                screenId = 'guilds';
+                break;
+
+            case 'open_mail':
+                screenId = 'mail';
+                break;
+
+            case 'open_inventory':
+                screenId = 'inventory';
+                break;
+
+            case 'open_player_shop':
+                screenId = 'player_shop';
+                break;
+
+            case 'open_player_missions':
+                screenId = 'player_missions';
+                break;
+
+            case 'open_bounty_board':
+                screenId = 'bounty_board';
+                break;
+
             default:
                 // Если админка прислала кастомный экшен, который обрабатывается во внешних файлах игры
                 // Выбрасываем глобальное событие, которое может поймать play.js или боевой менеджер
@@ -351,6 +484,8 @@ export class ScreenManager {
                 window.dispatchEvent(event);
                 break;
         }
+
+        if(screenId) this.renderScreen(screenId);
     }
 
     /**

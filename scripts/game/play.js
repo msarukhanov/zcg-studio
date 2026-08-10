@@ -103,9 +103,12 @@ async function init() {
 async function init2(isNewGame = false) {
 
     let worldMapContainer;
+    let cameraContainer;
     let hexMath;
     let app;
     let playerClickManager;
+
+    let view3DContainer, floorContainer, verticalObjectsContainer;
 
     let isDragging = false;
     let hasMoved = false; // Флаг, чтобы отличать перетаскивание карты от точечного клика
@@ -162,7 +165,11 @@ async function init2(isNewGame = false) {
         worldMapContainer.x = hexMath.size;
         worldMapContainer.y = hexMath.height / 2;
         worldMapContainer.sortableChildren = true;
+
         app.stage.addChild(worldMapContainer);
+
+
+
         AppState.engine.worldMapContainer = worldMapContainer;
 
         AppState.engine.app = app;
@@ -231,6 +238,180 @@ async function init2(isNewGame = false) {
         AppState.play.visibleTiles = new Set();
     }
 
+    // AppState.play.isFirstPersonMode = true;
+    // AppState.player.angle = -Math.PI/2;
+
+    AppState.engine.renderMap222 = () => {
+        if (!AppState.maps) return;
+
+        // Очистка и хеш сущностей (Ваш рабочий оригинал)
+        worldMapContainer.children.forEach(child => {
+            if (child.isUnitContainer) {
+                child.visible = false;
+                AppState.engine.unitContainerPool.push(child);
+            }
+        });
+        worldMapContainer.removeChildren();
+
+        const tileEntities = {};
+        Object.keys(AppState.entities).forEach(id => {
+            const char = AppState.entities[id];
+            if (char.mapPosition.q && char.mapPosition.r) {
+                const key = `${char.mapPosition.q},${char.mapPosition.r}`;
+                if(!tileEntities[key]) tileEntities[key] = {entities:[],charsOnThisTile:0};
+                tileEntities[key].entities.push(char);
+                if(!!AppState.characters[char.id]) tileEntities[key].charsOnThisTile++;
+            }
+        });
+
+        let screenW = app.screen.width;
+        let screenH = app.screen.height;
+        if (window.windowResized) {
+            const temp = screenW;
+            screenW = screenH;
+            screenH = temp;
+        }
+
+        const hexMath = AppState.engine.hexMath;
+
+        // Считаем границы. В 3D расширяем радиус, чтобы горизонт не обрезался
+        const minX = -worldMapContainer.x / (currentZoom || 1);
+        const minY = -worldMapContainer.y / (currentZoom || 1);
+        const maxX = minX + (screenW / (currentZoom || 1));
+        const maxY = minY + (screenH / (currentZoom || 1));
+        const padding = AppState.sizes.hex * 6;
+
+        // ШАГ 1: РИСУЕМ КАРТУ КАК ОБЫЧНО (Чистые изометрические гексы)
+        AppState.map.tiles.forEach((tile) => {
+            const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
+
+            if (!AppState.play.isFirstPersonMode) {
+                if (
+                    pixelPos.x < minX - padding ||
+                    pixelPos.x > maxX + padding ||
+                    pixelPos.y < minY - padding ||
+                    pixelPos.y > maxY + padding
+                ) {
+                    return;
+                }
+            }
+
+            const renderedTile = renderTile(tile);
+            if(!renderedTile) return;
+
+            const { roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
+            const entities = tileEntities[`${tile.q},${tile.r}`] ?  tileEntities[`${tile.q},${tile.r}`].entities : null;
+            const chars = entities ? tileEntities[`${tile.q},${tile.r}`].charsOnThisTile : 0;
+
+            if (entities?.length > 0 && isVisible) {
+                entities.forEach((unit, index) => {
+                    renderEntity(unit, chars, index, tile, tileFaction, roofSprite, pixelPos, roofY);
+                });
+            }
+        });
+
+        worldMapContainer.sortChildren();
+
+        if (AppState.play.isFirstPersonMode) {
+            const playerChar = AppState.characters[AppState.player?.character];
+            const playerPixelPos = hexMath.cubeToPixel(playerChar.mapPosition.q, playerChar.mapPosition.r);
+
+            const playerAngle = AppState.player.angle || 0;
+
+            const tilt = 0.82;
+            const yScale = 1 - tilt;
+
+            worldMapContainer.x = 0;
+            worldMapContainer.y = 0;
+
+            const centerX = screenW / 2;
+            const centerY = screenH - 0;
+
+            worldMapContainer.pivot.set(playerPixelPos.x, playerPixelPos.y);
+
+            const m = new PIXI.Matrix();
+
+            // Поворачиваем карту вокруг пивота, чтобы взгляд игрока шел наверх
+            m.rotate(playerAngle);
+
+            // Сжимаем плоскость по вертикали (наклоняем под ноги) относительно пивота
+            m.scale(1.0, 1.0);
+
+            // Применяем поворот и наклон напрямую к локальной матрице контейнера карты (Pixi v8)
+            if (typeof worldMapContainer.setFromMatrix === 'function') {
+                worldMapContainer.setFromMatrix(m);
+            } else {
+                worldMapContainer.localTransform.copyFrom(m);
+            }
+
+            // 4. Единственный раз выставляем физическую позицию контейнера на экране.
+            // Точка пивота (игрок) мгновенно приклеится к координатам centerX, centerY (центр-низ)!
+            worldMapContainer.position.set(centerX, centerY);
+
+            // worldMapContainer.pivot.set(worldMapContainer.x + centerY, worldMapContainer.y + centerX);
+            //
+            // worldMapContainer.rotation = -playerAngle - Math.PI / 2;
+
+
+            // ТОЧНО КАК ВЫ СКАЗАЛИ: используем x и y контейнера
+            // worldMapContainer.x = playerPixelPos.x;
+            // worldMapContainer.y = playerPixelPos.y;
+            //
+            // const m = new PIXI.Matrix();
+            //
+            //
+            //
+            //
+            // // ШАГ 2: Задаем поворот
+            // // Меням минус на плюс перед Math.PI/2, чтобы направить ось Y вверх (к горизонту)
+            // m.rotate(-playerAngle + Math.PI / 2);
+            //
+            // // Применяем наклон (сжатие по Y) к повернутым осям
+            // m.scale(1.0, yScale);
+            //
+            // // ШАГ 3: СТРОГО ЕДИНСТВЕННЫЙ ТРАНСЛЕЙТ В КОДЕ
+            // // Вычитаем из целевой точки экрана текущее смещение, которое дает worldMapContainer.x/y,
+            // // чтобы компенсировать авто-сдвиг Pixi и посадить игрока в нижний центр экрана.
+            // const centerX = screenW / 2;
+            // const centerY = screenH - 60; // Карта начнется отсюда и пойдет наверх
+            //
+            // m.translate(centerX - worldMapContainer.x, centerY - worldMapContainer.y);
+            //
+            // // Применяем матрицу напрямую к контейнеру карты
+            // if (typeof worldMapContainer.setFromMatrix === 'function') {
+            //     worldMapContainer.setFromMatrix(m);
+            // } else {
+            //     worldMapContainer.localTransform.copyFrom(m);
+            // }
+
+        } else {
+            // Сброс карты в обычный 2D режим
+            // if (typeof worldMapContainer.setFromMatrix === 'function') {
+            //     worldMapContainer.setFromMatrix(PIXI.Matrix.IDENTITY);
+            // } else {
+            //     worldMapContainer.localTransform.copyFrom(PIXI.Matrix.IDENTITY);
+            // }
+        }
+
+
+
+
+
+
+        // ======================================
+
+        app.render();
+    };
+
+
+
+
+
+
+
+
+
+
 
     AppState.engine.renderMap = () => {
         if(!AppState.maps) return;
@@ -285,7 +466,6 @@ async function init2(isNewGame = false) {
 
             if (!AppState.play.isFirstPersonMode) {
                 const hexMath = AppState.engine.hexMath;
-
 
                 // Если тайл находится далеко за пределами видимого окна — просто пропускаем его!
                 if (
