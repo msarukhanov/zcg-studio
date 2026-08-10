@@ -6596,7 +6596,7 @@
             "en": "Return home and fall asleep"
           },
           "kind": "neutral",
-          "conditions": [],
+          "conditions": []
         }
       ]
     }
