@@ -733,6 +733,7 @@ async function init2(isNewGame = false) {
     }
 
     AppState.engine.dialogManager.trigger("PROLOGUE_CINEMATIC");
+    // AppState.engine.dialogManager.trigger("SCENE_LESSON_HELP_NURSE_BRANCH");
     // AppState.engine.dialogManager.trigger("SCENE_3_0");
     // AppState.engine.dialogManager.trigger("SCENE_CLASS_START");
 }

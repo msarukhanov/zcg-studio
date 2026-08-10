@@ -2431,7 +2431,23 @@
             "en": "Look at the class's reaction"
           },
           "kind": "neutral",
-          "conditions": [],
+          "conditions": [
+            { "type": "flag", "param": "ERIN_EXHIBITION_AGREED", "value": false }
+          ],
+          "on_success": {
+            "triggers": [],
+            "next_scene": "SCENE_NURSE_MISSION_START"
+          }
+        },
+        {
+          "text": {
+            "ru": "Посмотреть на реакцию класса",
+            "en": "Look at the class's reaction"
+          },
+          "kind": "neutral",
+          "conditions": [
+            { "type": "flag", "param": "ERIN_EXHIBITION_AGREED", "value": true }
+          ],
           "on_success": {
             "triggers": [],
             "next_scene": "SCENE_LESSON_ERIN_INTERJECTION"
