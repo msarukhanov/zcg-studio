@@ -14,56 +14,56 @@
     "raphael": {
       "id": "raphael",
       "name": "Raphael Afterlife",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/raphael.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/raphael.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/raphael.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/raphael.png"
     },
     "quentin": {
       "id": "quentin",
       "name": "Quentin Blackwell",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/quentin.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/quentin.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/quentin.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/quentin.png"
     },
     "erin": {
       "id": "erin",
       "name": "Erin Faidaen",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/erin.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/erin.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/erin.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/erin.png"
     },
     "adelina": {
       "id": "adelina",
       "name": "adelina d'Lys",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/adelina.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/adelina.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/adelina.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/adelina.png"
     },
     "eleniel": {
       "id": "eleniel",
       "name": "Eleniel Falanar",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/eleniel.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/eleniel.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/eleniel.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/eleniel.png"
     },
     "sephirot": {
       "id": "sephirot",
       "name": "Mr. Sephirot",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/sephirot.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/sephirot.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/sephirot.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/sephirot.png"
     },
     "lazarus": {
       "id": "lazarus",
       "name": "Lazarus Midnight",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/lazarus.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/lazarus.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/lazarus.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/lazarus.png"
     },
     "ksenia": {
       "id": "ksenia",
       "name": "Ksenia Midnight",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/ksenia.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/ksenia.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/ksenia.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/ksenia.png"
     },
     "selena": {
       "id": "selena",
       "name": "Selena Ember",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/selena.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/selena.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/selena.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/selena.png"
     }
   },
   "playerGallery": {
@@ -156,50 +156,50 @@
     "raphael": {
       "id": "raphael",
       "name": "Raphael Afterlife",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/raphael.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/raphael.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/raphael.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/raphael.png"
     },
     "quentin": {
       "id": "quentin",
       "name": "Quentin Blackwell",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/quentin.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/quentin.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/quentin.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/quentin.png"
     },
     "erin": {
       "id": "erin",
       "name": "Erin Faidaen",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/erin.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/erin.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/erin.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/erin.png"
     },
     "adelina": {
       "id": "adelina",
       "name": "adelina d'Lys",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/adelina.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/adelina.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/adelina.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/adelina.png"
     },
     "eleniel": {
       "id": "eleniel",
       "name": "Eleniel Falanar",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/eleniel.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/eleniel.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/eleniel.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/eleniel.png"
     },
     "sephirot": {
       "id": "sephirot",
       "name": "Mr. Sephirot",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/sephirot.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/sephirot.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/sephirot.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/sephirot.png"
     },
     "lazarus": {
       "id": "lazarus",
       "name": "Lazarus Midnight",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/lazarus.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/lazarus.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/lazarus.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/lazarus.png"
     },
     "selena": {
       "id": "selena",
       "name": "Selena Ember",
-      "icon": "assets/demo/afterlife_school/images/bg/avatars/selena.png",
-      "image": "assets/demo/afterlife_school/images/bg/fullheight/selena.png"
+      "icon": "assets/demo/afterlife_school/images/avatars/selena.png",
+      "image": "assets/demo/afterlife_school/images/fullheight/selena.png"
     }
   },
 
