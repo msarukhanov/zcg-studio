@@ -4559,7 +4559,22 @@
         "avatar_width": 20,
         "panel_bottom": 1
       },
-      "text_pages": [],
+      "text_pages": [
+        {
+          "speaker_id": "NARRATOR",
+          "expression": "normal",
+          "text": {
+            "ru": "Рафаэль гуляет с Эрин.",
+            "en": "Raphael is walking with Erin."
+          },
+          "audio": "",
+          "auto_advance_time": 0,
+          "fx": {
+            "scene_animation": "",
+            "actor_animation": ""
+          }
+        }
+      ],
       "player_choices": [
         {
           "text": {

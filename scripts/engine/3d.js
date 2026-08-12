@@ -447,7 +447,7 @@ export function init3D() {
         // 3. Создаем WebGL-Рендерер
         const renderer = new THREE.WebGLRenderer({
             antialias: true,
-            logarithmicDepthBuffer: true // ЖЕСТКИЙ ФИКС ДЛЯ МОБИЛЬНЫХ: заставляет телефон идеально считать Z-слои!
+            logarithmicDepthBuffer: false
         });
         renderer.setSize(width, height);
         renderer.setPixelRatio(window.devicePixelRatio || 1);
