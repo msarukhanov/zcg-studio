@@ -111,6 +111,7 @@ export function renderTile3D(tile) {
             // потолки (крышки) и подсветки, которые находятся за ней.
             const wallMaterial = roofMaterial.clone();
             wallMaterial.depthWrite = true;
+            wallMaterial.transparent = false;
             wallMaterial.color.setHex(isVisited && !isVisible ? 0x222222 : orderOffset);
             wallMaterial.opacity = 1.0;
 

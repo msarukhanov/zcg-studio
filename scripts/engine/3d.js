@@ -438,14 +438,17 @@ export function init3D() {
 
         // 2. Создаем ПЕРСПЕКТИВНУЮ камеру
         // Параметры: FOV (60 градусов), Аспект, Ближняя и Дальняя плоскости отсечения
-        const camera = new THREE.PerspectiveCamera(60, width / height, 1, 5000);
+        const camera = new THREE.PerspectiveCamera(60, width / height, 1, 1500);
 
         // Позиционируем камеру: поднимаем вверх (Y) и отодвигаем назад (Z)
         camera.position.set(0, 400, 500);
         camera.lookAt(0, 0, 0); // Камера строго смотрит в центр мира
 
         // 3. Создаем WebGL-Рендерер
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            logarithmicDepthBuffer: true // ЖЕСТКИЙ ФИКС ДЛЯ МОБИЛЬНЫХ: заставляет телефон идеально считать Z-слои!
+        });
         renderer.setSize(width, height);
         renderer.setPixelRatio(window.devicePixelRatio || 1);
 
