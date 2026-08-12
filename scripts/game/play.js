@@ -201,6 +201,15 @@ async function init2(isNewGame = false) {
 
         init3D();
 
+        if(AppState.main.dimensionMode === '3d') {
+
+        }
+
+        if(AppState.main.playerView === 'firstPerson') {
+            AppState.engine.toggleFirstPersonMode();
+        }
+
+
         if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
             AppState.engine.playerClickManager.executeCharacterSelect(AppState.player?.character);
 
