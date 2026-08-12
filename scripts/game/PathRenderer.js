@@ -12,7 +12,7 @@ export class PathRenderer {
         // Оставляем только один служебный графический объект для стрелочки пути
         this.pathGraphics = new PIXI.Graphics();
         this.pathGraphics.zIndex = 6000; // Ложится строго поверх всех крышек
-        AppState.engine.worldMapContainer.addChild(this.pathGraphics);
+        if(AppState.engine.worldMapContainer) AppState.engine.worldMapContainer.addChild(this.pathGraphics);
 
         this.activeZoneSprites = [];
         this.activePathSprites = [];
@@ -79,7 +79,7 @@ export class PathRenderer {
             // lineSprite.zIndex = Math.min(fromPixel.y, toPixel.y) + (Math.max(fromTile.height, toTile.height) * 0.1) + 0.04;
             lineSprite.zIndex = 5000;
 
-            AppState.engine.worldMapContainer.addChild(lineSprite);
+            if(AppState.engine.worldMapContainer) AppState.engine.worldMapContainer.addChild(lineSprite);
             this.activePathSprites.push(lineSprite);
         }
 
@@ -110,7 +110,7 @@ export class PathRenderer {
             // dotSprite.zIndex = pixelPos.y + (tile.height * 0.1) + 0.06;
             dotSprite.zIndex = 5100;
 
-            AppState.engine.worldMapContainer.addChild(dotSprite);
+            if(AppState.engine.worldMapContainer) AppState.engine.worldMapContainer.addChild(dotSprite);
             this.activePathSprites.push(dotSprite);
         });
 
@@ -145,11 +145,11 @@ export class PathRenderer {
 
             selectionFrame.zIndex = 4500;
 
-            AppState.engine.worldMapContainer.addChild(selectionFrame);
+            if(AppState.engine.worldMapContainer) AppState.engine.worldMapContainer.addChild(selectionFrame);
             this.activePathSprites.push(selectionFrame);
         }
 
-        if (AppState.engine.worldMapContainer.sortChildren) {
+        if(AppState.engine.worldMapContainer && AppState.engine.worldMapContainer.sortChildren) {
             AppState.engine.worldMapContainer.sortChildren();
         }
     }

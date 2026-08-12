@@ -205,6 +205,8 @@ export class CombatManager {
         const attackType = attacker.stats.atkRangeType || 'melee';
         const attackRange = attacker.stats.atkRange || 1;
 
+        console.log(attacker.atkReadyTimer);
+
         if (isRealtime && attacker.atkReadyTimer > 0) {
             if (onComplete) onComplete();
             return;
@@ -239,6 +241,68 @@ export class CombatManager {
                 targetTile = { q: targetQ, r: targetR, type: 'air' };
             }
         }
+
+        if (!targetTile && AppState.play.isFirstPersonMode) {
+            const gridMode = AppState.map?.gridMode; // 'square' | 'pointyHex' | 'flatHex'
+            let offset = { q: 0, r: 0 };
+
+            const camSettings = AppState.engine.cameraSettings;
+
+            // Нормализуем угол fpYaw, чтобы он всегда лежал в диапазоне от 0 до 360 градусов
+            let normalizedYaw = camSettings.fpYaw % 360;
+            if (normalizedYaw < 0) normalizedYaw += 360;
+
+            // ---------------------------------------------------------------------
+            // КВАДРАТНАЯ СЕТКА в первом лице
+            // ---------------------------------------------------------------------
+            if (gridMode === 'square') {
+                // 4 сектора по 90 градусов. Камера смотрит:
+                // 0° - N (Вверх/Вперед), 90° - E (Вправо), 180° - S (Назад), 270° - W (Влево)
+                const squareSector = Math.round(normalizedYaw / 90) % 4;
+                const baseSquareDirs = ['N', 'E', 'S', 'W'];
+                const targetDir = baseSquareDirs[squareSector];
+
+                const squareDirections = {
+                    'N':  { q: 0,  r: -1 }, // Атакуем прямо перед собой по карте
+                    'E':  { q: 1,  r: 0  }, // Атакуем направо
+                    'S':  { q: 0,  r: 1  }, // Атакуем назад
+                    'W':  { q: -1, r: 0  }  // Атакуем налево
+                };
+                offset = squareDirections[targetDir] || { q: 0, r: 0 };
+            }
+            // ---------------------------------------------------------------------
+            // ГЕКСАГОНАЛЬНАЯ СЕТКА в первом лице
+            // ---------------------------------------------------------------------
+            else {
+                // 6 секторов по 60 градусов
+                const hexClockwiseDirs = ['N', 'NE', 'SE', 'S', 'SW', 'NW'];
+                const sectorShift = Math.round(normalizedYaw / 60) % 6;
+                const targetDir = hexClockwiseDirs[sectorShift];
+
+                const rtsDirections = {
+                    'N':  { q: 0,  r: -1 }, 'NE': { q: 1,  r: -1 }, 'SE': { q: 1,  r: 0 },
+                    'S':  { q: 0,  r: 1  }, 'SW': { q: -1, r: 1  }, 'NW': { q: -1, r: 0 }
+                };
+                offset = rtsDirections[targetDir] || { q: 0, r: 0 };
+            }
+
+            // Умножаем базовый офсет направления на дальность атаки (attackRange)
+            offset.q *= attackRange;
+            offset.r *= attackRange;
+
+            // Находим целевые координаты атаки с учетом рассчитанного сдвига
+            const targetQ = attacker.mapPosition.q + offset.q;
+            const targetR = attacker.mapPosition.r + offset.r;
+
+            // Перезаписываем targetTile, доставая клетку из стейта игры
+            targetTile = getTileFromState(targetQ, targetR);
+
+            // 🛡️ Ваша оригинальная защита от вылета на краях карты (Объект-пустышка)
+            if (!targetTile) {
+                targetTile = { q: targetQ, r: targetR, type: 'air' };
+            }
+        }
+
 
         let victim = null;
         let victimId = null;

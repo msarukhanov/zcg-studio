@@ -5,6 +5,8 @@ import { renderTile, renderEntity } from '../shared/render.js';
 import { AppState, getActiveMap, getTileFromState, DiplomaticPacts } from '../shared/GameState.js';
 
 import { InitEngine } from '../engine/engine.js';
+import { init3D } from '../engine/3d.js';
+import { init2D } from '../engine/2d.js';
 import { AssetLoaderManager } from '../engine/AssetLoaderManager.js';
 import { TranslateManager } from '../engine/TranslateManager.js';
 import {RenderFunctions} from '../engine/RenderFunctions.js';
@@ -15,6 +17,9 @@ import { PlayerClickManager } from '../game/PlayerClickManager.js';
 
 import { SaveLoadManager } from '../game/SaveLoadManager.js';
 
+import * as THREE from 'three';
+
+window.THREE = THREE;
 window.AppState = AppState;
 window._t = ()=>{};
 
@@ -88,40 +93,20 @@ async function init() {
     AppState.engine.TranslateManager = new TranslateManager();
     AppState.engine.TranslateManager.setLanguage('en');
 
+    AppState.engine.playerClickManager = new PlayerClickManager();
+
     AppState.engine.SaveLoadManager = SaveLoadManager;
 
     if (AppState.engine.SaveLoadManager) {
         AppState.engine.SaveLoadManager.captureInitialState(AppState);
     }
 
-    // 3. Вызываем триггер отрисовки Главного Меню из конфига админки
-    console.log("🖥️ Вывод стартового экрана [main_menu]...");
     AppState.engine.ScreenManager.renderScreen('main_menu');
 }
 
 
 async function init2(isNewGame = false) {
 
-    let worldMapContainer;
-    let cameraContainer;
-    let hexMath;
-    let app;
-    let playerClickManager;
-
-    let view3DContainer, floorContainer, verticalObjectsContainer;
-
-    let isDragging = false;
-    let hasMoved = false; // Флаг, чтобы отличать перетаскивание карты от точечного клика
-    let dragStartPos = { x: 0, y: 0 };
-    let mapStartPos = { x: 0, y: 0 };
-    let currentZoom = 1.0;
-
-    // AppState.isPlatformerMode = true;
-    //
-    // window.loaderControl.start();
-    //
-    // const loader = new AssetLoaderManager();
-    // await loader.loadAllGameAssets(TerrainConfig, ObjectConfig);
     if(AppState.maps) {
         const container = document.getElementById('app-container');
         const wrapper = document.getElementById('canvas-wrapper');
@@ -147,42 +132,15 @@ async function init2(isNewGame = false) {
             },
         };
 
-        app = new PIXI.Application();
+        AppState.config.heightStep = size/2;
 
-        await app.init({
-            resizeTo: wrapper,
-            resolution: window.devicePixelRatio || 1,
-            autoDensity: true,
-            backgroundColor: 0x0d1117,
-            antialias: true
-        });
-
-        container.appendChild(app.canvas);
-
-        hexMath = new HexMath(AppState.sizes.hex);
-
-        worldMapContainer = new PIXI.Container();
-        worldMapContainer.x = hexMath.size;
-        worldMapContainer.y = hexMath.height / 2;
-        worldMapContainer.sortableChildren = true;
-
-        app.stage.addChild(worldMapContainer);
-
-
-
-        AppState.engine.worldMapContainer = worldMapContainer;
-
-        AppState.engine.app = app;
-        AppState.engine.hexMath = hexMath;
+        AppState.engine.hexMath = new HexMath(AppState.sizes.hex);
 
     }
 
     window.applyGlobalAutoRotation();
 
     InitEngine();
-
-    playerClickManager = new PlayerClickManager();
-    AppState.engine.playerClickManager = playerClickManager;
 
     if(isNewGame) {
         console.log("NEW GAME =====");
@@ -238,288 +196,13 @@ async function init2(isNewGame = false) {
         AppState.play.visibleTiles = new Set();
     }
 
-    // AppState.play.isFirstPersonMode = true;
-    // AppState.player.angle = -Math.PI/2;
-
-    AppState.engine.renderMap222 = () => {
-        if (!AppState.maps) return;
-
-        // Очистка и хеш сущностей (Ваш рабочий оригинал)
-        worldMapContainer.children.forEach(child => {
-            if (child.isUnitContainer) {
-                child.visible = false;
-                AppState.engine.unitContainerPool.push(child);
-            }
-        });
-        worldMapContainer.removeChildren();
-
-        const tileEntities = {};
-        Object.keys(AppState.entities).forEach(id => {
-            const char = AppState.entities[id];
-            if (char.mapPosition.q && char.mapPosition.r) {
-                const key = `${char.mapPosition.q},${char.mapPosition.r}`;
-                if(!tileEntities[key]) tileEntities[key] = {entities:[],charsOnThisTile:0};
-                tileEntities[key].entities.push(char);
-                if(!!AppState.characters[char.id]) tileEntities[key].charsOnThisTile++;
-            }
-        });
-
-        let screenW = app.screen.width;
-        let screenH = app.screen.height;
-        if (window.windowResized) {
-            const temp = screenW;
-            screenW = screenH;
-            screenH = temp;
-        }
-
-        const hexMath = AppState.engine.hexMath;
-
-        // Считаем границы. В 3D расширяем радиус, чтобы горизонт не обрезался
-        const minX = -worldMapContainer.x / (currentZoom || 1);
-        const minY = -worldMapContainer.y / (currentZoom || 1);
-        const maxX = minX + (screenW / (currentZoom || 1));
-        const maxY = minY + (screenH / (currentZoom || 1));
-        const padding = AppState.sizes.hex * 6;
-
-        // ШАГ 1: РИСУЕМ КАРТУ КАК ОБЫЧНО (Чистые изометрические гексы)
-        AppState.map.tiles.forEach((tile) => {
-            const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
-
-            if (!AppState.play.isFirstPersonMode) {
-                if (
-                    pixelPos.x < minX - padding ||
-                    pixelPos.x > maxX + padding ||
-                    pixelPos.y < minY - padding ||
-                    pixelPos.y > maxY + padding
-                ) {
-                    return;
-                }
-            }
-
-            const renderedTile = renderTile(tile);
-            if(!renderedTile) return;
-
-            const { roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
-            const entities = tileEntities[`${tile.q},${tile.r}`] ?  tileEntities[`${tile.q},${tile.r}`].entities : null;
-            const chars = entities ? tileEntities[`${tile.q},${tile.r}`].charsOnThisTile : 0;
-
-            if (entities?.length > 0 && isVisible) {
-                entities.forEach((unit, index) => {
-                    renderEntity(unit, chars, index, tile, tileFaction, roofSprite, pixelPos, roofY);
-                });
-            }
-        });
-
-        worldMapContainer.sortChildren();
-
-        if (AppState.play.isFirstPersonMode) {
-            const playerChar = AppState.characters[AppState.player?.character];
-            const playerPixelPos = hexMath.cubeToPixel(playerChar.mapPosition.q, playerChar.mapPosition.r);
-
-            const playerAngle = AppState.player.angle || 0;
-
-            const tilt = 0.82;
-            const yScale = 1 - tilt;
-
-            worldMapContainer.x = 0;
-            worldMapContainer.y = 0;
-
-            const centerX = screenW / 2;
-            const centerY = screenH - 0;
-
-            worldMapContainer.pivot.set(playerPixelPos.x, playerPixelPos.y);
-
-            const m = new PIXI.Matrix();
-
-            // Поворачиваем карту вокруг пивота, чтобы взгляд игрока шел наверх
-            m.rotate(playerAngle);
-
-            // Сжимаем плоскость по вертикали (наклоняем под ноги) относительно пивота
-            m.scale(1.0, 1.0);
-
-            // Применяем поворот и наклон напрямую к локальной матрице контейнера карты (Pixi v8)
-            if (typeof worldMapContainer.setFromMatrix === 'function') {
-                worldMapContainer.setFromMatrix(m);
-            } else {
-                worldMapContainer.localTransform.copyFrom(m);
-            }
-
-            // 4. Единственный раз выставляем физическую позицию контейнера на экране.
-            // Точка пивота (игрок) мгновенно приклеится к координатам centerX, centerY (центр-низ)!
-            worldMapContainer.position.set(centerX, centerY);
-
-            // worldMapContainer.pivot.set(worldMapContainer.x + centerY, worldMapContainer.y + centerX);
-            //
-            // worldMapContainer.rotation = -playerAngle - Math.PI / 2;
-
-
-            // ТОЧНО КАК ВЫ СКАЗАЛИ: используем x и y контейнера
-            // worldMapContainer.x = playerPixelPos.x;
-            // worldMapContainer.y = playerPixelPos.y;
-            //
-            // const m = new PIXI.Matrix();
-            //
-            //
-            //
-            //
-            // // ШАГ 2: Задаем поворот
-            // // Меням минус на плюс перед Math.PI/2, чтобы направить ось Y вверх (к горизонту)
-            // m.rotate(-playerAngle + Math.PI / 2);
-            //
-            // // Применяем наклон (сжатие по Y) к повернутым осям
-            // m.scale(1.0, yScale);
-            //
-            // // ШАГ 3: СТРОГО ЕДИНСТВЕННЫЙ ТРАНСЛЕЙТ В КОДЕ
-            // // Вычитаем из целевой точки экрана текущее смещение, которое дает worldMapContainer.x/y,
-            // // чтобы компенсировать авто-сдвиг Pixi и посадить игрока в нижний центр экрана.
-            // const centerX = screenW / 2;
-            // const centerY = screenH - 60; // Карта начнется отсюда и пойдет наверх
-            //
-            // m.translate(centerX - worldMapContainer.x, centerY - worldMapContainer.y);
-            //
-            // // Применяем матрицу напрямую к контейнеру карты
-            // if (typeof worldMapContainer.setFromMatrix === 'function') {
-            //     worldMapContainer.setFromMatrix(m);
-            // } else {
-            //     worldMapContainer.localTransform.copyFrom(m);
-            // }
-
-        } else {
-            // Сброс карты в обычный 2D режим
-            // if (typeof worldMapContainer.setFromMatrix === 'function') {
-            //     worldMapContainer.setFromMatrix(PIXI.Matrix.IDENTITY);
-            // } else {
-            //     worldMapContainer.localTransform.copyFrom(PIXI.Matrix.IDENTITY);
-            // }
-        }
-
-
-
-
-
-
-        // ======================================
-
-        app.render();
-    };
-
-
-
-
-
-
-
-
-
-
-
-    AppState.engine.renderMap = () => {
-        if(!AppState.maps) return;
-
-        worldMapContainer.children.forEach(child => {
-            if (child.isUnitContainer) {
-                child.visible = false;
-                AppState.engine.unitContainerPool.push(child);
-            }
-        });
-        worldMapContainer.removeChildren();
-
-
-        const tileEntities = {};
-
-        Object.keys(AppState.entities).forEach(id => {
-            const char = AppState.entities[id];
-            if (char.mapPosition.q && char.mapPosition.r) {
-                const key = `${char.mapPosition.q},${char.mapPosition.r}`;
-                if(!tileEntities[key]) tileEntities[key] = {entities:[],charsOnThisTile:0};
-                tileEntities[key].entities.push(char);
-
-                // const isObject = !!AppState.objects[char.id];
-                if(!!AppState.characters[char.id]) tileEntities[key].charsOnThisTile++;
-            }
-        });
-
-        let screenW = app.screen.width;
-        let screenH = app.screen.height;
-
-        // Учитываем ваш CSS-разворот осей при ресайзе, если он активен
-        if (window.windowResized) {
-            const temp = screenW;
-            screenW = screenH;
-            screenH = temp;
-        }
-
-        // Переводим границы экрана в локальные координаты карты с учетом текущего сдвига и зума
-        const minX = -worldMapContainer.x / currentZoom;
-        const minY = -worldMapContainer.y / currentZoom;
-        const maxX = minX + (screenW / currentZoom);
-        const maxY = minY + (screenH / currentZoom);
-
-        // Добавляем запас (padding) в пикселях, чтобы высокие стены тайлов
-        // или тайлы на самых краях экрана не исчезали грубо при скролле
-        const padding = AppState.sizes.hex * 3;
-
-
-        AppState.map.tiles.forEach((tile) => {
-
-            const pixelPos = hexMath.cubeToPixel(tile.q, tile.r);
-
-            if (!AppState.play.isFirstPersonMode) {
-                const hexMath = AppState.engine.hexMath;
-
-                // Если тайл находится далеко за пределами видимого окна — просто пропускаем его!
-                if (
-                    pixelPos.x < minX - padding ||
-                    pixelPos.x > maxX + padding ||
-                    pixelPos.y < minY - padding ||
-                    pixelPos.y > maxY + padding
-                ) {
-                    return; // Завершаем итерацию для этого тайла, процессор отдыхает
-                }
-            }
-
-            const renderedTile = renderTile(tile);
-            if(!renderedTile) return;
-
-            const { roofY, isVisible, roofSprite, isVisited, tileFaction} = renderedTile;
-
-            const entities = tileEntities[`${tile.q},${tile.r}`] ?  tileEntities[`${tile.q},${tile.r}`].entities : null;
-            const chars = entities ? tileEntities[`${tile.q},${tile.r}`].charsOnThisTile : 0;
-
-            if (entities?.length > 0 && isVisible) {
-                entities.forEach((unit, index) => {
-                    renderEntity(unit, chars, index, tile, tileFaction, roofSprite, pixelPos, roofY);
-                });
-            }
-
-        });
-
-        // if (AppState.engine.pathRenderer) {
-        //     AppState.engine.pathRenderer.clearPath();
-        // }
-
-        // if (AppState.play.activeCharacterId) {
-        //     const activeChar = AppState.entities[AppState.play.activeCharacterId];
-        //     const charTile = getTileFromState(activeChar.mapPosition.q, activeChar.mapPosition.r);
-        //
-        //     if(AppState.main.MovementLine) {
-        //         if (activeChar.currentActivePath && activeChar.currentActivePath.length > 0 && activeChar.action !== 'move') {
-        //             AppState.engine.pathRenderer.drawPath(activeChar.currentActivePath, activeChar);
-        //         }
-        //     }
-        // }
-
-        worldMapContainer.sortChildren();
-        app.render();
-    };
-
-
-
     if(AppState.maps) {
         AppState.engine.MapManager.switchMap('world_map');
 
+        init3D();
+
         if (AppState.player?.character && AppState.game_settings && AppState.game_settings.playerType === 'character') {
-            playerClickManager.executeCharacterSelect(AppState.player?.character);
+            AppState.engine.playerClickManager.executeCharacterSelect(AppState.player?.character);
 
             if (AppState.engine.centerCameraOnCharacter) {
                 AppState.engine.centerCameraOnCharacter(AppState.play.activeCharacterId);
@@ -527,192 +210,12 @@ async function init2(isNewGame = false) {
         }
 
         AppState.engine.visionManager.updateFogOfWar();
+
+        // AppState.engine.renderMap();
     }
 
     AppState.engine.uiManager.init();
     AppState.engine.questManager.refreshQuestChains();
-
-    if(AppState.maps) {
-        AppState.engine.renderMap();
-
-        app.stage.eventMode = 'static';
-        app.stage.hitArea = app.screen;
-
-        app.stage.on('pointerdown', (event) => {
-            isDragging = true;
-            hasMoved = false; // Обнуляем при каждом нажатии
-
-            // 🌟 СТРОГИЙ ФИКС: Запоминаем стартовую позицию драга в виртуальном масштабе
-            if (window.windowResized) {
-                dragStartPos.x = event.global.y / window.innerWidth * window.innerHeight;
-                dragStartPos.y = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
-            } else {
-                dragStartPos.x = event.global.x;
-                dragStartPos.y = event.global.y;
-            }
-
-            mapStartPos.x = worldMapContainer.x;
-            mapStartPos.y = worldMapContainer.y;
-        });
-
-        app.stage.on('pointerup', (event) => {
-            isDragging = false;
-            if (!hasMoved) {
-                let canvasX = event.global.x;
-                let canvasY = event.global.y;
-
-                if (window.windowResized) {
-                    canvasX = event.global.y / window.innerWidth * window.innerHeight;
-                    canvasY = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
-                }
-
-                playerClickManager.handleMapClick(canvasX, canvasY);
-            }
-        });
-
-        app.stage.on('pointermove', (event) => {
-            const settings = AppState.game_settings;
-
-            let currentVirtualX = event.global.x;
-            let currentVirtualY = event.global.y;
-
-            if (window.windowResized) {
-                currentVirtualX = event.global.y / window.innerWidth * window.innerHeight;
-                currentVirtualY = window.innerWidth - event.global.x / window.innerHeight * window.innerWidth;
-            }
-
-            if (isDragging) {
-                if (settings.playerCamera === 'fixed') {
-                    return;
-                }
-                // Разница вычисляется между виртуальными координатами
-                const dx = currentVirtualX - dragStartPos.x;
-                const dy = currentVirtualY - dragStartPos.y;
-
-                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
-
-                // Драг самого контейнера идет по стандартным осям, так как CSS уже повернул контейнер
-                worldMapContainer.x = mapStartPos.x + dx;
-                worldMapContainer.y = mapStartPos.y + dy;
-
-                AppState.engine.renderMap();
-            } else {
-                // 🌟 СТРОГИЙ ФИКС HOVER: Подсовываем менеджеру подсветки гексов правильные координаты
-                // playerClickManager.handleMapHover(currentVirtualX, currentVirtualY);
-            }
-        });
-
-        app.stage.on('pointerupoutside', () => isDragging = false);
-
-        app.canvas.addEventListener('wheel', (event) => {
-            const settings = AppState.game_settings;
-            if (settings.playerCamera === 'fixed' && !settings.playerZoom) {
-                return;
-            }
-            event.preventDefault();
-
-            const zoomFactor = event.deltaY < 0 ? 1.05 : 1 / 1.05;
-            const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-
-            // const intensity = Math.abs(event.deltaY) * 0.0005; // Настройте этот коэф под себя (меньше = плавнее)
-            // const zoomFactor = event.deltaY < 0 ? (1 + intensity) : 1 / (1 + intensity);
-            //
-            // const newZoom = Math.min(Math.max(currentZoom * zoomFactor, 0.2), 3.0);
-
-            // 🌟 ИСПРАВЛЕНИЕ: Берем глобальные координаты из PixiJS, как в pointermove
-            const globalMouse = app.renderer.events.pointer.global;
-            let mouseX = globalMouse.x;
-            let mouseY = globalMouse.y;
-
-            // Применяем вашу рабочую схему разворота осей, если экран повернут через CSS
-            if (window.windowResized) {
-                const rawX = mouseX;
-                const rawY = mouseY;
-                mouseX = rawY / window.innerWidth * window.innerHeight;
-                mouseY = window.innerWidth - rawX / window.innerHeight * window.innerWidth;
-            }
-
-            // Запоминаем старый зум перед изменением
-            const oldZoom = currentZoom;
-            currentZoom = newZoom;
-            AppState.camera.currentZoom = currentZoom;
-
-            // Находим локальную точку внутри карты относительно СТАРОГО зума
-            const localX = (mouseX - worldMapContainer.x) / oldZoom;
-            const localY = (mouseY - worldMapContainer.y) / oldZoom;
-
-            // Применяем масштаб к контейнеру
-            worldMapContainer.scale.set(currentZoom);
-
-            // Сдвигаем контейнер так, чтобы точка под курсором осталась на месте
-            worldMapContainer.x = mouseX - localX * currentZoom;
-            worldMapContainer.y = mouseY - localY * currentZoom;
-
-            AppState.engine.renderMap();
-
-        }, { passive: false });
-
-
-        app.ticker.add((ticker) => {
-            const deltaMS = (ticker.deltaTime * AppState.animation.framesPerSecond * 10) / 60;
-            let needRedraw = false;
-
-            if(AppState.map.isPlatformerMode) {
-                AppState.engine.movementManager.updateCharacter(AppState.characters[AppState.play.activeCharacterId]);
-                needRedraw = true;
-            }
-
-            for (const charId in AppState.entities) {
-                const char = AppState.entities[charId];
-                if(!char) continue;
-
-                if (char.damageFlashTimer > 0) {
-                    char.damageFlashTimer = Math.max(0, char.damageFlashTimer - deltaMS);
-                    needRedraw = true;
-                }
-
-                if (char.healFlashTimer > 0) {
-                    char.healFlashTimer = Math.max(0, char.healFlashTimer - deltaMS);
-                    needRedraw = true;
-                }
-
-                if (char.animations && char.animations[char.action]) {
-                    const currentActionAnims = char.animations[char.action][char.direction];
-
-                    if (currentActionAnims && currentActionAnims.length > 1) {
-                        const animationTime = AppState.animation[char.action+"Time"] || 1000;
-                        char.frameTimer += deltaMS * 1000 / animationTime;
-
-                        if (char.frameTimer >= char.frameDuration) {
-                            char.frameTimer = 0;
-                            char.currentFrameIndex = (char.currentFrameIndex + 1) % currentActionAnims.length;
-                            needRedraw = true;
-                        }
-                    } else {
-                        char.currentFrameIndex = 0;
-                    }
-                }
-
-                if(AppState.engine.movementManager.animateMovement(char, deltaMS)) needRedraw = true;
-                if(AppState.engine.combatManager.animateAttack(char, deltaMS)) needRedraw = true;
-            }
-
-            if (AppState.play.activeCharacterId && AppState.engine.updateCameraSystem && (AppState.game_settings.playerCamera === 'fixed')) {
-                AppState.engine.updateCameraSystem(ticker);
-            }
-
-            if (needRedraw) {
-                AppState.engine.renderMap();
-            }
-        });
-
-        window.stopTicker = () => {
-            app.ticker.stop();
-        }
-        window.resumeTicker = () => {
-            app.ticker.start();
-        }
-    }
 
 
     const btnEndTurn = document.getElementById('btn-end-turn');

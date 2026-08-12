@@ -16,8 +16,6 @@ export class PlayerClickManager {
         console.log(tile);
         if (!tile) return;
 
-        console.log(tile.q, tile.r, tile);
-
         let char = AppState.entities[AppState.play.activeCharacterId];
 
         if (AppState.engine.skillManager && AppState.play.activeSkillId && tile.isSkillTargetZone) {

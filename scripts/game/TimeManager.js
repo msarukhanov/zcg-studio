@@ -11,6 +11,7 @@ export class TimeManager {
      */
 
     initTimeTicker() {
+        if(!AppState.engine.app) return;
         AppState.engine.app.ticker.add((ticker) => {
             const settings = AppState.turn_settings;
             if (!settings) return;

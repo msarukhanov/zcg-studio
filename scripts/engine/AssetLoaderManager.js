@@ -166,6 +166,7 @@ export class AssetLoaderManager {
         try { db = await this._initDB(); } catch (err) { console.error(err); }
 
         const pixiLoadQueue = [];
+        AppState.engine.threeTextureCache = {};
 
         for (const path of assetsArray) {
             if (window.gameAssets[path] && window.gameAssets[path] !== 'loading') continue;
@@ -240,6 +241,33 @@ export class AssetLoaderManager {
                         };
                         img.onerror = () => {
                             PIXI.Assets.add({ alias: path, src: path });
+                            resolve();
+                        };
+                        img.src = finalSrc;
+                    });
+
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            try {
+                                // Создаем 3D текстуру из загруженной HTML-картинки
+                                const texture = new THREE.Texture(img);
+                                texture.needsUpdate = true; // Сигнал для видеокарты загрузить пиксели
+
+                                // Для пиксель-арта и четких тайлов отключаем размытие при масштабировании
+                                texture.magFilter = THREE.NearestFilter;
+                                texture.minFilter = THREE.NearestFilter;
+
+                                // Сохраняем в наш новый кэш по пути файла (path)
+                                AppState.engine.threeTextureCache[path] = texture;
+
+                            } catch (e) {
+                                console.warn("Ошибка создания 3D текстуры:", e);
+                            }
+                            resolve();
+                        };
+                        img.onerror = () => {
+                            console.error("Не удалось загрузить картинку:", finalSrc);
                             resolve();
                         };
                         img.src = finalSrc;

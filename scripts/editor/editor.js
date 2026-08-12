@@ -22,6 +22,7 @@ import { AssetLoaderManager } from '../engine/AssetLoaderManager.js';
 import { AssetGalleryManager } from '../engine/AssetGalleryManager.js';
 import {RenderFunctions} from '../engine/RenderFunctions.js';
 import { initAdditionalFunctions } from '../engine/AdditionalFunctions.js';
+import { init2D } from '../engine/2d.js';
 
 
 window.getActiveMap = getActiveMap;
@@ -159,6 +160,12 @@ async function init() {
     };
 
     const hexMath = new HexMath(size);
+
+    AppState.camera = {
+        "currentZoom": 1,
+        "x": 0,
+        "y": 0
+    };
 
     const worldMapContainer = new PIXI.Container();
     worldMapContainer.x = hexMath.size;
