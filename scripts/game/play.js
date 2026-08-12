@@ -111,7 +111,10 @@ async function init2(isNewGame = false) {
         const container = document.getElementById('app-container');
         const wrapper = document.getElementById('canvas-wrapper');
 
-        const size = wrapper.clientHeight / 2 / AppState.sizes.hexesRad;
+        let size = wrapper.clientHeight / 2 / AppState.sizes.hexesRad;
+        if(AppState.main.playerView === 'firstPerson') {
+            size = 50;
+        }
         const charHeight = AppState.sizes.char.heightPercent/100 * size;
         const objHeight = AppState.sizes.obj.heightPercent/100 * size;
 
